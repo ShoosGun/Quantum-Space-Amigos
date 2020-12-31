@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.1231
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerSide", "Socket + Player test\ServerSide.csproj", "{F3204D45-5026-428A-BA45-C094D0D24C3D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DumbClient", "DumbClient\DumbClient.csproj", "{DCEFFB67-17FE-40E0-B96F-314F241C6C54}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F3204D45-5026-428A-BA45-C094D0D24C3D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F3204D45-5026-428A-BA45-C094D0D24C3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F3204D45-5026-428A-BA45-C094D0D24C3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F3204D45-5026-428A-BA45-C094D0D24C3D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCEFFB67-17FE-40E0-B96F-314F241C6C54}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCEFFB67-17FE-40E0-B96F-314F241C6C54}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCEFFB67-17FE-40E0-B96F-314F241C6C54}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCEFFB67-17FE-40E0-B96F-314F241C6C54}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A5155793-4784-484B-992F-3E5DE891A519}
+	EndGlobalSection
+EndGlobal
