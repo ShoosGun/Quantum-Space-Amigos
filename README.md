@@ -7,3 +7,5 @@ All the sockets stuff was learned from / inspired by those series from [CaptJigg
 
 * The Server Side part works as any other [DIMOWA](https://github.com/ShoosGun/DIMOWA)'s mod, so just place it in the `mods` folder and install it
   *  Your firewall might not be triggered by it because it only allows connections made inside the computer of the host
+
+* Totally not copping the idea from, [QSB](https://github.com/misternebula/quantum-space-buddies), I would I *ever* do that
