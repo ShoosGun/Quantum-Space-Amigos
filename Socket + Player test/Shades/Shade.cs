@@ -6,7 +6,7 @@ namespace ServerSide.Shades
     public class Shade : MonoBehaviour
     {
         //Tem que vir a partir de um Cilindro padrão
-        public ShadeMovementModel MovementModel
+        public ShadePacketCourier PacketCourrier
         {
             get;
             private set;
@@ -49,9 +49,11 @@ namespace ServerSide.Shades
             shadeGODetector.AddComponent<AlignmentFieldDetector>();
             gameObject.AddComponent<AlignWithField>();
 
-            MovementModel = gameObject.AddComponent<ShadeMovementModel>();
+            gameObject.AddComponent<ShadeMovementModel>();
             gameObject.AddComponent<ShadeDetachHandler>();
-            
+
+            PacketCourrier = gameObject.AddComponent<ShadePacketCourier>();
+
             //Serve para fazer o player seguir o shade, "não importa o que ocorra"
             //playerTransform.GetComponent<PlayerCharacterController>().LockMovement(false);
             //playerTransform.gameObject.AddComponent<OWRigidbodyFollowsAnother>().SetConstrain(OWUtilities.GetAttachedOWRigidbody(shadeGO, false));

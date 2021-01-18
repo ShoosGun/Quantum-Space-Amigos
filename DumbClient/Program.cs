@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Net;
 using System.Net.Sockets;
 using UnityEngine;
@@ -26,8 +27,9 @@ namespace DumbClient
             DateTime start = DateTime.UtcNow;
 
             Vector3 moveInput = Vector3.zero;
-            float turnInput = 0f;
-            bool jumpInput = false;
+            //float turnInput = 0f;
+            //bool jumpInput = false;
+            Thread.Sleep(100);          
             while (on)
             {
                 if (Console.KeyAvailable == true)
@@ -35,37 +37,37 @@ namespace DumbClient
                     ConsoleKeyInfo keyPressed = Console.ReadKey(true);
                     switch (keyPressed.Key)
                     {
-                        //Mover
-                        case ConsoleKey.W:
-                            moveInput.z++;
-                            break;
+                        ////Mover
+                        //case ConsoleKey.W:
+                        //    moveInput.z++;
+                        //    break;
 
-                        case ConsoleKey.S:
-                            moveInput.z--;
-                            break;
+                        //case ConsoleKey.S:
+                        //    moveInput.z--;
+                        //    break;
 
-                        case ConsoleKey.A:
-                            moveInput.x--;
-                            break;
+                        //case ConsoleKey.A:
+                        //    moveInput.x--;
+                        //    break;
 
-                        case ConsoleKey.D:
-                            moveInput.x++;
-                            break;
+                        //case ConsoleKey.D:
+                        //    moveInput.x++;
+                        //    break;
 
-                        //Virar
-                        case ConsoleKey.Q:
-                            turnInput++;
-                            break;
+                        ////Virar
+                        //case ConsoleKey.Q:
+                        //    turnInput++;
+                        //    break;
 
-                        case ConsoleKey.E:
-                            turnInput--;
-                            break;
+                        //case ConsoleKey.E:
+                        //    turnInput--;
+                        //    break;
 
-                        //Pular
-                        case ConsoleKey.Z:
-                            jumpInput = true;
-                            break;
-                            
+                        ////Pular
+                        //case ConsoleKey.Z:
+                        //    jumpInput = true;
+                        //    break;
+
                         //Desligar
                         case ConsoleKey.P:
                             on = false;
@@ -76,37 +78,40 @@ namespace DumbClient
                     }
                 }
 
-                if ((DateTime.UtcNow - start).Milliseconds >= 500 && (moveInput != Vector3.zero || jumpInput || turnInput != 0f) )
-                {
+                //if ((DateTime.UtcNow - start).Milliseconds >= 33 && (moveInput != Vector3.zero || jumpInput || turnInput != 0f) )
+                //{
                     //Send packet to server
-                    Console.WriteLine("Mandando pacote. . .");
+                    //Console.WriteLine("Mandando pacote. . .");
                     PacketWriter packet = new PacketWriter();
                     packet.Write((byte)Header.MOVEMENT);
 
-                    packet.Write((byte)3);//Quantos sub pacotes vamos mandar 
+                    packet.Write(DateTime.UtcNow);
+
+                    packet.Write((byte)1);//Quantos sub pacotes vamos mandar 
                     
                     //Não importa a ordem e a quantidade (mas e se mandarmos mais de um :heartian_thinking_emojo:)
                     
                     packet.Write((byte)SubMovementHeader.HORIZONTAL_MOVEMENT);
-                    packet.Write(moveInput);
+                    packet.Write(new Vector3(0f,0f,1f));
 
-                    packet.Write((byte)SubMovementHeader.SPIN);
-                    packet.Write(turnInput);
+                    //packet.Write((byte)SubMovementHeader.SPIN);
+                    //packet.Write(turnInput);
 
-                    packet.Write((byte)SubMovementHeader.JUMP);
-                    packet.Write(jumpInput);
+                    //packet.Write((byte)SubMovementHeader.JUMP);
+                    //packet.Write(jumpInput);
                     byte[] buffer = packet.GetBytes();
 
                     clientSck.Send(BitConverter.GetBytes(buffer.Length));
                     clientSck.Send(buffer);
 
-                    moveInput = Vector3.zero;
-                    turnInput = 0f;
-                    jumpInput = false;
+                    //moveInput = Vector3.zero;
+                    //turnInput = 0f;
+                    //jumpInput = false;
 
                     start = DateTime.UtcNow;
-                }
+                //}
             }
+            Console.WriteLine("Pressione ENTER para fechar o programa");
             clientSck.Close();
             Console.Read();
 

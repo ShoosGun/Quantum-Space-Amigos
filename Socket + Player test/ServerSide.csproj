@@ -57,6 +57,7 @@
     <Compile Include="Shades\ShadeDetachHandler.cs" />
     <Compile Include="Shades\ShadeMovementModel.cs" />
     <Compile Include="Shades\Shade.cs" />
+    <Compile Include="Shades\ShadePacketCourier.cs" />
     <Compile Include="Sockets\Clients\Client.cs" />
     <Compile Include="Sockets\Headers.cs" />
     <Compile Include="Sockets\PacketIO.cs" />

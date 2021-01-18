@@ -46,6 +46,14 @@ namespace DumbClient
             Write(quaternion.z);
             Write(quaternion.x);
         }
+        /// <summary>
+        /// Use DateTime.UtcNow to avoid problems
+        /// </summary>
+        /// <param name="dateTime"></param>
+        public void Write(DateTime dateTime)
+        {
+            Write(dateTime.ToBinary());
+        }
 
     }
 
@@ -70,6 +78,14 @@ namespace DumbClient
         public Quaternion ReadQuaternion()
         {
             return new Quaternion(ReadSingle(), ReadSingle(), ReadSingle(), ReadSingle());
+        }
+        /// <summary>
+        /// Read as if the DateTime was a DateTime.UtcNow to avoid problems
+        /// </summary>
+        /// <returns></returns>
+        public DateTime ReadDateTime()
+        {
+            return DateTime.FromBinary(ReadInt64());
         }
     }
 }
