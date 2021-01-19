@@ -1,4 +1,5 @@
-# Sockets-In-OWA
+# Sockets-In-OWA 
+(or maybe QSA [Quantum Space Acquaintances], I loved that idea Rai)
 ### A project that aims to add socket connections to the game Outer Wilds Alpha
 
 Fell free to look and even help with this project, the big part of handling connections is already done, and there is even some prototypes of the player movement system. 
