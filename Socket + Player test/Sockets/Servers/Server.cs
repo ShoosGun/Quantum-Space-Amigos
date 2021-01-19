@@ -11,7 +11,7 @@ namespace ServerSide.Sockets.Servers
 {
     public class Server
     {
-        //Vocês não iriam acreitar que todo esse código (e mais) foi deletado por eu ter feito merge enquanto tentava colocar ele em um repo
+        //Vocês não iriam acreditar que todo esse código (e mais) foi deletado por eu ter feito merge enquanto tentava colocar ele em um repo
         // É, nem eu acreditaria
         // que aventura desgranhenta, nunca mais não terei um backup de algum tipo (ao menos que eu esqueça :P)
         private ClientDebuggerSide debugger;
@@ -19,10 +19,22 @@ namespace ServerSide.Sockets.Servers
         private List<Client> clients;
         private Dictionary<string, Client> clientsLookUpTable;
 
-        private List<ClientUpdate>[] UpdatesCache;
+        private List<Client> NewClientsCache = new List<Client>();
+        private readonly object NCC_lock = new object();
+
+        private const int MAX_DATA_PER_CLIENT_LOOP = 3;
+        private Dictionary<string, byte[][]> ReceivedDataCache = new Dictionary<string, byte[][]>();
+        private readonly object RDC_lock = new object();
+
+        private List<string> DisconnecedClientsCache = new List<string>();
+        private readonly object DCC_lock = new object();
+
+
+        //private List<ClientUpdate>[] UpdatesCache;
 
         //Parte legal
         private Dictionary<string, Shade> clientsShades = new Dictionary<string, Shade>();
+        //private object cShades_lock = new object();
 
         public Server(ClientDebuggerSide debugger)
         {
@@ -33,25 +45,35 @@ namespace ServerSide.Sockets.Servers
             l.SocketAccepted += L_SocketAccepted;
             l.Start();
 
-            //MDS HAHAHAHAH
-            UpdatesCache = new List<ClientUpdate>[(int)UpdatesTypes.UpdatesTypes_Size]; // ai não precisamos mudar o valor quando adicionarmos mais no UpdatesTypes
-            for (int i = 0; i < UpdatesCache.Length; i++)
-            {
-                UpdatesCache[i] = new List<ClientUpdate>();
-            }
+            ////MDS HAHAHAHAH
+            //UpdatesCache = new List<ClientUpdate>[(int)UpdatesTypes.UpdatesTypes_Size]; // ai não precisamos mudar o valor quando adicionarmos mais no UpdatesTypes
+            //for (int i = 0; i < UpdatesCache.Length; i++)
+            //{
+            //    UpdatesCache[i] = new List<ClientUpdate>();
+            //}
         }
 
         /// <summary>
         /// Handles new connections on the in game loop and creates the in-game representation of the client
         /// </summary>
         /// <returns></returns>
-        private void NewConnections(ClientUpdate clientUpdate)
+        private void NewConnections(Client client)
         {
-            clientsLookUpTable.Add(clientUpdate.Client.ID, clientUpdate.Client);
-            clients.Add(clientUpdate.Client);
+            clientsLookUpTable.Add(client.ID, client);
+            clients.Add(client);
+            lock (RDC_lock)
+            {
+                var maxDataPerLoop = new byte[MAX_DATA_PER_CLIENT_LOOP][];
+                for(int i = 0; i< MAX_DATA_PER_CLIENT_LOOP; i++)
+                {
+                    maxDataPerLoop[i] = new byte[] { };
+                }
+
+                ReceivedDataCache.Add(client.ID, maxDataPerLoop);
+            }
 
             Shade newShade = GameObject.CreatePrimitive(PrimitiveType.Cylinder).AddComponent<Shade>();
-            clientsShades.Add(clientUpdate.Client.ID, newShade);
+            clientsShades.Add(client.ID, newShade);
 
             string clientsString = "";
             foreach (Client c in clients)
@@ -60,9 +82,9 @@ namespace ServerSide.Sockets.Servers
             }
             debugger.SendLogMultiThread("Lista dos clientes conectados ate agora:" + clientsString, DebugType.LOG);
         }
-        private void NewConnections(List<ClientUpdate> clientUpdates)
+        private void NewConnections(List<Client> newClients)
         {
-            foreach (var c in clientUpdates)
+            foreach (var c in newClients)
             {
                 NewConnections(c);
             }
@@ -71,9 +93,9 @@ namespace ServerSide.Sockets.Servers
         /// Handles disconnections on the in game loop and delets the in-game representation of the client
         /// </summary>
         /// <returns></returns>
-        private void Disconnections(ClientUpdate clientUpdate)
+        private void Disconnections(string clientID)
         {
-            Client c = clientsLookUpTable[clientUpdate.Client.ID];
+            Client c = clientsLookUpTable[clientID];
             debugger.SendLogMultiThread(c.ID + " se desconectou!", DebugType.LOG);
 
             //Destruir e remover a representação do cliente no jogo
@@ -91,9 +113,9 @@ namespace ServerSide.Sockets.Servers
             }
             debugger.SendLogMultiThread("Lista dos clientes conectados ate agora:\n" + clientsString, DebugType.LOG);
         }
-        private void Disconnections(List<ClientUpdate> clientUpdates)
+        private void Disconnections(List<string> clientsIDs)
         {
-            foreach (var c in clientUpdates)
+            foreach (var c in clientsIDs)
             {
                 Disconnections(c);
             }
@@ -102,12 +124,12 @@ namespace ServerSide.Sockets.Servers
         /// Handles new data sent by the clients on the in game loop and passes it to the respective in-game representation
         /// </summary>
         /// <returns></returns>
-        private void ReceivedData(ClientUpdate clientUpdate)
+        private void ReceivedData(string clientID, byte[] data)
         {
-            Client c = clientsLookUpTable[clientUpdate.Client.ID];
+            Client c = clientsLookUpTable[clientID];
             try
             {
-                PacketReader packet = new PacketReader(clientUpdate.Data);
+                PacketReader packet = new PacketReader(data);
 
                 switch ((Header)packet.ReadByte())
                 {
@@ -145,7 +167,9 @@ namespace ServerSide.Sockets.Servers
                             }
                         }
                         //Send inputs to the specified shade
-                        clientsShades[c.ID].PacketCourrier.AddMovementPacket(new MovementPacket(moveInput, turnInput, jumpInput, sendTime));
+                        
+                         clientsShades[c.ID].PacketCourrier.AddMovementPacket(new MovementPacket(moveInput, turnInput, jumpInput, sendTime));
+                        
                         break;
 
                     case Header.REFRESH:
@@ -160,11 +184,26 @@ namespace ServerSide.Sockets.Servers
                 debugger.SendLogMultiThread("Erro ao ler dados de " + c.ID + " :" + ex.Message, DebugType.ERROR);
             }
         }
-        private void ReceivedData(List<ClientUpdate> clientUpdates)
+        private void ReceivedData(Dictionary<string,byte[][]> receivedData, bool resetDataArrays = true)
         {
-            foreach (var c in clientUpdates)
+            //Ideias: 
+            // 1 - Fazer a leitura de dados no async
+            // 2 - Fazer a leitura de dados em uma Coroutine da unity
+            // 3 - No lugar de enviar byte[]'s enviamos PacketReaders um pouco tratadas
+            for (int i = 0; i < clients.Count; i++) 
             {
-                ReceivedData(c);
+                string clientID = clients[i].ID;
+                for (int j = 0; j < receivedData[clientID].Length; j++)
+                {
+                    byte[] data = receivedData[clientID][j];
+                    if (data.Length > 0)
+                    {
+                        ReceivedData(clientID, data);
+                        if(resetDataArrays)
+                            receivedData[clientID][j] = new byte[] { };
+                    }
+                }
+                
             }
         }
 
@@ -301,29 +340,52 @@ namespace ServerSide.Sockets.Servers
             //    }
             //}
             //Agora estão todos separados, para melhor manuntenção do código
-            bool updateCacheNotLoked = Monitor.TryEnter(UpdatesCache.SyncRoot,10);
+            bool NCC_NotLoked = Monitor.TryEnter(NCC_lock,10);
             try
             {
-                if (updateCacheNotLoked)
+                if (NCC_NotLoked)
                 {
-                    NewConnections(UpdatesCache[(int)UpdatesTypes.NEW_CONNECTION]);
-
-                    ReceivedData(UpdatesCache[(int)UpdatesTypes.RECEIVED_DATA]);
-
-                    Disconnections(UpdatesCache[(int)UpdatesTypes.DISCONNECTION]);
-
-                    foreach (var list in UpdatesCache)
+                    if (NewClientsCache.Count > 0)
                     {
-                        list.Clear();
+                        NewConnections(NewClientsCache);
+                        NewClientsCache.Clear();
                     }
                 }
             }
             finally
             {
-                if (updateCacheNotLoked)
+                Monitor.Exit(NCC_lock);
+            }
+            
+
+            bool RDC_NotLoked = Monitor.TryEnter(RDC_lock, 10);
+            try
+            {
+                if (RDC_NotLoked)
                 {
-                    Monitor.Exit(UpdatesCache.SyncRoot);
+                     ReceivedData(ReceivedDataCache); // Dá clear dentro do método
                 }
+            }
+            finally
+            {
+                Monitor.Exit(RDC_lock);
+            }
+
+            bool DCC_NotLoked = Monitor.TryEnter(DCC_lock, 10);
+            try
+            {
+                if (DCC_NotLoked && DisconnecedClientsCache.Count > 0)
+                {
+                    if (DisconnecedClientsCache.Count > 0)
+                    {
+                        Disconnections(DisconnecedClientsCache);
+                        DisconnecedClientsCache.Clear();
+                    }
+                }
+            }
+            finally
+            {
+                Monitor.Exit(DCC_lock);
             }
         }
 
@@ -333,31 +395,42 @@ namespace ServerSide.Sockets.Servers
             Client client = new Client(e, debugger);
             client.Received += Client_Received;
             client.Disconnected += Client_Disconnected;
-            lock (UpdatesCache.SyncRoot)
+            lock (NCC_lock)
             {
-                UpdatesCache[(int)UpdatesTypes.NEW_CONNECTION].Add(new ClientUpdate(client, null));
+                NewClientsCache.Add(client);
             }
         }
 
         private void Client_Disconnected(Client sender)
         {
-            lock (UpdatesCache.SyncRoot)
+            lock (DCC_lock)
             {
-                UpdatesCache[(int)UpdatesTypes.DISCONNECTION].Add(new ClientUpdate(sender, null));
+                DisconnecedClientsCache.Add(sender.ID);
             }
         }
 				
         private void Client_Received(Client sender, byte[] data)
         {
-            lock (UpdatesCache.SyncRoot)
+            bool RDC_NotLoked = Monitor.TryEnter(RDC_lock);
+            try
             {
-                //foreach (var update in UpdatesCache[(int)UpdatesTypes.RECEIVED_DATA])
-                //{
-                //    if (update.Client.ID == sender.ID)
-                //        return;
-                //}
+                if (RDC_NotLoked)
+                {
+                    if (!ReceivedDataCache.ContainsKey(sender.ID))
+                        return;
 
-                UpdatesCache[(int)UpdatesTypes.RECEIVED_DATA].Add(new ClientUpdate(sender, data));
+                    var senderCache = ReceivedDataCache[sender.ID];
+                    for (int i = 0; i < senderCache.Length; i++)
+                        if (senderCache[i].Length <= 0)
+                        {
+                            senderCache[i] = data;
+                            break;
+                        }
+                }
+            }
+            finally
+            {
+                Monitor.Exit(RDC_lock);
             }
         }
 
@@ -371,14 +444,14 @@ namespace ServerSide.Sockets.Servers
 
     }
 
-    public struct ClientUpdate
+    public struct ClientEssentials
     {
-        public Client Client;
+        public string ClientID;
         public byte[] Data;
 
-        public ClientUpdate(Client client, byte[] data)
+        public ClientEssentials(string clientID, byte[] data)
         {
-            Client = client;
+            ClientID = clientID;
             Data = data;
         }
     }

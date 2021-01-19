@@ -22,6 +22,7 @@ namespace ServerSide.Shades
             GetComponent<CapsuleCollider>().radius = 0.5f;
             GetComponent<CapsuleCollider>().height = 2f;
             transform.rotation = playerTransform.rotation;
+			transform.position = playerTransform.position;
 
             Rigidbody shadeRidigbody = gameObject.AddComponent<Rigidbody>();
             shadeRidigbody.mass = 0.001f;

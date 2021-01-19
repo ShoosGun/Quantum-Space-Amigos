@@ -7,7 +7,7 @@ namespace ServerSide.Shades
     public class ShadePacketCourier : MonoBehaviour
     {
         private ShadeMovementModel shadeMovementModel;
-
+       
         private List<MovementPacket> MovementPacketsCache = new List<MovementPacket>();
 
         void Start()
@@ -24,17 +24,16 @@ namespace ServerSide.Shades
                 MovementPacketsCache.RemoveAt(0);
             }
             else
-            {
                 shadeMovementModel.SetNewPacket(new MovementPacket(Vector3.zero, 0f, false, System.DateTime.UtcNow));
-            }
         }
 
         public void AddMovementPacket(MovementPacket packet)
         {
-            if (MovementPacketsCache.Count == 10)
-                MovementPacketsCache.RemoveAt(0); // Caso, CASO, acumulem
+            
+                if (MovementPacketsCache.Count == 10)
+                    MovementPacketsCache.RemoveAt(0); // Caso, CASO, acumulem
 
-            MovementPacketsCache.Add(packet);
+                MovementPacketsCache.Add(packet);
         }
 
     }
