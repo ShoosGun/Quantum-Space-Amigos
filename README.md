@@ -13,11 +13,11 @@ All the sockets stuff was learned from / inspired by these series from [CaptJigg
 
 * Current Goals:
 
-- [ ] Tests with the ´dumb client´ over the internet
+- [ ] Tests with the `dumb client` over the internet
 
 - [ ] Beeing able to add and change nicknames from the client (with a new header)
 
-- [ ] Create a ´dumb server´ so that the creation of the actual client becomes easier
+- [ ] Create a `dumb server` so that the creation of the actual client becomes easier
 
 - [ ] Create **the client**
 
