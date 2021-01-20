@@ -12,12 +12,21 @@ All the sockets stuff was learned from / inspired by these series from [CaptJigg
 * Totally not copying the idea from, [QSB](https://github.com/misternebula/quantum-space-buddies), why would I *ever* do that
 
 * Current Goals:
-	[] Tests with the ´dumb client´ over the internet
-	[] Beeing able to add and change nicknames from the client (with a new header)
-	[] Create a ´dumb server´ so that the creation of the actual client becomes easier
-	[] Create **the client**
-	[] Add basic entity sync (with delta syncs)
-	[] Add actual syncing (with position syncs)
-	[] Add orb sync (1- by entity sync or 2- trusting the client that it can, from some parameters, get a very simmilar orbit [I think that I'm going with the first option])
-	[] Add quantum sync (by first knowing the only possibilities for it and then adding them in 3-4 bits, so that all of the quantum objects are in a small amount of bytes)
-	[] Add ***FUN***
+
+- [ ] Tests with the ´dumb client´ over the internet
+
+- [ ] Beeing able to add and change nicknames from the client (with a new header)
+
+- [ ] Create a ´dumb server´ so that the creation of the actual client becomes easier
+
+- [ ] Create **the client**
+
+- [ ] Add basic entity sync (with delta syncs)
+
+- [ ] Add actual syncing (with position syncs)
+
+- [ ] Add orb sync (1- by entity sync or 2- trusting the client that it can, from some parameters, get a very simmilar orbit [I think that I'm going with the first option])
+
+- [ ] Add quantum sync (by first knowing the only possibilities for it and then adding them in 3-4 bits, so that all of the quantum objects are in a small amount of bytes)
+
+- [ ] Add ***FUN***
