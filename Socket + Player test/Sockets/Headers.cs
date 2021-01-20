@@ -8,7 +8,8 @@ namespace ServerSide.Sockets
     {
         DISCONECT,
         MOVEMENT,
-        REFRESH
+        REFRESH,
+        NAME
     }
     public enum SubMovementHeader : byte
     {

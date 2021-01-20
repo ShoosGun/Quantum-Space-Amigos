@@ -15,8 +15,6 @@ All the sockets stuff was learned from / inspired by these series from [CaptJigg
 
 - [ ] Tests with the `dumb client` over the internet
 
-- [ ] Beeing able to add and change nicknames from the client (with a new header)
-
 - [ ] Create a `dumb server` so that the creation of the actual client becomes easier
 
 - [ ] Create **the client**
@@ -30,3 +28,5 @@ All the sockets stuff was learned from / inspired by these series from [CaptJigg
 - [ ] Add quantum sync (by first knowing the only possibilities for it and then adding them in 3-4 bits, so that all of the quantum objects are in a small amount of bytes)
 
 - [ ] Add ***FUN***
+
+	- [x] Beeing able to add and change nicknames from the client (with a new header)

@@ -130,55 +130,59 @@ namespace ServerSide.Sockets.Servers
             try
             {
                 PacketReader packet = new PacketReader(data);
-				while(packet.ToArray().Length > 0)
-				{
-                switch ((Header)packet.ReadByte())
+				while(data.Length > 0)
                 {
-                    case Header.MOVEMENT:
-                        DateTime sendTime = packet.ReadDateTime();
+                    switch ((Header)packet.ReadByte())
+                    {
+                        case Header.MOVEMENT:
+                            DateTime sendTime = packet.ReadDateTime();
 
-                        Vector3 moveInput = Vector3.zero;
-                        float turnInput = 0f;
-                        bool jumpInput = false;
+                            Vector3 moveInput = Vector3.zero;
+                            float turnInput = 0f;
+                            bool jumpInput = false;
 
-                        //Tipos de imput:
-                        // Falar quantos deles [1,3] vão vir
-                        // 1 - MoveInput - > Vector3
-                        // 2 - TurnInput - > float
-                        // 3 - JumpInput - > bool
+                            //Tipos de imput:
+                            // Falar quantos deles [1,3] vão vir
+                            // 1 - MoveInput - > Vector3
+                            // 2 - TurnInput - > float
+                            // 3 - JumpInput - > bool
 
-                        for (byte amountOfMovement = packet.ReadByte(); amountOfMovement > 0; amountOfMovement--)
-                        {
-                            switch ((SubMovementHeader)packet.ReadByte())
+                            for (byte amountOfMovement = packet.ReadByte(); amountOfMovement > 0; amountOfMovement--)
                             {
-                                case SubMovementHeader.HORIZONTAL_MOVEMENT:
-                                    moveInput = packet.ReadVector3();
-                                    break;
+                                switch ((SubMovementHeader)packet.ReadByte())
+                                {
+                                    case SubMovementHeader.HORIZONTAL_MOVEMENT:
+                                        moveInput = packet.ReadVector3();
+                                        break;
 
-                                case SubMovementHeader.SPIN:
-                                    turnInput = packet.ReadSingle();
-                                    break;
+                                    case SubMovementHeader.SPIN:
+                                        turnInput = packet.ReadSingle();
+                                        break;
 
-                                case SubMovementHeader.JUMP:
-                                    jumpInput = packet.ReadBoolean();
-                                    break;
+                                    case SubMovementHeader.JUMP:
+                                        jumpInput = packet.ReadBoolean();
+                                        break;
 
-                                default:
-                                    break;
+                                    default:
+                                        break;
+                                }
                             }
-                        }
-                        //Send inputs to the specified shade
-                         clientsShades[c.ID].PacketCourrier.AddMovementPacket(new MovementPacket(moveInput, turnInput, jumpInput, sendTime));
-                        
-                        break;
+                            //Send inputs to the specified shade
+                            clientsShades[c.ID].PacketCourrier.AddMovementPacket(new MovementPacket(moveInput, turnInput, jumpInput, sendTime));
 
-                    case Header.REFRESH:
-                        break;
+                            break;
 
-                    default:
-                        break;
+                        case Header.REFRESH:
+                            break;
+
+                        case Header.NAME:
+                            clientsShades[c.ID].Name = packet.ReadString();
+                            break;
+
+                        default:
+                            break;
+                    }
                 }
-				}
             }
             catch (Exception ex)
             {

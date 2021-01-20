@@ -8,7 +8,8 @@ namespace DumbClient
     {
         DISCONECT,
         MOVEMENT,
-        REFRESH
+        REFRESH,
+        NAME
     }
     public enum SubMovementHeader : byte
     {

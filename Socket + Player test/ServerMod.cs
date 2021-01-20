@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using ServerSide.Sockets.Servers;
+using ServerSide.Shades;
 using DIMOWAModLoader;
 using CAMOWA;
 
@@ -22,9 +23,11 @@ namespace ServerSide
             Debug.Log("Server Test foi iniciado em " + porOndeTaInicializando);
             new GameObject("ShadeTest").AddComponent<ServerMod>();
         }
-        
+        Transform playerTransform;
+
         private void Start()
         {
+            playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
             _debugger = GameObject.Find("DIMOWALevelLoaderHandler").GetComponent<ClientDebuggerSide>();
             _serverSide = new Server(_debugger);
         }
@@ -35,6 +38,7 @@ namespace ServerSide
             _serverSide.Update();
             //Ver o estado do jogo e tirar uma "foto" dele
         }
+
         private void OnDestroy()
         {
             _serverSide.Stop();

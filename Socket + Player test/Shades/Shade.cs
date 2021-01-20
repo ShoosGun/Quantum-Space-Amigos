@@ -12,10 +12,12 @@ namespace ServerSide.Shades
             private set;
         }
 
+        public string Name = "";
+
         private void Start()
         {
             Transform playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
-            
+            //center
             transform.parent = playerTransform.root;
             gameObject.layer= LayerMask.NameToLayer("Primitive");
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Net;
 using System.Net.Sockets;
 using DIMOWAModLoader;
@@ -28,18 +29,31 @@ namespace ServerSide.Sockets.Clients
             get;
             private set;
         }
-        public Client(Socket accepted, ClientDebuggerSide debugger)
+
+        private DateTime startedReceivingTime;
+        private int receivingLimit;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="accepted"></param>
+        /// <param name="debugger"></param>
+        /// <param name="receivingLimit"> In packets/s </param>
+        public Client(Socket accepted, ClientDebuggerSide debugger, int receivingLimit =  100)
         {
             this.debugger = debugger;
+            this.receivingLimit = receivingLimit;
 
             ID = Guid.NewGuid().ToString();
             sck = accepted;
             EndPoint = (IPEndPoint)sck.RemoteEndPoint;
-            sck.BeginReceive(new byte[] { 0 }, 0, 0, 0, callback, null);
 
+            startedReceivingTime = DateTime.UtcNow;
+            sck.BeginReceive(new byte[] { 0 }, 0, 0, 0, callback, null);
             ReceivedPackets = 0;
         }
 
+        private int amountOfReceivedPackets = 0;
         private void callback(IAsyncResult ar)
         {
             try
@@ -56,6 +70,13 @@ namespace ServerSide.Sockets.Clients
                 if (Received != null)
                 {
                     Received(this, buffer);
+                }
+                if( (DateTime.UtcNow - startedReceivingTime).Milliseconds >= 1000)
+                    amountOfReceivedPackets = 0;
+
+                else if(amountOfReceivedPackets > receivingLimit)
+                {
+                    Thread.Sleep(1000); // 1 second
                 }
                 sck.BeginReceive(new byte[] { 0 }, 0, 0, 0, callback, null);
             }
