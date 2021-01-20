@@ -130,7 +130,8 @@ namespace ServerSide.Sockets.Servers
             try
             {
                 PacketReader packet = new PacketReader(data);
-
+				while(packet.ToArray().Length > 0)
+				{
                 switch ((Header)packet.ReadByte())
                 {
                     case Header.MOVEMENT:
@@ -167,7 +168,6 @@ namespace ServerSide.Sockets.Servers
                             }
                         }
                         //Send inputs to the specified shade
-                        
                          clientsShades[c.ID].PacketCourrier.AddMovementPacket(new MovementPacket(moveInput, turnInput, jumpInput, sendTime));
                         
                         break;
@@ -178,6 +178,7 @@ namespace ServerSide.Sockets.Servers
                     default:
                         break;
                 }
+				}
             }
             catch (Exception ex)
             {

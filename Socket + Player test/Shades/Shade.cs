@@ -21,8 +21,6 @@ namespace ServerSide.Shades
 
             GetComponent<CapsuleCollider>().radius = 0.5f;
             GetComponent<CapsuleCollider>().height = 2f;
-            transform.rotation = playerTransform.rotation;
-			transform.position = playerTransform.position;
 
             Rigidbody shadeRidigbody = gameObject.AddComponent<Rigidbody>();
             shadeRidigbody.mass = 0.001f;
@@ -54,6 +52,9 @@ namespace ServerSide.Shades
             gameObject.AddComponent<ShadeDetachHandler>();
 
             PacketCourrier = gameObject.AddComponent<ShadePacketCourier>();
+			
+			transform.position = playerTransform.position;
+            transform.rotation = playerTransform.rotation;
 
             //Serve para fazer o player seguir o shade, "não importa o que ocorra"
             //playerTransform.GetComponent<PlayerCharacterController>().LockMovement(false);

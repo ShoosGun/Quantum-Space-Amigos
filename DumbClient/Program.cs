@@ -26,11 +26,12 @@ namespace DumbClient
             bool on = true;
             DateTime start = DateTime.UtcNow;
 
+			bool useRandomInput = false;
             Vector3 moveInput = Vector3.zero;
             float turnInput = 0f;
             bool jumpInput = false;
             Thread.Sleep(100);
-            System.Random rnd = new System.Random();
+            System.Random rnd = new System.Random(start.tick);
             while (on)
             {
 
@@ -39,49 +40,61 @@ namespace DumbClient
                     ConsoleKeyInfo keyPressed = Console.ReadKey(true);
                     switch (keyPressed.Key)
                     {
-                        ////Mover
-                        //case ConsoleKey.W:
-                        //    moveInput.z++;
-                        //    break;
-
-                        //case ConsoleKey.S:
-                        //    moveInput.z--;
-                        //    break;
-
-                        //case ConsoleKey.A:
-                        //    moveInput.x--;
-                        //    break;
-
-                        //case ConsoleKey.D:
-                        //    moveInput.x++;
-                        //    break;
-
-                        ////Virar
-                        //case ConsoleKey.Q:
-                        //    turnInput++;
-                        //    break;
-
-                        //case ConsoleKey.E:
-                        //    turnInput--;
-                        //    break;
-
-                        ////Pular
-                        //case ConsoleKey.Z:
-                        //    jumpInput = true;
-                        //    break;
-
                         //Desligar
                         case ConsoleKey.P:
                             on = false;
                             break;
+							
+						case ConsoleKey.R:
+							useRandomInput = !useRandomInput;
+							break;
 
                         default:
                             break;
                     }
+					if(!useRandomInput)
+					{
+						switch(keyPressed.Key)
+						{
+							//Mover
+                        case ConsoleKey.W:
+                            moveInput.z++;
+                            break;
+
+                        case ConsoleKey.S:
+                            moveInput.z--;
+                            break;
+
+                        case ConsoleKey.A:
+                            moveInput.x--;
+                            break;
+
+                        case ConsoleKey.D:
+                            moveInput.x++;
+                            break;
+
+                        //Virar
+                        case ConsoleKey.Q:
+                            turnInput++;
+                            break;
+
+                        case ConsoleKey.E:
+                            turnInput--;
+                            break;
+
+                        //Pular
+                        case ConsoleKey.Z:
+                            jumpInput = true;
+                            break;
+						}
+					}
                 }
-                moveInput = new Vector3(rnd.Next(0, 2), 0f, rnd.Next(0, 2));
-                turnInput = rnd.Next(-1, 2);
-                jumpInput = rnd.Next(0, 101) < 26;
+				if(useRandomInput)
+				{
+					moveInput = new Vector3(rnd.Next(0, 2), 0f, rnd.Next(0, 2));
+					turnInput = rnd.Next(-1, 2);
+					jumpInput = rnd.Next(0, 101) < 11;
+				}
 
 
                 //Send packet to server
@@ -93,7 +106,7 @@ namespace DumbClient
                 packet.Write((byte)3);//Quantos sub pacotes vamos mandar 
                 
                 packet.Write((byte)SubMovementHeader.HORIZONTAL_MOVEMENT);
-                packet.Write(new Vector3(0f, 0f, 1f));
+                packet.Write(moveInput);
 
                 packet.Write((byte)SubMovementHeader.SPIN);
                 packet.Write(turnInput);
