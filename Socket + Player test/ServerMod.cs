@@ -11,7 +11,7 @@ namespace ServerSide
 {
     public class ServerMod : MonoBehaviour
     {
-        private Server _serverSide;
+        public Server _serverSide;
         private ClientDebuggerSide _debugger;
 
         [IMOWAModInnit("Server Test", 1, 2)]
@@ -23,20 +23,21 @@ namespace ServerSide
             Debug.Log("Server Test foi iniciado em " + porOndeTaInicializando);
             new GameObject("ShadeTest").AddComponent<ServerMod>();
         }
-        Transform playerTransform;
 
         private void Start()
         {
-            playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
             _debugger = GameObject.Find("DIMOWALevelLoaderHandler").GetComponent<ClientDebuggerSide>();
-            _serverSide = new Server(_debugger);
+            _serverSide = new Server(_debugger, gameObject.AddComponent<ShadePacketCourier>());
         }
         
-        //A parte que cria as shades foi perdida, teremos que aprender elas de novo ;-;
         private void FixedUpdate()
         {
-            _serverSide.Update();
+            _serverSide.FixedUpdate();
             //Ver o estado do jogo e tirar uma "foto" dele
+        }
+        private void Update()
+        {
+            _serverSide.Update();
         }
 
         private void OnDestroy()

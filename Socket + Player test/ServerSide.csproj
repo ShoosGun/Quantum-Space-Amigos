@@ -36,19 +36,19 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp - Copia">
-      <HintPath>..\..\..\..\..\OuterWilds Alpha 1_2\OuterWilds_Alpha_1_2_Data\Managed\Assembly-CSharp - Copia.dll</HintPath>
+      <HintPath>..\..\..\..\OuterWilds Alpha 1_2\OuterWilds_Alpha_1_2_Data\Managed\Assembly-CSharp - Copia.dll</HintPath>
     </Reference>
     <Reference Include="CAMOWA">
-      <HintPath>..\..\..\DIMOWA\Instalador\CAMOWA.dll</HintPath>
+      <HintPath>..\..\DIMOWA\Instalador\CAMOWA.dll</HintPath>
     </Reference>
     <Reference Include="DIMOWAModLoader">
-      <HintPath>..\..\..\DIMOWA\Instalador\DIMOWAModLoader.dll</HintPath>
+      <HintPath>..\..\DIMOWA\Instalador\DIMOWAModLoader.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">
-      <HintPath>..\..\..\..\..\OuterWilds Alpha 1_2\OuterWilds_Alpha_1_2_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>..\..\..\..\OuterWilds Alpha 1_2\OuterWilds_Alpha_1_2_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -65,6 +65,7 @@
     <Compile Include="Sockets\Servers\Server.cs" />
     <Compile Include="Sockets\Servers\UpdatesTypes.cs" />
     <Compile Include="ServerMod.cs" />
+    <Compile Include="Sync\IPacketCourier.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -24,12 +24,6 @@ namespace ServerSide.Sockets.Clients
         }
         private Socket sck;
 
-        public int ReceivedPackets
-        {
-            get;
-            private set;
-        }
-
         private DateTime startedReceivingTime;
         private int receivingLimit;
 
@@ -50,7 +44,6 @@ namespace ServerSide.Sockets.Clients
 
             startedReceivingTime = DateTime.UtcNow;
             sck.BeginReceive(new byte[] { 0 }, 0, 0, 0, callback, null);
-            ReceivedPackets = 0;
         }
 
         private int amountOfReceivedPackets = 0;
@@ -66,19 +59,24 @@ namespace ServerSide.Sockets.Clients
                     throw new SocketException();
 
                 buffer = new byte[dataSize];
-                sck.Receive(buffer, 0, buffer.Length, 0);
+                int received = sck.Receive(buffer, 0, buffer.Length, 0);
+                while (received < dataSize)
+                {
+                    received += sck.Receive(buffer, received, dataSize - received, 0);
+                }
                 if (Received != null)
                 {
                     Received(this, buffer);
                 }
+
                 if( (DateTime.UtcNow - startedReceivingTime).Milliseconds >= 1000)
                     amountOfReceivedPackets = 0;
 
                 else if(amountOfReceivedPackets > receivingLimit)
                 {
-                    Thread.Sleep(1000); // 1 second
+                    Thread.Sleep(1000 - (DateTime.UtcNow - startedReceivingTime).Milliseconds); // Esperar até dar um segundo
                 }
-                sck.BeginReceive(new byte[] { 0 }, 0, 0, 0, callback, null);
+                sck.BeginReceive(new byte[] { 0 }, 0, 0, 0,callback, null);
             }
             catch (Exception ex)
             {
@@ -89,8 +87,25 @@ namespace ServerSide.Sockets.Clients
                 }
             }
         }
+        public void Send(byte[] buffer) 
+        {
+            lock (this) //Será que isso ajuda? Sla, mas não quero que crashe de novo, se quiser tire esse lock e teste ai
+            {
+                try
+                {   //Bruh momiento (pf não inverter na próxima vez, más lembranças)
+                    byte[] sizeBuffer = BitConverter.GetBytes(buffer.Length);
+                    sck.Send(sizeBuffer, 0, sizeBuffer.Length, 0);
+                    sck.Send(buffer, 0, buffer.Length, 0);
+                }
+                catch (Exception ex)
+                {
+                    debugger.SendLogMultiThread("Erro enquanto ao enviar dados >> " + ex.Message, DebugType.ERROR);
+                }
+            }
+        }
         public void Close()
         {
+            sck.Close();
         }
 
         public event ClientReceivedHandler Received;

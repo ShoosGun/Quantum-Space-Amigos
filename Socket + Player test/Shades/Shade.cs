@@ -6,13 +6,14 @@ namespace ServerSide.Shades
     public class Shade : MonoBehaviour
     {
         //Tem que vir a partir de um Cilindro padrão
-        public ShadePacketCourier PacketCourrier
+        public ShadeMovementModel MovementModel
         {
             get;
             private set;
         }
 
         public string Name = "";
+        public string ClientID;
 
         private void Start()
         {
@@ -50,11 +51,9 @@ namespace ServerSide.Shades
             shadeGODetector.AddComponent<AlignmentFieldDetector>();
             gameObject.AddComponent<AlignWithField>();
 
-            gameObject.AddComponent<ShadeMovementModel>();
+            MovementModel = gameObject.AddComponent<ShadeMovementModel>();
             gameObject.AddComponent<ShadeDetachHandler>();
-
-            PacketCourrier = gameObject.AddComponent<ShadePacketCourier>();
-			
+            
 			transform.position = playerTransform.position;
             transform.rotation = playerTransform.rotation;
 

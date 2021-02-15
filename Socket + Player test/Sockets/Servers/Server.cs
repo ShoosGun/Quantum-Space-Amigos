@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
+using System.Net;
 using DIMOWAModLoader;
 using ServerSide.Sockets.Clients;
 using ServerSide.Shades;
 using UnityEngine;
 using System.Threading;
+using System.IO;
 
 namespace ServerSide.Sockets.Servers
 {
@@ -30,27 +32,22 @@ namespace ServerSide.Sockets.Servers
         private readonly object DCC_lock = new object();
 
 
-        //private List<ClientUpdate>[] UpdatesCache;
-
         //Parte legal
-        private Dictionary<string, Shade> clientsShades = new Dictionary<string, Shade>();
-        //private object cShades_lock = new object();
+        public ShadePacketCourier shadePacketCourier;
+        //Fotografias do jogo, uma a cada..., transformar tudo em uma entidade, a qual pode recebe dados de acordo e envia de maneira semelhante
 
-        public Server(ClientDebuggerSide debugger)
+
+        public Server(ClientDebuggerSide debugger, ShadePacketCourier shadePacketCourier)
         {
             this.debugger = debugger;
+            this.shadePacketCourier = shadePacketCourier;
+
             clients = new List<Client>();
             clientsLookUpTable = new Dictionary<string, Client>();
-            l = new Listener(2121, this.debugger);
+            l = new Listener(2121, AllowedConnections.ANY, this.debugger);
             l.SocketAccepted += L_SocketAccepted;
             l.Start();
-
-            ////MDS HAHAHAHAH
-            //UpdatesCache = new List<ClientUpdate>[(int)UpdatesTypes.UpdatesTypes_Size]; // ai não precisamos mudar o valor quando adicionarmos mais no UpdatesTypes
-            //for (int i = 0; i < UpdatesCache.Length; i++)
-            //{
-            //    UpdatesCache[i] = new List<ClientUpdate>();
-            //}
+            
         }
 
         /// <summary>
@@ -64,23 +61,23 @@ namespace ServerSide.Sockets.Servers
             lock (RDC_lock)
             {
                 var maxDataPerLoop = new byte[MAX_DATA_PER_CLIENT_LOOP][];
-                for(int i = 0; i< MAX_DATA_PER_CLIENT_LOOP; i++)
+                for (int i = 0; i < MAX_DATA_PER_CLIENT_LOOP; i++)
                 {
                     maxDataPerLoop[i] = new byte[] { };
                 }
-
                 ReceivedDataCache.Add(client.ID, maxDataPerLoop);
             }
 
-            Shade newShade = GameObject.CreatePrimitive(PrimitiveType.Cylinder).AddComponent<Shade>();
-            clientsShades.Add(client.ID, newShade);
+            NewConnection?.Invoke();
+            NewConnectionID?.Invoke(client.ID);
 
             string clientsString = "";
             foreach (Client c in clients)
             {
                 clientsString = clientsString + "\n" + c.ID + "\n===================";
             }
-            debugger.SendLogMultiThread("Lista dos clientes conectados ate agora:" + clientsString, DebugType.LOG);
+            
+            debugger.SendLog("Lista dos clientes conectados ate agora:" + clientsString, DebugType.LOG);
         }
         private void NewConnections(List<Client> newClients)
         {
@@ -98,9 +95,8 @@ namespace ServerSide.Sockets.Servers
             Client c = clientsLookUpTable[clientID];
             debugger.SendLogMultiThread(c.ID + " se desconectou!", DebugType.LOG);
 
-            //Destruir e remover a representação do cliente no jogo
-            clientsShades[c.ID].DestroyShade();
-            clientsShades.Remove(c.ID);
+            Disconnection?.Invoke();
+            DisconnectionID?.Invoke(clientID);
 
             c.Close();
             clientsLookUpTable.Remove(c.ID);
@@ -127,75 +123,46 @@ namespace ServerSide.Sockets.Servers
         private void ReceivedData(string clientID, byte[] data)
         {
             Client c = clientsLookUpTable[clientID];
-            try
+
+            PacketReader packet = new PacketReader(data);
+            while (true)
             {
-                PacketReader packet = new PacketReader(data);
-				while(data.Length > 0)
+                try
                 {
                     switch ((Header)packet.ReadByte())
                     {
                         case Header.MOVEMENT:
-                            DateTime sendTime = packet.ReadDateTime();
-
-                            Vector3 moveInput = Vector3.zero;
-                            float turnInput = 0f;
-                            bool jumpInput = false;
-
-                            //Tipos de imput:
-                            // Falar quantos deles [1,3] vão vir
-                            // 1 - MoveInput - > Vector3
-                            // 2 - TurnInput - > float
-                            // 3 - JumpInput - > bool
-
-                            for (byte amountOfMovement = packet.ReadByte(); amountOfMovement > 0; amountOfMovement--)
-                            {
-                                switch ((SubMovementHeader)packet.ReadByte())
-                                {
-                                    case SubMovementHeader.HORIZONTAL_MOVEMENT:
-                                        moveInput = packet.ReadVector3();
-                                        break;
-
-                                    case SubMovementHeader.SPIN:
-                                        turnInput = packet.ReadSingle();
-                                        break;
-
-                                    case SubMovementHeader.JUMP:
-                                        jumpInput = packet.ReadBoolean();
-                                        break;
-
-                                    default:
-                                        break;
-                                }
-                            }
-                            //Send inputs to the specified shade
-                            clientsShades[c.ID].PacketCourrier.AddMovementPacket(new MovementPacket(moveInput, turnInput, jumpInput, sendTime));
-
+                            shadePacketCourier.Receive(ref packet, c.ID);
                             break;
 
                         case Header.REFRESH:
                             break;
 
                         case Header.NAME:
-                            clientsShades[c.ID].Name = packet.ReadString();
+                            debugger.SendLog($"Recebendo um nome de {c.ID}");
+                            packet.ReadString();
                             break;
 
                         default:
-                            break;
+                            throw new EndOfStreamException();
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                debugger.SendLogMultiThread("Erro ao ler dados de " + c.ID + " :" + ex.Message, DebugType.ERROR);
+                catch (Exception ex)
+                {
+                    if (ex.GetType() != typeof(EndOfStreamException)) //Quando chegar no final da Stream, ele joga um EndOfStreamException, então sabemos que ela acabou
+                        debugger.SendLog($"Erro ao ler dados de {c.ID}: {ex.Source} | {ex.Message}", DebugType.ERROR);
+                    packet.Close();
+                    break;
+                }
             }
         }
-        private void ReceivedData(Dictionary<string,byte[][]> receivedData, bool resetDataArrays = true)
+        private void ReceivedData(Dictionary<string, byte[][]> receivedData, bool resetDataArrays = true)
         {
             //Ideias: 
             // 1 - Fazer a leitura de dados no async
             // 2 - Fazer a leitura de dados em uma Coroutine da unity
             // 3 - No lugar de enviar byte[]'s enviamos PacketReaders um pouco tratadas
-            for (int i = 0; i < clients.Count; i++) 
+            for (int i = 0; i < clients.Count; i++)
             {
                 string clientID = clients[i].ID;
                 for (int j = 0; j < receivedData[clientID].Length; j++)
@@ -204,171 +171,36 @@ namespace ServerSide.Sockets.Servers
                     if (data.Length > 0)
                     {
                         ReceivedData(clientID, data);
-                        if(resetDataArrays)
+                        if (resetDataArrays)
                             receivedData[clientID][j] = new byte[] { };
                     }
                 }
-                
+
             }
         }
 
-        public void Update()
+        public void FixedUpdate()
         {
-            //lock (UpdatesCache.SyncRoot)
-            //{
-            //    for (int i = 0; i < UpdatesCache.Length; i++)
-            //    {
-            //        //pegar o par e dependendo do valor do i fazer coisas de acordo com UpdateTypes
-            //        foreach (ClientUpdate clientUpdate in UpdatesCache[i])
-            //        {
-            //            switch ((UpdatesTypes)i)
-            //            {
-            //                case UpdatesTypes.NEW_CONNECTION:
-
-            //                    clients.Add(clientUpdate.Client);
-
-            //                    Shade newShade = GameObject.CreatePrimitive(PrimitiveType.Cylinder).AddComponent<Shade>();
-            //                    clientsShades.Add(clientUpdate.Client.ID, newShade);
-
-            //                    string clientsString = "";
-            //                    foreach (Client c in clients)
-            //                    {
-            //                        clientsString = clientsString + "\n" + c.ID + "\n===================";
-            //                    }
-            //                    debugger.SendLogMultiThread("Lista dos clientes conectados ate agora:" + clientsString, DebugType.LOG);
-            //                    break;
-
-            //                case UpdatesTypes.RECEIVED_DATA:
-            //                    foreach (Client c in clients)
-            //                    {
-            //                        if (c.ID == clientUpdate.Client.ID)
-            //                        {
-            //                            try
-            //                            {
-            //                                PacketReader packet = new PacketReader(clientUpdate.Data);
-            //                                //debugger.SendLogMultiThread(c.ID + " mandou dados!", DebugType.LOG);
-            //                                //Fazer o que precisa fazer com os dados
-            //                                switch ((Header)packet.ReadByte())
-            //                                {
-            //                                    case Header.MOVEMENT:
-            //                                        DateTime sendTime = packet.ReadDateTime();
-
-            //                                        Vector3 moveInput = Vector3.zero;
-            //                                        float turnInput = 0f;
-            //                                        bool jumpInput = false;
-
-            //                                        //Tipos de imput:
-            //                                        // Falar quantos deles [1,3] vão vir
-            //                                        // 1 - MoveInput - > Vector3
-            //                                        // 2 - TurnInput - > float
-            //                                        // 3 - JumpInput - > bool
-
-            //                                        for (byte amountOfMovement = packet.ReadByte(); amountOfMovement > 0; amountOfMovement--)
-            //                                        {
-            //                                            switch ((SubMovementHeader)packet.ReadByte())
-            //                                            {
-            //                                                case SubMovementHeader.HORIZONTAL_MOVEMENT:
-            //                                                    moveInput = packet.ReadVector3();
-            //                                                    //debugger.SendLogMultiThread($"Movimento Horizontal: {moveInput}");
-            //                                                    break;
-
-            //                                                case SubMovementHeader.SPIN:
-            //                                                    turnInput = packet.ReadSingle();
-            //                                                    //debugger.SendLogMultiThread($"Giro: {turnInput}");
-            //                                                    break;
-
-            //                                                case SubMovementHeader.JUMP:
-            //                                                    jumpInput = packet.ReadBoolean();
-            //                                                    //debugger.SendLogMultiThread($"Pulo: {jumpInput}");
-            //                                                    break;
-
-            //                                                default:
-            //                                                    break;
-            //                                            }
-            //                                        }
-            //                                        //Send inputs to the specified shade
-            //                                        //debugger.SendLogMultiThread($"Dados recebidos de {c.ID}");
-            //                                        clientsShades[c.ID].PacketCourrier.AddMovementPacket(new MovementPacket(moveInput, turnInput, jumpInput, sendTime));
-            //                                        break;
-
-            //                                    case Header.REFRESH:
-            //                                        break;
-
-            //                                    default:
-            //                                        break;
-            //                                }
-
-            //                            }
-            //                            catch (Exception ex)
-            //                            {
-            //                                debugger.SendLogMultiThread("Erro ao ler dados de " + c.ID + " :" + ex.Message, DebugType.ERROR);
-            //                            }
-            //                            break;
-            //                        }
-            //                    }
-            //                    break;
-
-
-            //                case UpdatesTypes.DISCONNECTION:
-            //                    foreach (Client c in clients)
-            //                    {
-            //                        if (c.ID == clientUpdate.Client.ID)
-            //                        {
-            //                            debugger.SendLogMultiThread(c.ID + " se desconectou!", DebugType.LOG);
-
-            //                            //Destruir e remover a representação do cliente no jogo
-            //                            clientsShades[c.ID].DestroyShade();
-            //                            clientsShades.Remove(c.ID);
-
-            //                            c.Close();
-            //                            clients.Remove(c);
-
-
-            //                            string stringLoka = "";
-            //                            foreach (Client temp in clients)
-            //                            {
-            //                                stringLoka = stringLoka + "\n" + temp.ID + "\n===================";
-            //                            }
-            //                            debugger.SendLogMultiThread("Lista dos clientes conectados ate agora:\n" + stringLoka, DebugType.LOG);
-            //                            break;
-            //                        }
-            //                    }
-            //                    break;
-
-            //                case UpdatesTypes.UpdatesTypes_Size:
-            //                default:
-            //                    break;
-            //            }
-            //        }
-            //        //Quando fazer o que tem que fazer, remover o que ja foi
-            //        UpdatesCache[i].Clear();
-            //    }
-            //}
-            //Agora estão todos separados, para melhor manuntenção do código
-            bool NCC_NotLoked = Monitor.TryEnter(NCC_lock,10);
+            bool NCC_NotLoked = Monitor.TryEnter(NCC_lock, 10);
             try
             {
-                if (NCC_NotLoked)
+                if (NCC_NotLoked && NewClientsCache.Count > 0)
                 {
-                    if (NewClientsCache.Count > 0)
-                    {
-                        NewConnections(NewClientsCache);
-                        NewClientsCache.Clear();
-                    }
+                    NewConnections(NewClientsCache);
+                    NewClientsCache.Clear();
                 }
             }
             finally
             {
                 Monitor.Exit(NCC_lock);
             }
-            
 
             bool RDC_NotLoked = Monitor.TryEnter(RDC_lock, 10);
             try
             {
                 if (RDC_NotLoked)
                 {
-                     ReceivedData(ReceivedDataCache); // Dá clear dentro do método
+                    ReceivedData(ReceivedDataCache); // Dá clear dentro do método
                 }
             }
             finally
@@ -381,11 +213,8 @@ namespace ServerSide.Sockets.Servers
             {
                 if (DCC_NotLoked && DisconnecedClientsCache.Count > 0)
                 {
-                    if (DisconnecedClientsCache.Count > 0)
-                    {
-                        Disconnections(DisconnecedClientsCache);
-                        DisconnecedClientsCache.Clear();
-                    }
+                    Disconnections(DisconnecedClientsCache);
+                    DisconnecedClientsCache.Clear();
                 }
             }
             finally
@@ -393,10 +222,22 @@ namespace ServerSide.Sockets.Servers
                 Monitor.Exit(DCC_lock);
             }
         }
+        public void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.O))
+            {
+                PacketWriter p = new PacketWriter();
+                p.Write((byte)Header.NAME);
+                p.Write("Ola!");
+
+                if (clients.Count > 0)
+                    clients[0].Send(p.GetBytes());
+            }
+        }
 
         private void L_SocketAccepted(Socket e)
         {
-            debugger.SendLogMultiThread(string.Format("Nova Coneccao: {0}\n===================", e.RemoteEndPoint), DebugType.LOG);
+            //debugger.SendLogMultiThread(string.Format("Nova Coneccao: {0}\n===================", e.RemoteEndPoint), DebugType.LOG);
             Client client = new Client(e, debugger);
             client.Received += Client_Received;
             client.Disconnected += Client_Disconnected;
@@ -413,7 +254,7 @@ namespace ServerSide.Sockets.Servers
                 DisconnecedClientsCache.Add(sender.ID);
             }
         }
-				
+
         private void Client_Received(Client sender, byte[] data)
         {
             bool RDC_NotLoked = Monitor.TryEnter(RDC_lock);
@@ -425,6 +266,7 @@ namespace ServerSide.Sockets.Servers
                         return;
 
                     var senderCache = ReceivedDataCache[sender.ID];
+
                     for (int i = 0; i < senderCache.Length; i++)
                         if (senderCache[i].Length <= 0)
                         {
@@ -439,14 +281,59 @@ namespace ServerSide.Sockets.Servers
             }
         }
 
+        /// <summary>
+        /// Sends a buffer of information to an especified Client
+        /// </summary>
+        /// <param name="shade">The client's in-game representation</param>
+        /// <param name="buffer"></param>
+        public void Send(string clientID, byte[] buffer)
+        {
+            if(clientsLookUpTable.ContainsKey(clientID))
+                clientsLookUpTable[clientID].Send(buffer);
+        }
+        /// <summary>
+        /// Sends a buffer of information to an array of especified Clients. It is faster, and safer, to use SendAll if you want to send some information to all connected clients.
+        /// </summary>
+        /// <param name="shades"></param>
+        /// <param name="buffer"></param>
+        public void Send(string[] clientIDs, byte[] buffer)
+        {
+            foreach(string id in clientIDs)
+            {
+                Send(id, buffer);
+            }
+        }
+        /// <summary>
+        /// Sends a buffer of information to all Clients. By iterating through all the Clients and sending with their sockets, it can be faster compared to seraching for all Shades and then using Send().
+        /// </summary>
+        /// <param name="shades"></param>
+        /// <param name="buffer"></param>
+        public void SendAll(byte[] buffer)
+        {
+            foreach(Client c in clients)
+            {
+                c.Send(buffer);
+            }
+        }
+
         public void Stop()
         {
-            debugger.SendLogMultiThread("Fechando o servidor . . .", DebugType.LOG);
+            debugger.SendLog("Fechando o servidor . . .", DebugType.LOG);
             Update();// ultimo Upddate para limpar o cache de updates
             l.Stop();
         }
 
+        public event NewConnectionHandler NewConnection;
+        public delegate void NewConnectionHandler();
 
+        public event NewConnectionIDHandler NewConnectionID;
+        public delegate void NewConnectionIDHandler(string clientID);
+
+        public event DisconnectionHandler Disconnection;
+        public delegate void DisconnectionHandler();
+
+        public event DisconnectionHandlerID DisconnectionID;
+        public delegate void DisconnectionHandlerID(string clientID);
     }
 
     public struct ClientEssentials

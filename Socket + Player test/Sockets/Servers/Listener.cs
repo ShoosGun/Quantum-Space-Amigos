@@ -21,11 +21,13 @@ namespace ServerSide.Sockets.Servers
             get;
             private set;
         }
+        private AllowedConnections AllowedConnections;
         private Socket s;
 
-        public Listener(int port, ClientDebuggerSide debugger)
+        public Listener(int port, AllowedConnections allowedConnections, ClientDebuggerSide debugger)
         {
             Port = port;
+            AllowedConnections = allowedConnections;
             s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             this.debugger = debugger;
         }
@@ -33,10 +35,23 @@ namespace ServerSide.Sockets.Servers
         {
             if (Listening)
                 return;
+            
+            //s.Bind(new IPEndPoint(AllowedConnections, Port)); // Depois trocar por 0
 
-            s.Bind(new IPEndPoint(IPAddress.Parse("127.1.0.0"), Port)); // Depois trocar por 0
+            if (AllowedConnections == AllowedConnections.ANY)
+            {
+                s.Bind(new IPEndPoint(0, Port)); // Depois trocar por 0
+
+                string localIPv4 = GetLocalIPAddress();
+                if (localIPv4 != null)
+                    debugger.SendLogMultiThread($"Server IP = {localIPv4}<<");
+                else
+                    debugger.SendLogMultiThread("Não conseguimos o IPv4");
+            }
+            else if(AllowedConnections == AllowedConnections.ONLY_HOST)
+                s.Bind(new IPEndPoint(IPAddress.Parse("127.1.0.0"), Port)); // Depois trocar por 0
+
             s.Listen(0);
-
             s.BeginAccept(callback, null);
             Listening = true;
 
@@ -70,8 +85,30 @@ namespace ServerSide.Sockets.Servers
                 debugger.SendLogMultiThread(ex.Message, DebugType.ERROR);
             }
         }
-
         public event SocketAcceptedHandler SocketAccepted;
         public delegate void SocketAcceptedHandler(Socket e);
+
+        /// <summary>
+        /// Returns the local IP
+        /// </summary>
+        /// <param name="addressFamily">Defaults to IPv4</param>
+        /// <returns>If no IP from that AddressFamily is found, returns null</returns>
+        public static string GetLocalIPAddress(AddressFamily addressFamily = AddressFamily.InterNetwork)
+        {
+            IPAddress[] IPArray = Dns.GetHostEntry(Dns.GetHostName()).AddressList;
+            foreach (var ip in IPArray)
+            {
+                if (ip.AddressFamily == addressFamily)
+                {
+                    return ip.ToString();
+                }
+            }
+            return null;
+        }
+    }
+    public enum AllowedConnections : byte
+    {
+        ONLY_HOST,
+        ANY,
     }
 } 

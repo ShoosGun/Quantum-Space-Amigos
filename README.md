@@ -15,6 +15,10 @@ All the sockets stuff was learned from / inspired by these series from [CaptJigg
 
 - [ ] Tests with the `dumb client` over the internet
 
+	- [x] In LAN (uhuuuuu LAN works!, just gotta place the IP that the debbuger gives you (it only shows the IP when the server is open to outside connections) in the Dumb Client and voilà!)
+	
+	- [ ] With Hamachi/Port Fowarding
+
 - [ ] Create a `dumb server` so that the creation of the actual client becomes easier
 
 - [ ] Create **the client**

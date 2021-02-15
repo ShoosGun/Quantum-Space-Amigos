@@ -18,9 +18,7 @@ namespace ServerSide.Shades
             
             _jumpSpeed = 6f;
             _turnRate = 160f;
-
-            if(gameObject.GetComponent<ShadePacketCourier>() == null)
-                gameObject.AddComponent<ShadePacketCourier>();
+            
         }
         protected override Vector3 GetMoveInput()
         {

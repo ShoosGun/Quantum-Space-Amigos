@@ -9,12 +9,8 @@ namespace ServerSide.Sockets
         DISCONECT,
         MOVEMENT,
         REFRESH,
-        NAME
-    }
-    public enum SubMovementHeader : byte
-    {
-        HORIZONTAL_MOVEMENT,
-        JUMP,
-        SPIN
+        NAME,
+        OTHER //Quando se receber algo advindo de um plugin (por exemplo) ele irá primeiro enviar esse Header, ai (no estilo GlobalEvent do Outer Wilds) 
+              //enviar o resto do pacote para o plugin fazer o que quiser com ele
     }
 }
