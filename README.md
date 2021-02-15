@@ -23,9 +23,11 @@ All the sockets stuff was learned from / inspired by these series from [CaptJigg
 
 - [ ] Create **the client**
 
-- [ ] Add basic entity sync (with delta syncs)
+- [] Add a way for outside classes ('plugins') to access events (client connection/disconnection) and receive/send data [IPacketCourier]
 
-- [ ] Add actual syncing (with position syncs)
+	- [ ] Add basic entity sync (with delta syncs)
+
+	- [ ] Add actual syncing (with position syncs)
 
 - [ ] Add orb sync (1- by entity sync or 2- trusting the client that it can, from some parameters, get a very simmilar orbit [I think that I'm going with the first option])
 
@@ -33,4 +35,4 @@ All the sockets stuff was learned from / inspired by these series from [CaptJigg
 
 - [ ] Add ***FUN***
 
-	- [x] Beeing able to add and change nicknames from the client (with a new header)
+	- [ ] Beeing able to add and change nicknames from the client (with a new header) [changed reverted b'cause yes :(]
