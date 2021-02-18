@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.1231
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerSide", "Socket + Player test\ServerSide.csproj", "{F3204D45-5026-428A-BA45-C094D0D24C3D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerSide", "ServerSide\ServerSide.csproj", "{F3204D45-5026-428A-BA45-C094D0D24C3D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DumbClient", "DumbClient\DumbClient.csproj", "{DCEFFB67-17FE-40E0-B96F-314F241C6C54}"
 EndProject
