@@ -19,13 +19,15 @@ All the sockets stuff was learned from / inspired by these series from [CaptJigg
 	
 	- [ ] With Hamachi/Port Fowarding
 
-- [ ] Create a `dumb server` so that the creation of the actual client becomes easier
+~~Create a `dumb server` so that the creation of the actual client becomes easier~~ Maybe not, creating the ServerSide was already pretty hard
 
-- [ ] Create **the client**
+- [x] Create **the client**
+	
+	- [ ] Tests on *t**he** c**lie**nt* 
 
 - [ ] Add a way for outside classes ('plugins') to access events (client connection/disconnection) and receive/send data [IPacketCourier]
 
-	- [ ] Add basic entity sync (with delta syncs)
+	- [x] Add basic entity sync (with delta syncs) | it just wasn't tested (Shade Packet Courier)
 
 	- [ ] Add actual syncing (with position syncs)
 
