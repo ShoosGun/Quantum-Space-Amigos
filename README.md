@@ -23,7 +23,7 @@ All the sockets stuff was learned from / inspired by these series from [CaptJigg
 
 - [ ] Create **the client**
 
-- [] Add a way for outside classes ('plugins') to access events (client connection/disconnection) and receive/send data [IPacketCourier]
+- [ ] Add a way for outside classes ('plugins') to access events (client connection/disconnection) and receive/send data [IPacketCourier]
 
 	- [ ] Add basic entity sync (with delta syncs)
 
