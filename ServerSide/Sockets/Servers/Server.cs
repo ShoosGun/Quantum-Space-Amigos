@@ -4,7 +4,7 @@ using System.Net.Sockets;
 using System.Net;
 using DIMOWAModLoader;
 using ServerSide.Sockets.Clients;
-using ServerSide.Shades;
+using ServerSide.PacketCouriers.Shades;
 using UnityEngine;
 using System.Threading;
 using System.IO;
@@ -33,11 +33,11 @@ namespace ServerSide.Sockets.Servers
 
 
         //Parte legal
-        public ShadePacketCourier shadePacketCourier;
+        public Server_ShadePacketCourier shadePacketCourier;
         //Fotografias do jogo, uma a cada..., transformar tudo em uma entidade, a qual pode recebe dados de acordo e envia de maneira semelhante
 
 
-        public Server(ClientDebuggerSide debugger, ShadePacketCourier shadePacketCourier)
+        public Server(ClientDebuggerSide debugger, Server_ShadePacketCourier shadePacketCourier)
         {
             this.debugger = debugger;
             this.shadePacketCourier = shadePacketCourier;
@@ -138,11 +138,6 @@ namespace ServerSide.Sockets.Servers
                         case Header.REFRESH:
                             break;
 
-                        case Header.NAME:
-                            debugger.SendLog($"Recebendo um nome de {c.ID}");
-                            packet.ReadString();
-                            break;
-
                         default:
                             throw new EndOfStreamException();
                     }
@@ -220,18 +215,6 @@ namespace ServerSide.Sockets.Servers
             finally
             {
                 Monitor.Exit(DCC_lock);
-            }
-        }
-        public void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.O))
-            {
-                PacketWriter p = new PacketWriter();
-                p.Write((byte)Header.NAME);
-                p.Write("Ola!");
-
-                if (clients.Count > 0)
-                    clients[0].Send(p.GetBytes());
             }
         }
 
@@ -319,7 +302,7 @@ namespace ServerSide.Sockets.Servers
         public void Stop()
         {
             debugger.SendLog("Fechando o servidor . . .", DebugType.LOG);
-            Update();// ultimo Upddate para limpar o cache de updates
+            FixedUpdate();// ultimo Upddate para limpar o cache de updates
             l.Stop();
         }
 

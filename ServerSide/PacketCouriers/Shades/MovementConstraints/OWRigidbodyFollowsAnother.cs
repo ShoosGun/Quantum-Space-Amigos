@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
-namespace ServerSide.Shades.MovementConstraints
+namespace ServerSide.PacketCouriers.Shades.MovementConstraints
 {
     //Achar um nome melhor
     public class OWRigidbodyFollowsAnother : MonoBehaviour

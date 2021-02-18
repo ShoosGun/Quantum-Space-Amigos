@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
-namespace ServerSide.Shades
+namespace ClientSide.PacketCouriers.Shades
 {
     public class ShadeDetachHandler : MonoBehaviour
     {

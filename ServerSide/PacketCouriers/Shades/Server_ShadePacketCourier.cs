@@ -5,9 +5,9 @@ using ServerSide.Sync;
 using ServerSide.Sockets;
 using ServerSide.Sockets.Servers;
 
-namespace ServerSide.Shades
+namespace ServerSide.PacketCouriers.Shades
 {
-    public class ShadePacketCourier : MonoBehaviour, IPacketCourier
+    public class Server_ShadePacketCourier : MonoBehaviour, IPacketCourier
     {
         private Server server;
 
@@ -19,7 +19,7 @@ namespace ServerSide.Shades
         const int TIME_BETWEEN_SNAPSHOTS = 10; //(em fotos/loops) A cada 10 loops, tira-se uma foto
         void Start()
         {
-            server = GameObject.Find("ShadeTest").GetComponent<ServerMod>()._serverSide;
+            server = GameObject.Find("QSAServer").GetComponent<ServerMod>()._serverSide;
 
             server.NewConnectionID += Server_NewConnectionID;
             server.DisconnectionID += Server_DisconnectionID;
@@ -57,6 +57,7 @@ namespace ServerSide.Shades
         }
 
         int numberOfLoops = 0;
+        ShadeGameSnapshot latestSnapshot;
         void FixedUpdate()
         {
             foreach (ShadePacketPair pair in clientShades)
@@ -81,6 +82,21 @@ namespace ServerSide.Shades
             numberOfLoops++;
 
             //Enviar o delta para cada shade, dependendo dos seus casos(ping)
+            if(latestSnapshot.SnapshotTime!= null)
+            foreach(var cl in latestSnapshot.TransformsWithIds)
+            {
+                    ShadeTransform deltaTransform = new ShadeTransform(clientsShadesLookUpTable[cl.Value].Shade.transform) - cl.Key;
+
+                    PacketWriter packet = new PacketWriter();
+                    packet.Write((byte)Header.SHADE_PC);
+                    packet.Write((byte)ShadeHeader.TRANSFORM);
+
+                    packet.Write(DateTime.UtcNow);
+                    packet.Write(deltaTransform.Position);
+                    packet.Write(deltaTransform.Rotation);
+                    server.Send(cl.Value, packet.GetBytes());
+            }
+            latestSnapshot = new ShadeGameSnapshot(clientShades);
         }
 
         public void Receive(ref PacketReader packet, string clientID)
@@ -150,24 +166,24 @@ namespace ServerSide.Shades
 
     public struct ShadeGameSnapshot
     {
-        public KeyValuePair<Transform, string>[] TransformsWithIds;
+        public KeyValuePair<ShadeTransform, string>[] TransformsWithIds;
         public DateTime SnapshotTime;
 
         public ShadeGameSnapshot(List<Shade> shades)
         {
             SnapshotTime = DateTime.UtcNow;
 
-            TransformsWithIds = new KeyValuePair<Transform, string>[shades.Count];
+            TransformsWithIds = new KeyValuePair<ShadeTransform, string>[shades.Count];
             for (int i = 0; i < shades.Count; i++)
-                TransformsWithIds[i] = new KeyValuePair<Transform, string>(shades[i].transform, shades[i].ClientID);
+                TransformsWithIds[i] = new KeyValuePair<ShadeTransform, string>(new ShadeTransform(shades[i].transform), shades[i].ClientID);
         }
         public ShadeGameSnapshot(List<ShadePacketPair> shades)
         {
             SnapshotTime = DateTime.UtcNow;
 
-            TransformsWithIds = new KeyValuePair<Transform, string>[shades.Count];
+            TransformsWithIds = new KeyValuePair<ShadeTransform, string>[shades.Count];
             for (int i = 0; i < shades.Count; i++)
-                TransformsWithIds[i] = new KeyValuePair<Transform, string>(shades[i].Shade.transform, shades[i].Shade.ClientID);
+                TransformsWithIds[i] = new KeyValuePair<ShadeTransform, string>(new ShadeTransform(shades[i].Shade.transform), shades[i].Shade.ClientID);
         }
     }
 
@@ -181,11 +197,33 @@ namespace ServerSide.Shades
             MovementPacketsCache = new List<MovementPacket>();
         }
     }
+    public struct ShadeTransform
+    {
+        public Vector3 Position;
+        public Quaternion Rotation;
 
+        public ShadeTransform(Vector3 position, Quaternion rotation)
+        {
+            Position = position;
+            Rotation = rotation;
+        }
+        public ShadeTransform(Transform transform)
+        {
+            Position = transform.position;
+            Rotation = transform.rotation;
+        }
+        
+
+        public static ShadeTransform operator -(ShadeTransform right, ShadeTransform left)
+        {
+            return new ShadeTransform(right.Position - left.Position,right.Rotation*Quaternion.Inverse(left.Rotation));
+        }
+    }
     public enum ShadeHeader : byte
     {
         MOVEMENT,
-        SET_NAME
+        SET_NAME,
+        TRANSFORM
     }
 
     public enum ShadeMovementHeader : byte

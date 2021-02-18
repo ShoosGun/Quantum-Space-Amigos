@@ -37,7 +37,8 @@ namespace DumbClient
                 Thread.Sleep(100);
 
                 PacketWriter namePacket = new PacketWriter();
-                namePacket.Write((byte)Header.NAME);
+                namePacket.Write((byte)Header.SHADE_PC);
+                namePacket.Write((byte)ShadeHeader.SET_NAME);
                 namePacket.Write(shadeName);
                 byte[] namePacketBuffer = namePacket.GetBytes();
                 
@@ -71,9 +72,6 @@ namespace DumbClient
                                         PacketReader pac = new PacketReader(p);
                                         switch ((Header)pac.ReadByte())
                                         {
-                                            case Header.NAME:
-                                                Console.WriteLine("Nome recebido: {0}", pac.ReadString());
-                                                break;
                                             default:
                                                 break;
                                         }
@@ -159,6 +157,7 @@ namespace DumbClient
                         //Send packet to server
                         PacketWriter packet = new PacketWriter();
                         packet.Write((byte)Header.SHADE_PC);
+                        namePacket.Write((byte)ShadeHeader.SET_NAME);
 
                         packet.Write(DateTime.UtcNow);
 

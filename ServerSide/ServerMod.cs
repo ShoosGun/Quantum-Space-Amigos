@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using ServerSide.Sockets.Servers;
-using ServerSide.Shades;
+using ServerSide.PacketCouriers.Shades;
 using DIMOWAModLoader;
 using CAMOWA;
 
@@ -21,23 +21,19 @@ namespace ServerSide
                 Application.runInBackground = true; // Thanks _nebula ;)
 
             Debug.Log("Server Test foi iniciado em " + porOndeTaInicializando);
-            new GameObject("ShadeTest").AddComponent<ServerMod>();
+            new GameObject("QSAServer").AddComponent<ServerMod>();
         }
 
         private void Start()
         {
             _debugger = GameObject.Find("DIMOWALevelLoaderHandler").GetComponent<ClientDebuggerSide>();
-            _serverSide = new Server(_debugger, gameObject.AddComponent<ShadePacketCourier>());
+            _serverSide = new Server(_debugger, gameObject.AddComponent<Server_ShadePacketCourier>());
         }
         
         private void FixedUpdate()
         {
             _serverSide.FixedUpdate();
             //Ver o estado do jogo e tirar uma "foto" dele
-        }
-        private void Update()
-        {
-            _serverSide.Update();
         }
 
         private void OnDestroy()

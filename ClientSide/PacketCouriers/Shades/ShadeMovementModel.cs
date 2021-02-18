@@ -4,7 +4,7 @@ using System.Text;
 using UnityEngine;
 using DIMOWAModLoader;
 
-namespace ServerSide.Shades
+namespace ClientSide.PacketCouriers.Shades
 {
     public class ShadeMovementModel : CharacterMovementModel
     {

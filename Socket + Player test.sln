@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerSide", "ServerSide\Se
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DumbClient", "DumbClient\DumbClient.csproj", "{DCEFFB67-17FE-40E0-B96F-314F241C6C54}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientSide", "ClientSide\ClientSide.csproj", "{5370E0E7-F170-4721-8A7F-C4594E068F6A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{DCEFFB67-17FE-40E0-B96F-314F241C6C54}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DCEFFB67-17FE-40E0-B96F-314F241C6C54}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DCEFFB67-17FE-40E0-B96F-314F241C6C54}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5370E0E7-F170-4721-8A7F-C4594E068F6A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5370E0E7-F170-4721-8A7F-C4594E068F6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5370E0E7-F170-4721-8A7F-C4594E068F6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5370E0E7-F170-4721-8A7F-C4594E068F6A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

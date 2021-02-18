@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
-using ServerSide.Shades.MovementConstraints;
+using ServerSide.PacketCouriers.Shades.MovementConstraints;
 
-namespace ServerSide.Shades
+namespace ServerSide.PacketCouriers.Shades
 {
     public class Shade : MonoBehaviour
     {
