@@ -27,7 +27,7 @@ All the sockets stuff was learned from / inspired by these series from [CaptJigg
 
 - [ ] Add a way for outside classes ('plugins') to access events (client connection/disconnection) and receive/send data [IPacketCourier]
 
-	- [x] Add basic entity sync (with delta syncs) | it just wasn't tested (Shade Packet Courier)
+	- [x] Add basic entity sync (with delta syncs) | only need to tested it (Shade Packet Courier)
 
 	- [ ] Add actual syncing (with position syncs)
 
