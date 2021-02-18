@@ -9,12 +9,14 @@ namespace ServerSide.Shades
 {
     public class ShadePacketCourier : MonoBehaviour, IPacketCourier
     {
-        private List<ShadePacketPair> clientShades = new List<ShadePacketPair>();
-
-        private Dictionary<string, ShadePacketPair> clientsShadesLookUpTable = new Dictionary<string, ShadePacketPair>();
-
         private Server server;
 
+        private List<ShadePacketPair> clientShades = new List<ShadePacketPair>();
+        private Dictionary<string, ShadePacketPair> clientsShadesLookUpTable = new Dictionary<string, ShadePacketPair>();
+
+        private List<ShadeGameSnapshot> gameSnapshots = new List<ShadeGameSnapshot>();
+        const int MAX_SNAPSHOTS = 10; //Número máxmo fotos que se pode ter do jogo
+        const int TIME_BETWEEN_SNAPSHOTS = 10; //(em fotos/loops) A cada 10 loops, tira-se uma foto
         void Start()
         {
             server = GameObject.Find("ShadeTest").GetComponent<ServerMod>()._serverSide;
@@ -54,24 +56,54 @@ namespace ServerSide.Shades
             }
         }
 
-
+        int numberOfLoops = 0;
         void FixedUpdate()
         {
             foreach (ShadePacketPair pair in clientShades)
             {
                 if (pair.MovementPacketsCache.Count > 0)
                 {
-                    if(pair.Shade.MovementModel != null)
+                    if (pair.Shade.MovementModel != null)
                         pair.Shade.MovementModel.SetNewPacket(pair.MovementPacketsCache[0]);
                     pair.MovementPacketsCache.RemoveAt(0);
                 }
-                else if(pair.Shade.MovementModel != null)
+                else if (pair.Shade.MovementModel != null)
                     pair.Shade.MovementModel.SetNewPacket(new MovementPacket(Vector3.zero, 0f, false, DateTime.UtcNow));
-            }  
-            
+            }
+
+            //Foto do jogo nesse momento
+            if (numberOfLoops % TIME_BETWEEN_SNAPSHOTS == 0)
+            {
+                if (gameSnapshots.Count > MAX_SNAPSHOTS)
+                    gameSnapshots.RemoveAt(0);
+                gameSnapshots.Add(new ShadeGameSnapshot(clientShades));
+            }
+            numberOfLoops++;
+
+            //Enviar o delta para cada shade, dependendo dos seus casos(ping)
         }
 
         public void Receive(ref PacketReader packet, string clientID)
+        {
+            switch ((ShadeHeader)packet.ReadByte())
+            {
+                case ShadeHeader.MOVEMENT:
+                    ReceiveMovementPacket(ref packet, clientID);
+                    break;
+
+                case ShadeHeader.SET_NAME:
+                    if (clientsShadesLookUpTable.ContainsKey(clientID))
+                    {
+                        clientsShadesLookUpTable[clientID].Shade.Name = packet.ReadString();
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        private void ReceiveMovementPacket(ref PacketReader packet, string clientID)
         {
             DateTime sendTime = packet.ReadDateTime();
 
@@ -86,17 +118,17 @@ namespace ServerSide.Shades
             // 3 - JumpInput - > bool
             for (byte amountOfMovement = packet.ReadByte(); amountOfMovement > 0; amountOfMovement--)
             {
-                switch ((MovementHeader)packet.ReadByte())
+                switch ((ShadeMovementHeader)packet.ReadByte())
                 {
-                    case MovementHeader.HORIZONTAL_MOVEMENT:
+                    case ShadeMovementHeader.HORIZONTAL_MOVEMENT:
                         moveInput = packet.ReadVector3();
                         break;
 
-                    case MovementHeader.SPIN:
+                    case ShadeMovementHeader.SPIN:
                         turnInput = packet.ReadSingle();
                         break;
 
-                    case MovementHeader.JUMP:
+                    case ShadeMovementHeader.JUMP:
                         jumpInput = packet.ReadBoolean();
                         break;
 
@@ -115,6 +147,30 @@ namespace ServerSide.Shades
 
     }
 
+
+    public struct ShadeGameSnapshot
+    {
+        public KeyValuePair<Transform, string>[] TransformsWithIds;
+        public DateTime SnapshotTime;
+
+        public ShadeGameSnapshot(List<Shade> shades)
+        {
+            SnapshotTime = DateTime.UtcNow;
+
+            TransformsWithIds = new KeyValuePair<Transform, string>[shades.Count];
+            for (int i = 0; i < shades.Count; i++)
+                TransformsWithIds[i] = new KeyValuePair<Transform, string>(shades[i].transform, shades[i].ClientID);
+        }
+        public ShadeGameSnapshot(List<ShadePacketPair> shades)
+        {
+            SnapshotTime = DateTime.UtcNow;
+
+            TransformsWithIds = new KeyValuePair<Transform, string>[shades.Count];
+            for (int i = 0; i < shades.Count; i++)
+                TransformsWithIds[i] = new KeyValuePair<Transform, string>(shades[i].Shade.transform, shades[i].Shade.ClientID);
+        }
+    }
+
     public struct ShadePacketPair
     {
         public Shade Shade;
@@ -125,8 +181,14 @@ namespace ServerSide.Shades
             MovementPacketsCache = new List<MovementPacket>();
         }
     }
-    
-    public enum MovementHeader : byte
+
+    public enum ShadeHeader : byte
+    {
+        MOVEMENT,
+        SET_NAME
+    }
+
+    public enum ShadeMovementHeader : byte
     {
         HORIZONTAL_MOVEMENT,
         JUMP,

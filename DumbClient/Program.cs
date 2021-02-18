@@ -158,19 +158,19 @@ namespace DumbClient
 
                         //Send packet to server
                         PacketWriter packet = new PacketWriter();
-                        packet.Write((byte)Header.MOVEMENT);
+                        packet.Write((byte)Header.SHADE_PC);
 
                         packet.Write(DateTime.UtcNow);
 
                         packet.Write((byte)3);//Quantos sub pacotes vamos mandar 
 
-                        packet.Write((byte)SubMovementHeader.HORIZONTAL_MOVEMENT);
+                        packet.Write((byte)ShadeMovementSubHeader.HORIZONTAL_MOVEMENT);
                         packet.Write(moveInput);
 
-                        packet.Write((byte)SubMovementHeader.SPIN);
+                        packet.Write((byte)ShadeMovementSubHeader.SPIN);
                         packet.Write(turnInput);
 
-                        packet.Write((byte)SubMovementHeader.JUMP);
+                        packet.Write((byte)ShadeMovementSubHeader.JUMP);
                         packet.Write(jumpInput);
                         byte[] buffer = packet.GetBytes();
 

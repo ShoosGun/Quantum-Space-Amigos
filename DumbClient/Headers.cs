@@ -7,11 +7,20 @@ namespace DumbClient
     public enum Header : byte
     {
         DISCONECT,
-        MOVEMENT,
+        SHADE_PC,
         REFRESH,
-        NAME
+        OTHER
     }
-    public enum SubMovementHeader : byte
+
+    //Parte do Shades no cliente
+
+    public enum ShadeHeader : byte
+    {
+        MOVEMENT,
+        SET_NAME
+    }
+
+    public enum ShadeMovementSubHeader : byte
     {
         HORIZONTAL_MOVEMENT,
         JUMP,

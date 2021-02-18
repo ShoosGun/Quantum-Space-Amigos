@@ -131,7 +131,7 @@ namespace ServerSide.Sockets.Servers
                 {
                     switch ((Header)packet.ReadByte())
                     {
-                        case Header.MOVEMENT:
+                        case Header.SHADE_PC:
                             shadePacketCourier.Receive(ref packet, c.ID);
                             break;
 
