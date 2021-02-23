@@ -24,12 +24,12 @@ namespace ClientSide.PacketCouriers.Shades
             GetComponent<CapsuleCollider>().radius = 0.5f;
             GetComponent<CapsuleCollider>().height = 2f;
 
-            //Rigidbody shadeRidigbody = gameObject.AddComponent<Rigidbody>();
-            //shadeRidigbody.mass = 0.001f;
-            //shadeRidigbody.drag = 0f;
-            //shadeRidigbody.angularDrag = 0f;
-            //shadeRidigbody.isKinematic = false;
-            //shadeRidigbody.constraints = RigidbodyConstraints.FreezeRotation;
+            Rigidbody shadeRidigbody = gameObject.AddComponent<Rigidbody>();
+            shadeRidigbody.mass = 0.001f;
+            shadeRidigbody.drag = 0f;
+            shadeRidigbody.angularDrag = 0f;
+            shadeRidigbody.isKinematic = false;
+            //shadeRidigbody.constraints = RigidbodyConstraints.FreezeAll;
 
             Collider taggedComponent = OWUtilities.GetTaggedComponent<Collider>(gameObject,"Player");
 
@@ -41,7 +41,7 @@ namespace ClientSide.PacketCouriers.Shades
             taggedComponent.enabled = false; //Desabilitar colisões, ao menos se for extrapolar
 
             //Após testes reabilitar esses componentes mais deixalos com enable = fasle, e só liga-los se uma extrapolação for ocorrer
-            //         gameObject.AddComponent<OWRigidbody>();
+                     gameObject.AddComponent<OWRigidbody>().MakeKinematic();
             //         GameObject shadeGODetector = new GameObject
             //         {
             //             layer = LayerMask.NameToLayer("BasicEffectVolume")

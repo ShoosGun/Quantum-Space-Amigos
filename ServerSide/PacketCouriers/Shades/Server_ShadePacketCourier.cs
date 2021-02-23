@@ -11,6 +11,8 @@ namespace ServerSide.PacketCouriers.Shades
     {
         private Server server;
 
+        private Transform thTransform;
+
         private List<ShadePacketPair> clientShades = new List<ShadePacketPair>();
         private Dictionary<string, ShadePacketPair> clientsShadesLookUpTable = new Dictionary<string, ShadePacketPair>();
 
@@ -19,13 +21,14 @@ namespace ServerSide.PacketCouriers.Shades
         const int TIME_BETWEEN_SNAPSHOTS = 10; //(em fotos/loops) A cada 10 loops, tira-se uma foto
         void Start()
         {
+            //thTransform = GameObject.Find("TimberHearth_Pivot").GetComponent<Transform>();
             server = GameObject.Find("QSAServer").GetComponent<ServerMod>()._serverSide;
 
             server.NewConnectionID += Server_NewConnectionID;
             server.DisconnectionID += Server_DisconnectionID;
         }
 
-        void Destroy()
+        void OnDestroy()
         {
             server.NewConnectionID -= Server_NewConnectionID;
             server.DisconnectionID -= Server_DisconnectionID;

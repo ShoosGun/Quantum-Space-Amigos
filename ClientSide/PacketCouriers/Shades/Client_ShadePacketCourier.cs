@@ -10,6 +10,8 @@ namespace ClientSide.PacketCouriers.Shades
     {
         private Client client;
 
+        private Transform thTransfrom;
+
         private List<KeyValuePair<ShadeTransform, DateTime>> serverSnapshots = new List<KeyValuePair<ShadeTransform, DateTime>>();
 
         const int MAX_SNAPSHOTS = 10; //Número máxmo fotos que se pode ter do jogo
@@ -18,13 +20,14 @@ namespace ClientSide.PacketCouriers.Shades
 
         void Start()
         {
-            client = GameObject.Find("ShadeTest").GetComponent<ClientMod>()._clientSide;
+            //thTransfrom = GameObject.Find("TimberHearth_Pivot").GetComponent<Transform>();
+            client = GameObject.Find("QSAClient").GetComponent<ClientMod>()._clientSide;
 
             client.Connection += Client_Connection;
             client.Disconnection += Client_Disconnection;
         }
 
-        void Destroy()
+        void OnDestroy()
         {
             client.Connection -= Client_Connection;
             client.Disconnection -= Client_Disconnection;
@@ -48,8 +51,8 @@ namespace ClientSide.PacketCouriers.Shades
         {
             foreach(var shadeTransf in serverSnapshots)
             {
-                playerShade.rigidbody.MovePosition(shadeTransf.Key.Position);
-                playerShade.rigidbody.MoveRotation(shadeTransf.Key.Rotation);
+                playerShade.GetAttachedOWRigidbody().TranslateWithPhysics(shadeTransf.Key.Position);
+                playerShade.GetAttachedOWRigidbody().RotateWithPhysics(shadeTransf.Key.Rotation.eulerAngles);
             }
 
         }

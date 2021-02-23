@@ -33,8 +33,7 @@ namespace ClientSide.Sockets
         /// <param name="receivingLimit"> In packets/s </param>
         public Client(ClientDebuggerSide debugger,Client_ShadePacketCourier shadePacketCourier, int receivingLimit = 100)
         {
-            serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            Connected = serverSocket.Connected;
+            Connected = false;
             this.receivingLimit = receivingLimit;
             this.debugger = debugger;
             this.shadePacketCourier = shadePacketCourier;
@@ -47,37 +46,20 @@ namespace ClientSide.Sockets
         /// <param name="timeOut"> In milliseconds. It will wait indefinitely if set to a negative number</param>
         public void TryConnect(string IP, int timeOut = -1)
         {
+            serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             //Tentar conectar, e se conectar gravar o IP na string
-            debugger.SendLogMultiThread("Tentando conectar...");
-            serverSocket.BeginConnect(new IPEndPoint(IPAddress.Parse(IP), serverPort), ConnectCallback, null);
+            debugger.SendLog("Tentando conectar...");
             //Se for negativo ira esperar para sempre por uma conecção
-            if (timeOut > 0)
+
+            IAsyncResult result = serverSocket.BeginConnect(new IPEndPoint(IPAddress.Parse(IP), serverPort), ConnectCallback, null);
+            if (timeOut >= 0)
                 new Thread(() =>
                 {
-                    DateTime time = DateTime.UtcNow;
-                    while (!serverSocket.Connected)
+                    bool success = result.AsyncWaitHandle.WaitOne(timeOut, true);
+                    if (!serverSocket.Connected)
                     {
-                        if ((DateTime.UtcNow - time).Milliseconds > timeOut && !serverSocket.Connected)
-                        {
-                            try
-                            {
-                                serverSocket.Close();
-                            }
-                            catch (SocketException ex)
-                            {
-                                if (ex.ErrorCode == 10038) //Erro de timeout
-                                {
-                                    debugger.SendLogMultiThread($"Server demorou mais que {timeOut} milisegundos para responder, tentativa cancelada", DebugType.WARNING);
-                                    serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                                    serverSocket.BeginConnect(new IPEndPoint(IPAddress.Parse(IP), serverPort), ConnectCallback, null);
-                                }
-                                else
-                                {
-                                    debugger.SendLogMultiThread($"Erro ao fechar com o timeout >> Error Code:{ex.ErrorCode}\n {ex.Message} -- {ex.Source}", DebugType.ERROR);
-                                    break;
-                                }
-                            }
-                        }
+                        serverSocket.Close();
+                        debugger.SendLogMultiThread($"A tentativa de coneccao superou o limite de {timeOut} ms, tentativa abortada", DebugType.WARNING);
                     }
                 }).Start();
         }
@@ -197,6 +179,10 @@ namespace ClientSide.Sockets
         {
             foreach (var pk in packets)
                 ReceiveData(pk);
+        }
+        public void Close()
+        {
+            serverSocket.Close();
         }
 
         public event ConnectionHandler Connection;
