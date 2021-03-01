@@ -66,12 +66,12 @@ namespace ClientSide.PacketCouriers.Shades
                             if (shadeTransf.Key.ShadeTransform.isDeltaSync)
                             {
                                 serverShadesLookUpTable[shadeTransf.Key.ID].rigidbody.position = solarSystemTransform.TransformDirection(shadeTransf.Key.ShadeTransform.Position) + shadeTransf.Key.ShadeTransform.Position + playerShade.rigidbody.position;
-                                serverShadesLookUpTable[shadeTransf.Key.ID].rigidbody.MoveRotation(shadeTransf.Key.ShadeTransform.Rotation);
+                                serverShadesLookUpTable[shadeTransf.Key.ID].rigidbody.rotation = serverShadesLookUpTable[shadeTransf.Key.ID].rigidbody.rotation * shadeTransf.Key.ShadeTransform.Rotation;
                             }
                             else
                             {
                                 serverShadesLookUpTable[shadeTransf.Key.ID].rigidbody.position = solarSystemTransform.TransformPoint(shadeTransf.Key.ShadeTransform.Position);
-                                serverShadesLookUpTable[shadeTransf.Key.ID].rigidbody.rotation = shadeTransf.Key.ShadeTransform.Rotation;
+                                serverShadesLookUpTable[shadeTransf.Key.ID].rigidbody.rotation = shadeTransf.Key.ShadeTransform.Rotation * solarSystemTransform.rotation;
                             }
                         }
                     }

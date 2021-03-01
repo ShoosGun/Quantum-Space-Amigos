@@ -246,7 +246,7 @@ namespace ServerSide.PacketCouriers.Shades
 
             TransformsWithIds = new KeyValuePair<ShadeTransform, string>[shades.Count];
             for (int i = 0; i < shades.Count; i++)
-                TransformsWithIds[i] = new KeyValuePair<ShadeTransform, string>(new ShadeTransform(InertialReference.InverseTransformPoint(shades[i].Shade.rigidbody.position), shades[i].Shade.rigidbody.rotation), shades[i].Shade.ClientID);
+                TransformsWithIds[i] = new KeyValuePair<ShadeTransform, string>(new ShadeTransform(InertialReference.InverseTransformPoint(shades[i].Shade.rigidbody.position), shades[i].Shade.rigidbody.rotation * Quaternion.Inverse(InertialReference.rotation)), shades[i].Shade.ClientID);
         }
     }
 
