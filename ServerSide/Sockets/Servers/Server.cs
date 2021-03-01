@@ -289,20 +289,21 @@ namespace ServerSide.Sockets.Servers
         /// <summary>
         /// Sends a buffer of information to all Clients. By iterating through all the Clients and sending with their sockets, it can be faster compared to seraching for all Shades and then using Send().
         /// </summary>
-        /// <param name="shades"></param>
+        /// <param name="Exception"> The id of the one you don't want to send to</param>
         /// <param name="buffer"></param>
-        public void SendAll(byte[] buffer)
+        public void SendAll(byte[] buffer, string Exception = "")
         {
             foreach(Client c in clients)
             {
-                c.Send(buffer);
+                if(c.ID != Exception)
+                    c.Send(buffer);
             }
         }
 
         public void Stop()
         {
             debugger.SendLog("Fechando o servidor . . .", DebugType.LOG);
-            FixedUpdate();// ultimo Upddate para limpar o cache de updates
+            //FixedUpdate();// ultimo Upddate para limpar o cache de updates
             l.Stop();
         }
 

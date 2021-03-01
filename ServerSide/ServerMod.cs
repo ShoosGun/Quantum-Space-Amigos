@@ -20,8 +20,11 @@ namespace ServerSide
             if (!Application.runInBackground)
                 Application.runInBackground = true; // Thanks _nebula ;)
 
+            var client = GameObject.Find("QSAClient");
+            if (client == null)
+                new GameObject("QSAServer").AddComponent<ServerMod>();
+
             Debug.Log("Server Test foi iniciado em " + porOndeTaInicializando);
-            new GameObject("QSAServer").AddComponent<ServerMod>();
         }
 
         private void Start()
@@ -29,7 +32,7 @@ namespace ServerSide
             _debugger = GameObject.Find("DIMOWALevelLoaderHandler").GetComponent<ClientDebuggerSide>();
             _serverSide = new Server(_debugger, gameObject.AddComponent<Server_ShadePacketCourier>());
         }
-        
+
         private void FixedUpdate()
         {
             _serverSide.FixedUpdate();

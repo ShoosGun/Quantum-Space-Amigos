@@ -9,9 +9,12 @@ namespace ServerSide.PacketCouriers.Shades
 {
     public class Server_ShadePacketCourier : MonoBehaviour, IPacketCourier
     {
+        //Achar o que aki está null
         private Server server;
 
-        private Transform thTransform;
+        private Shade serverShade;
+
+        private Transform solarSystemTransform;
 
         private List<ShadePacketPair> clientShades = new List<ShadePacketPair>();
         private Dictionary<string, ShadePacketPair> clientsShadesLookUpTable = new Dictionary<string, ShadePacketPair>();
@@ -21,11 +24,20 @@ namespace ServerSide.PacketCouriers.Shades
         const int TIME_BETWEEN_SNAPSHOTS = 10; //(em fotos/loops) A cada 10 loops, tira-se uma foto
         void Start()
         {
-            //thTransform = GameObject.Find("TimberHearth_Pivot").GetComponent<Transform>();
+            solarSystemTransform = GameObject.Find("HomePlanet_graybox").transform; //Depois trocar por SolarSystem_Root ou algo assim
             server = GameObject.Find("QSAServer").GetComponent<ServerMod>()._serverSide;
 
             server.NewConnectionID += Server_NewConnectionID;
             server.DisconnectionID += Server_DisconnectionID;
+
+            serverShade = GameObject.CreatePrimitive(PrimitiveType.Cylinder).AddComponent<Shade>();
+            serverShade.ClientID = "server";
+            serverShade.gameObject.collider.enabled = false;
+            serverShade.gameObject.AddComponent<MovementConstraints.OWRigidbodyFollowsAnother>();
+
+            ShadePacketPair shadePacketPair = new ShadePacketPair(serverShade);
+            clientShades.Add(shadePacketPair);
+            clientsShadesLookUpTable.Add("server", shadePacketPair);
         }
 
         void OnDestroy()
@@ -36,13 +48,39 @@ namespace ServerSide.PacketCouriers.Shades
 
         private void Server_NewConnectionID(string clientID)
         {
+            
+            //Mandar para quem chegou quem são os conectados
+            PacketWriter packetForClients = new PacketWriter();
+
+            packetForClients.Write((byte)Header.SHADE_PC);
+            packetForClients.Write((byte)ShadeHeader.SHADE_SYNC);
+            packetForClients.Write((byte)clientShades.Count); 
+            packetForClients.Write(clientID);
+            foreach (var cl in clientShades)
+                packetForClients.Write(cl.Shade.ClientID);
+
+            server.Send(clientID, packetForClients.GetBytes()); //Tem PacketWriter.Close() incluso
+
+
+            //Mandar para todos os conectados quem acabou de chegar (menos para quem chegou)
+            packetForClients = new PacketWriter();
+            packetForClients.Write((byte)Header.SHADE_PC);
+            packetForClients.Write((byte)ShadeHeader.SHADE_DELTA_PLUS_SYNC);
+            packetForClients.Write(clientID);
+            server.SendAll(packetForClients.GetBytes(), clientID);
+            //---
+
+            //Criando e guardando a shade do cliente que acabou de conectar
+
             Shade newShade = GameObject.CreatePrimitive(PrimitiveType.Cylinder).AddComponent<Shade>();
             newShade.ClientID = clientID;
 
             ShadePacketPair shadePacketPair = new ShadePacketPair(newShade);
+
             clientShades.Add(shadePacketPair);
-            clientsShadesLookUpTable.Add(clientID, shadePacketPair);
-            Debug.Log("Nova Shade!\n" + $" Quantidade de Shades no momento: {clientShades.Count}");
+            clientsShadesLookUpTable.Add(newShade.ClientID, shadePacketPair);
+
+            Debug.Log($"Nova Shade!\n Quantidade de Shades no momento: {clientShades.Count}");
         }
 
 
@@ -53,16 +91,32 @@ namespace ServerSide.PacketCouriers.Shades
                 clientsShadesLookUpTable[clientID].Shade.DestroyShade();
                 clientsShadesLookUpTable[clientID].MovementPacketsCache.Clear();
 
+                var packetForClients = new PacketWriter();
+                packetForClients.Write((byte)Header.SHADE_PC);
+                packetForClients.Write((byte)ShadeHeader.SHADE_DELTA_MINUS_SYNC);
+                packetForClients.Write(clientID);
+                server.SendAll(packetForClients.GetBytes());
+
                 //Remover da lista primeiro para não usarmos algo nulo para apagar essa cópia
                 clientShades.Remove(clientsShadesLookUpTable[clientID]);
                 clientsShadesLookUpTable.Remove(clientID);
             }
         }
 
+        private bool wasThereOWRigdb = false;
+        void Update()
+        {
+            if (serverShade.GetAttachedOWRigidbody() != null && !wasThereOWRigdb)
+            {
+                serverShade.GetComponent<MovementConstraints.OWRigidbodyFollowsAnother>().SetConstrain(GameObject.FindGameObjectWithTag("Player").GetAttachedOWRigidbody());
+                wasThereOWRigdb = true;
+            }
+        }
+
         int numberOfLoops = 0;
-        ShadeGameSnapshot latestSnapshot;
         void FixedUpdate()
         {
+            //Dá a movimentação recebida dos clientes para suas shades
             foreach (ShadePacketPair pair in clientShades)
             {
                 if (pair.MovementPacketsCache.Count > 0)
@@ -75,31 +129,34 @@ namespace ServerSide.PacketCouriers.Shades
                     pair.Shade.MovementModel.SetNewPacket(new MovementPacket(Vector3.zero, 0f, false, DateTime.UtcNow));
             }
 
+            //Enviar o delta para cada shade, dependendo dos seus casos(ping)
+            if (gameSnapshots.Count > 0)
+            {
+                PacketWriter packet = new PacketWriter();
+                packet.Write((byte)Header.SHADE_PC);
+                packet.Write((byte)ShadeHeader.TRANSFORM_SYNC); //Só position sync por enquanto
+                packet.Write(DateTime.UtcNow);     //Referencial no passado(do cl.Key)       Referencial do presente (do lookUpTable)
+                packet.Write((byte)gameSnapshots[0].TransformsWithIds.Length);
+
+                foreach (var cl in gameSnapshots[0].TransformsWithIds)
+                {
+                    packet.Write(cl.Value); //ID da shade
+                    packet.Write(cl.Key.Position);     //InertialReference.InverseTransformPoint(shades[i].Shade.transform.position)
+                    packet.Write(cl.Key.Rotation);
+                }
+
+                server.SendAll(packet.GetBytes()); //Mandar para todos
+                gameSnapshots.RemoveAt(0);
+            }
+
             //Foto do jogo nesse momento
             if (numberOfLoops % TIME_BETWEEN_SNAPSHOTS == 0)
             {
                 if (gameSnapshots.Count > MAX_SNAPSHOTS)
                     gameSnapshots.RemoveAt(0);
-                gameSnapshots.Add(new ShadeGameSnapshot(clientShades));
+                gameSnapshots.Add(new ShadeGameSnapshot(clientShades, solarSystemTransform));
             }
             numberOfLoops++;
-
-            //Enviar o delta para cada shade, dependendo dos seus casos(ping)
-            if(latestSnapshot.SnapshotTime!= null)
-            foreach(var cl in latestSnapshot.TransformsWithIds)
-            {
-                    ShadeTransform deltaTransform = new ShadeTransform(clientsShadesLookUpTable[cl.Value].Shade.transform) - cl.Key;
-
-                    PacketWriter packet = new PacketWriter();
-                    packet.Write((byte)Header.SHADE_PC);
-                    packet.Write((byte)ShadeHeader.TRANSFORM);
-
-                    packet.Write(DateTime.UtcNow);
-                    packet.Write(deltaTransform.Position);
-                    packet.Write(deltaTransform.Rotation);
-                    server.Send(cl.Value, packet.GetBytes());
-            }
-            latestSnapshot = new ShadeGameSnapshot(clientShades);
         }
 
         public void Receive(ref PacketReader packet, string clientID)
@@ -117,6 +174,18 @@ namespace ServerSide.PacketCouriers.Shades
                     }
                     break;
 
+                case ShadeHeader.SHADE_SYNC:
+                    PacketWriter packetForClients = new PacketWriter();
+
+                    packetForClients.Write((byte)Header.SHADE_PC);
+                    packetForClients.Write((byte)ShadeHeader.SHADE_SYNC);
+                    packetForClients.Write((byte)clientShades.Count);
+                    packetForClients.Write(clientID);
+                    foreach (var cl in clientShades)
+                        packetForClients.Write(cl.Shade.ClientID);
+                    server.Send(clientID, packetForClients.GetBytes());
+
+                    break;
                 default:
                     break;
             }
@@ -130,31 +199,23 @@ namespace ServerSide.PacketCouriers.Shades
             float turnInput = 0f;
             bool jumpInput = false;
 
-            //Tipos de imput:
-            // Falar quantos deles [1,3] vão vir
-            // 1 - MoveInput - > Vector3
-            // 2 - TurnInput - > float
-            // 3 - JumpInput - > bool
-            for (byte amountOfMovement = packet.ReadByte(); amountOfMovement > 0; amountOfMovement--)
-            {
-                switch ((ShadeMovementHeader)packet.ReadByte())
-                {
-                    case ShadeMovementHeader.HORIZONTAL_MOVEMENT:
+            ShadeMovementHeader Movements = (ShadeMovementHeader)packet.ReadByte();
+
+            //Tipos de input:
+            // 1 - MoveInput - > Vector3  001
+            // 2 - TurnInput - > float    010
+            // 3 - JumpInput - > bool     100
+
+            //xx1    &     001 -> 001 == 001 (True)
+            if ((Movements & ShadeMovementHeader.HORIZONTAL_MOVEMENT) == ShadeMovementHeader.HORIZONTAL_MOVEMENT) 
                         moveInput = packet.ReadVector3();
-                        break;
-
-                    case ShadeMovementHeader.SPIN:
+            //x1x    &     010 -> 010 == 010 (True)
+            if ((Movements & ShadeMovementHeader.SPIN) == ShadeMovementHeader.SPIN)
                         turnInput = packet.ReadSingle();
-                        break;
-
-                    case ShadeMovementHeader.JUMP:
-                        jumpInput = packet.ReadBoolean();
-                        break;
-
-                    default:
-                        break;
-                }
-            }
+            //1xx    &     100 -> 100 == 100 (True)
+            if ((Movements & ShadeMovementHeader.JUMP) == ShadeMovementHeader.JUMP)
+                jumpInput = packet.ReadBoolean();
+                    
             if (clientsShadesLookUpTable.ContainsKey(clientID))
             {
                 if (clientsShadesLookUpTable[clientID].MovementPacketsCache.Count == 10)
@@ -163,7 +224,6 @@ namespace ServerSide.PacketCouriers.Shades
                 clientsShadesLookUpTable[clientID].MovementPacketsCache.Add(new MovementPacket(moveInput, turnInput, jumpInput, sendTime));
             }
         }
-
     }
 
 
@@ -172,21 +232,21 @@ namespace ServerSide.PacketCouriers.Shades
         public KeyValuePair<ShadeTransform, string>[] TransformsWithIds;
         public DateTime SnapshotTime;
 
-        public ShadeGameSnapshot(List<Shade> shades)
+        public ShadeGameSnapshot(List<Shade> shades, Transform InertialReference)
         {
             SnapshotTime = DateTime.UtcNow;
-
+            
             TransformsWithIds = new KeyValuePair<ShadeTransform, string>[shades.Count];
             for (int i = 0; i < shades.Count; i++)
-                TransformsWithIds[i] = new KeyValuePair<ShadeTransform, string>(new ShadeTransform(shades[i].transform), shades[i].ClientID);
+                TransformsWithIds[i] = new KeyValuePair<ShadeTransform, string>(new ShadeTransform(InertialReference.InverseTransformPoint(shades[i].rigidbody.position), shades[i].rigidbody.rotation), shades[i].ClientID);
         }
-        public ShadeGameSnapshot(List<ShadePacketPair> shades)
+        public ShadeGameSnapshot(List<ShadePacketPair> shades, Transform InertialReference)
         {
             SnapshotTime = DateTime.UtcNow;
 
             TransformsWithIds = new KeyValuePair<ShadeTransform, string>[shades.Count];
             for (int i = 0; i < shades.Count; i++)
-                TransformsWithIds[i] = new KeyValuePair<ShadeTransform, string>(new ShadeTransform(shades[i].Shade.transform), shades[i].Shade.ClientID);
+                TransformsWithIds[i] = new KeyValuePair<ShadeTransform, string>(new ShadeTransform(InertialReference.InverseTransformPoint(shades[i].Shade.rigidbody.position), shades[i].Shade.rigidbody.rotation), shades[i].Shade.ClientID);
         }
     }
 
@@ -210,29 +270,37 @@ namespace ServerSide.PacketCouriers.Shades
             Position = position;
             Rotation = rotation;
         }
+        public ShadeTransform(Rigidbody rigidbody)
+        {
+            Position = rigidbody.position;
+            Rotation = rigidbody.rotation;
+        }
         public ShadeTransform(Transform transform)
         {
             Position = transform.position;
             Rotation = transform.rotation;
         }
-        
 
         public static ShadeTransform operator -(ShadeTransform right, ShadeTransform left)
         {
-            return new ShadeTransform(right.Position - left.Position,right.Rotation*Quaternion.Inverse(left.Rotation));
+            return new ShadeTransform(right.Position - left.Position, right.Rotation * Quaternion.Inverse(left.Rotation));
         }
     }
     public enum ShadeHeader : byte
     {
         MOVEMENT,
         SET_NAME,
-        TRANSFORM
+        DELTA_SYNC,
+        TRANSFORM_SYNC,
+        SHADE_SYNC, //Para que a quantidade de shades nos dois lados seja igual (Para novos clientes)
+        SHADE_DELTA_PLUS_SYNC, //  /\ (Para já conectados)
+        SHADE_DELTA_MINUS_SYNC,
     }
 
     public enum ShadeMovementHeader : byte
     {
-        HORIZONTAL_MOVEMENT,
-        JUMP,
-        SPIN
+        HORIZONTAL_MOVEMENT=1,//001
+        JUMP=2,//010
+        SPIN=4//100
     }
 }

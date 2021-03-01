@@ -51,17 +51,18 @@ namespace ClientSide.Sockets
             debugger.SendLog("Tentando conectar...");
             //Se for negativo ira esperar para sempre por uma conecção
 
-            IAsyncResult result = serverSocket.BeginConnect(new IPEndPoint(IPAddress.Parse(IP), serverPort), ConnectCallback, null);
             if (timeOut >= 0)
                 new Thread(() =>
                 {
-                    bool success = result.AsyncWaitHandle.WaitOne(timeOut, true);
+                    serverSocket.BeginConnect(new IPEndPoint(IPAddress.Parse(IP), serverPort), ConnectCallback, null).AsyncWaitHandle.WaitOne(timeOut, true);
                     if (!serverSocket.Connected)
                     {
                         serverSocket.Close();
                         debugger.SendLogMultiThread($"A tentativa de coneccao superou o limite de {timeOut} ms, tentativa abortada", DebugType.WARNING);
                     }
                 }).Start();
+            else
+                serverSocket.BeginConnect(new IPEndPoint(IPAddress.Parse(IP), serverPort), ConnectCallback, null);
         }
         private void ConnectCallback(IAsyncResult ar)
         {
@@ -119,6 +120,7 @@ namespace ClientSide.Sockets
             {
                 if (!wasConnected)
                 {
+                    debugger.SendLog("Conectados!");
                     wasConnected = true;
                     Connection?.Invoke();
                 }
@@ -138,9 +140,9 @@ namespace ClientSide.Sockets
                     Monitor.Exit(packetBuffers_lock);
                 }
             }
-
-            if (wasConnected && !Connected)
+            else if (wasConnected)
             {
+                debugger.SendLog("Desconectados!");
                 wasConnected = false;
                 Disconnection?.Invoke();
             }
@@ -180,9 +182,26 @@ namespace ClientSide.Sockets
             foreach (var pk in packets)
                 ReceiveData(pk);
         }
+        public void Send(byte[] data)
+        {
+            lock (this) //Será que isso ajuda? Sla, mas não quero que crashe de novo, se quiser tire esse lock e teste ai
+            {
+                try
+                {   //Bruh momiento (pf não inverter na próxima vez, más lembranças)
+                    byte[] sizeBuffer = BitConverter.GetBytes(data.Length);
+                    serverSocket.Send(sizeBuffer, 0, sizeBuffer.Length, 0);
+                    serverSocket.Send(data, 0, data.Length, 0);
+                }
+                catch (Exception ex)
+                {
+                    debugger.SendLogMultiThread("Erro enquanto ao enviar dados >> " + ex.Message, DebugType.ERROR);
+                }
+            }
+        }
         public void Close()
         {
-            serverSocket.Close();
+            if(serverSocket != null)
+                serverSocket.Close();
         }
 
         public event ConnectionHandler Connection;

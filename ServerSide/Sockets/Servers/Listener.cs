@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Text;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using DIMOWAModLoader;
 
 namespace ServerSide.Sockets.Servers
 {
     public class Listener
     {
+        private static DateTime TimeFromLastClose;
         private ClientDebuggerSide debugger;
         public bool Listening
         {
@@ -35,8 +37,10 @@ namespace ServerSide.Sockets.Servers
         {
             if (Listening)
                 return;
-            
+
             //s.Bind(new IPEndPoint(AllowedConnections, Port)); // Depois trocar por 0
+
+            //https://stackoverflow.com/questions/3229860/what-is-the-meaning-of-so-reuseaddr-setsockopt-option-linux/3233022#3233022, achar forma de resolver isso ai
 
             if (AllowedConnections == AllowedConnections.ANY)
             {
@@ -46,23 +50,24 @@ namespace ServerSide.Sockets.Servers
                 if (localIPv4 != null)
                     debugger.SendLogMultiThread($"Server IP = {localIPv4}<<");
                 else
-                    debugger.SendLogMultiThread("Não conseguimos o IPv4");
+                    debugger.SendLog("Não conseguimos o IPv4");
             }
-            else if(AllowedConnections == AllowedConnections.ONLY_HOST)
+            else if (AllowedConnections == AllowedConnections.ONLY_HOST)
                 s.Bind(new IPEndPoint(IPAddress.Parse("127.1.0.0"), Port)); // Depois trocar por 0
 
             s.Listen(0);
             s.BeginAccept(callback, null);
             Listening = true;
-
         }
 
         public void Stop()
         {
             if (!Listening)
                 return;
-            
+
             s.Close();
+            
+            TimeFromLastClose = DateTime.UtcNow;
             s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
         }
@@ -92,7 +97,7 @@ namespace ServerSide.Sockets.Servers
         /// Returns the local IP
         /// </summary>
         /// <param name="addressFamily">Defaults to IPv4</param>
-        /// <returns>If no IP from that AddressFamily is found, returns null</returns>
+        /// <returns>If no IP from that AddressFamily is found, returns an empty string</returns>
         public static string GetLocalIPAddress(AddressFamily addressFamily = AddressFamily.InterNetwork)
         {
             IPAddress[] IPArray = Dns.GetHostEntry(Dns.GetHostName()).AddressList;
@@ -103,7 +108,7 @@ namespace ServerSide.Sockets.Servers
                     return ip.ToString();
                 }
             }
-            return null;
+            return "";
         }
     }
     public enum AllowedConnections : byte

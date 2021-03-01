@@ -56,7 +56,7 @@
     <Compile Include="PacketCouriers\Shades\ShadeDetachHandler.cs" />
     <Compile Include="PacketCouriers\Shades\ShadeMovementModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SettingsMenu\ClientModSettingsMenuTrigger.cs" />
+    <Compile Include="SettingsMenu\ClientModMenu.cs" />
     <Compile Include="Sockets\Client.cs" />
     <Compile Include="Sockets\Headers.cs" />
     <Compile Include="Sockets\PacketIO.cs" />

@@ -16,9 +16,10 @@ namespace ClientSide.PacketCouriers.Shades
 
         private void Start()
         {
+            var solarSystemTransform = GameObject.Find("TimberHearth_Body").transform;
+
             Transform playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
             //center
-            transform.parent = playerTransform.root;
             gameObject.layer= LayerMask.NameToLayer("Primitive");
 
             GetComponent<CapsuleCollider>().radius = 0.5f;
@@ -26,22 +27,17 @@ namespace ClientSide.PacketCouriers.Shades
 
             Rigidbody shadeRidigbody = gameObject.AddComponent<Rigidbody>();
             shadeRidigbody.mass = 0.001f;
-            shadeRidigbody.drag = 0f;
-            shadeRidigbody.angularDrag = 0f;
-            shadeRidigbody.isKinematic = false;
-            //shadeRidigbody.constraints = RigidbodyConstraints.FreezeAll;
 
-            Collider taggedComponent = OWUtilities.GetTaggedComponent<Collider>(gameObject,"Player");
+            gameObject.AddComponent<OWRigidbody>().MakeKinematic();
 
             //if (taggedComponent.enabled)
             //{
             //    Physics.IgnoreCollision(collider, taggedComponent);
             //}
 
-            taggedComponent.enabled = false; //Desabilitar colisões, ao menos se for extrapolar
+            collider.enabled = false; //Desabilitar colisões, ao menos se for extrapolar
 
-            //Após testes reabilitar esses componentes mais deixalos com enable = fasle, e só liga-los se uma extrapolação for ocorrer
-                     gameObject.AddComponent<OWRigidbody>().MakeKinematic();
+            //Após testes reabilitar esses componentes mais deixalos com enable = false, e só liga-los se uma extrapolação for ocorrer
             //         GameObject shadeGODetector = new GameObject
             //         {
             //             layer = LayerMask.NameToLayer("BasicEffectVolume")
@@ -55,11 +51,12 @@ namespace ClientSide.PacketCouriers.Shades
             //         gameObject.AddComponent<AlignWithField>();
 
             //         MovementModel = gameObject.AddComponent<ShadeMovementModel>();
-            //         gameObject.AddComponent<ShadeDetachHandler>();
+            //         gameObject.AddComponent<ShadeDetachHandler>(); 
 
             transform.position = playerTransform.position;
             transform.rotation = playerTransform.rotation;
 
+            transform.parent = solarSystemTransform;
             //         //Serve para fazer o player seguir o shade, "não importa o que ocorra"
             //         playerTransform.GetComponent<PlayerCharacterController>().LockMovement(false);
             //         playerTransform.gameObject.AddComponent<OWRigidbodyFollowsAnother>().SetConstrain(OWUtilities.GetAttachedOWRigidbody(gameObject, false));

@@ -12,17 +12,30 @@ namespace ClientSide
 {
     public class ClientMod : MonoBehaviour
     {
+
         public Client _clientSide;
         private ClientDebuggerSide _debugger;
 
-        [IMOWAModInnit("Client Test", 1, 2)]
+        [IMOWAModInnit("Client Test", 2, 2)]
         public static void ModInnit(string porOndeTaInicializando)
         {
             if (!Application.runInBackground)
                 Application.runInBackground = true; // Thanks _nebula ;)
 
+            if (Application.loadedLevel == 0)
+                new GameObject("QSAClientMainMenu").AddComponent<ClientModMenu>();
+
+            else if (Application.loadedLevel == 1)
+            {
+                if (ClientModMenu.UseClient)
+                {
+                    new GameObject("QSAClient").AddComponent<ClientMod>();
+                    var server = GameObject.Find("QSAServer");
+                    if (server != null)
+                        server.SetActive(false);
+                }
+            }
             Debug.Log("Client Test foi iniciado em " + porOndeTaInicializando);
-            new GameObject("QSAClient").AddComponent<ClientMod>();
         }
 
         private void Start()
@@ -37,6 +50,10 @@ namespace ClientSide
             //se o cliente foi desconectado do servido voltar ao inicio
 
             //_clientSide.TryConnect(); descobrir maneira do usuario escrever o ip do servidor com GUI
+        }
+        private void FixedUpdate()
+        {
+            _clientSide.Update();
         }
         private void OnDestroy()
         {
