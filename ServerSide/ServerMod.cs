@@ -4,6 +4,7 @@ using System.Text;
 using UnityEngine;
 using ServerSide.Sockets.Servers;
 using ServerSide.PacketCouriers.Shades;
+using ServerSide.PacketCouriers.Entities;
 using DIMOWAModLoader;
 using CAMOWA;
 
@@ -30,13 +31,12 @@ namespace ServerSide
         private void Start()
         {
             _debugger = GameObject.Find("DIMOWALevelLoaderHandler").GetComponent<ClientDebuggerSide>();
-            _serverSide = new Server(_debugger, gameObject.AddComponent<Server_ShadePacketCourier>());
+            _serverSide = new Server(_debugger, gameObject.AddComponent<Server_ShadePacketCourier>(), gameObject.AddComponent<Server_NetworkedEntityPacketCourier>());
         }
 
         private void FixedUpdate()
         {
-            _serverSide.FixedUpdate();
-            //Ver o estado do jogo e tirar uma "foto" dele
+            _serverSide.FixedUpdate(); // Big Brain time
         }
 
         private void OnDestroy()

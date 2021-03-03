@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
-using System.Net;
 using DIMOWAModLoader;
 using ServerSide.Sockets.Clients;
-using ServerSide.PacketCouriers.Shades;
-using UnityEngine;
 using System.Threading;
 using System.IO;
+
+
+using ServerSide.PacketCouriers.Shades;
+using ServerSide.PacketCouriers.Entities;
 
 namespace ServerSide.Sockets.Servers
 {
@@ -33,14 +34,16 @@ namespace ServerSide.Sockets.Servers
 
 
         //Parte legal
-        public Server_ShadePacketCourier shadePacketCourier;
+        private Server_ShadePacketCourier shadePacketCourier;
+        private Server_NetworkedEntityPacketCourier networkedEntityPacketCourier;
         //Fotografias do jogo, uma a cada..., transformar tudo em uma entidade, a qual pode recebe dados de acordo e envia de maneira semelhante
 
 
-        public Server(ClientDebuggerSide debugger, Server_ShadePacketCourier shadePacketCourier)
+        public Server(ClientDebuggerSide debugger, Server_ShadePacketCourier shadePacketCourier, Server_NetworkedEntityPacketCourier networkedEntityPacketCourier)
         {
             this.debugger = debugger;
             this.shadePacketCourier = shadePacketCourier;
+            this.networkedEntityPacketCourier = networkedEntityPacketCourier;
 
             clients = new List<Client>();
             clientsLookUpTable = new Dictionary<string, Client>();
@@ -133,6 +136,10 @@ namespace ServerSide.Sockets.Servers
                     {
                         case Header.SHADE_PC:
                             shadePacketCourier.Receive(ref packet, c.ID);
+                            break;
+
+                        case Header.NET_ENTITY_PC:
+                            networkedEntityPacketCourier.Receive(ref packet, c.ID);
                             break;
 
                         case Header.REFRESH:

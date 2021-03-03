@@ -1,9 +1,9 @@
 ﻿using UnityEngine;
-using ServerSide.PacketCouriers.Shades.MovementConstraints;
+using ServerSide.PacketCouriers.Entities;
 
 namespace ServerSide.PacketCouriers.Shades
 {
-    public class Shade : MonoBehaviour
+    public class Shade : NetworkedEntity
     {
         //Tem que vir a partir de um Cilindro padrão
         public ShadeMovementModel MovementModel
@@ -13,24 +13,18 @@ namespace ServerSide.PacketCouriers.Shades
         }
 
         public string Name = "";
-        public string ClientID;
 
         private void Start()
         {
             Transform playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
-            //center
             transform.parent = playerTransform.root;
             gameObject.layer= LayerMask.NameToLayer("Primitive");
 
             GetComponent<CapsuleCollider>().radius = 0.5f;
             GetComponent<CapsuleCollider>().height = 2f;
-
-            Rigidbody shadeRidigbody = gameObject.AddComponent<Rigidbody>();
-            shadeRidigbody.mass = 0.001f;
-            shadeRidigbody.drag = 0f;
-            shadeRidigbody.angularDrag = 0f;
-            shadeRidigbody.isKinematic = false;
-            shadeRidigbody.constraints = RigidbodyConstraints.FreezeRotation;
+            
+            GetComponent<Rigidbody>().mass = 0.001f;
+            GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezeRotation;
 
             Collider taggedComponent = OWUtilities.GetTaggedComponent<Collider>(gameObject,"Player");
 
@@ -38,7 +32,7 @@ namespace ServerSide.PacketCouriers.Shades
             {
                 Physics.IgnoreCollision(collider, taggedComponent);
             }
-            gameObject.AddComponent<OWRigidbody>();
+
             GameObject shadeGODetector = new GameObject
             {
                 layer = LayerMask.NameToLayer("BasicEffectVolume")
@@ -56,10 +50,6 @@ namespace ServerSide.PacketCouriers.Shades
             
 			transform.position = playerTransform.position;
             transform.rotation = playerTransform.rotation;
-
-            //Serve para fazer o player seguir o shade, "não importa o que ocorra"
-            //playerTransform.GetComponent<PlayerCharacterController>().LockMovement(false);
-            //playerTransform.gameObject.AddComponent<OWRigidbodyFollowsAnother>().SetConstrain(OWUtilities.GetAttachedOWRigidbody(shadeGO, false));
         }
 
         public void DestroyShade()

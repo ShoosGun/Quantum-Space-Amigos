@@ -1,23 +1,14 @@
 ﻿using UnityEngine;
-using ClientSide.PacketCouriers.Shades.MovementConstraints;
+using ClientSide.PacketCouriers.Entities;
 
 namespace ClientSide.PacketCouriers.Shades
 {
-    public class Shade : MonoBehaviour
+    public class Shade : NetworkedEntity
     {
-        //Tem que vir a partir de um Cilindro padrão
-        //public ShadeMovementModel MovementModel
-        //{
-        //    get;
-        //    private set;
-        //}
-
         public string Name = "";
 
         private void Start()
         {
-            var solarSystemTransform = GameObject.Find("TimberHearth_Body").transform;
-
             Transform playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
             //center
             gameObject.layer= LayerMask.NameToLayer("Primitive");
@@ -56,7 +47,7 @@ namespace ClientSide.PacketCouriers.Shades
             transform.position = playerTransform.position;
             transform.rotation = playerTransform.rotation;
 
-            transform.parent = solarSystemTransform;
+            transform.parent = playerTransform.root;
             //         //Serve para fazer o player seguir o shade, "não importa o que ocorra"
             //         playerTransform.GetComponent<PlayerCharacterController>().LockMovement(false);
             //         playerTransform.gameObject.AddComponent<OWRigidbodyFollowsAnother>().SetConstrain(OWUtilities.GetAttachedOWRigidbody(gameObject, false));

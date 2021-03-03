@@ -65,7 +65,9 @@
     <Compile Include="Sockets\Servers\Server.cs" />
     <Compile Include="Sockets\Servers\UpdatesTypes.cs" />
     <Compile Include="ServerMod.cs" />
-    <Compile Include="Sync\IPacketCourier.cs" />
+    <Compile Include="PacketCouriers\Entities\NetworkedEntity.cs" />
+    <Compile Include="PacketCouriers\IPacketCourier.cs" />
+    <Compile Include="PacketCouriers\Entities\Server_NetworkedEntityPacketCourier.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

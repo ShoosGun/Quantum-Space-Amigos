@@ -7,6 +7,7 @@ using System.Threading;
 using DIMOWAModLoader;
 using System.IO;
 using ClientSide.PacketCouriers.Shades;
+using ClientSide.PacketCouriers.Entities;
 
 namespace ClientSide.Sockets
 {
@@ -25,18 +26,20 @@ namespace ClientSide.Sockets
         private bool wasConnected = false;
 
         private Client_ShadePacketCourier shadePacketCourier;
+        private Client_NetworkedEntityPacketCourier networkedEntityPacketCourier;
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="debugger"></param>
         /// <param name="receivingLimit"> In packets/s </param>
-        public Client(ClientDebuggerSide debugger,Client_ShadePacketCourier shadePacketCourier, int receivingLimit = 100)
+        public Client(ClientDebuggerSide debugger,Client_ShadePacketCourier shadePacketCourier, Client_NetworkedEntityPacketCourier networkedEntityPacketCourier, int receivingLimit = 100)
         {
             Connected = false;
             this.receivingLimit = receivingLimit;
             this.debugger = debugger;
             this.shadePacketCourier = shadePacketCourier;
+            this.networkedEntityPacketCourier = networkedEntityPacketCourier;
         }
 
         /// <summary>
@@ -159,6 +162,10 @@ namespace ClientSide.Sockets
                     {
                         case Header.SHADE_PC:
                             shadePacketCourier.Receive(ref packet); // Fazer a parte da Shades no cliente
+                            break;
+
+                        case Header.NET_ENTITY_PC:
+                            networkedEntityPacketCourier.Receive(ref packet);
                             break;
 
                         case Header.REFRESH:

@@ -1,29 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using ClientSide.Sync;
 using ClientSide.Sockets;
+using ClientSide.PacketCouriers.Entities;
 
 namespace ClientSide.PacketCouriers.Shades
 {
     public class Client_ShadePacketCourier : MonoBehaviour, IPacketCourier
     {
         private Client client;
-
-        private Transform solarSystemTransform;
-
-        private List<KeyValuePair<ShadeTransformIDPair, DateTime>> serverSnapshots = new List<KeyValuePair<ShadeTransformIDPair, DateTime>>();
-
-        const int MAX_SNAPSHOTS = 10; //Número máxmo fotos que se pode ter do jogo
-
+        private Client_NetworkedEntityPacketCourier entityPacketCourier;
+        
         private Shade playerShade;
-        private string playerID = "";
-        private Dictionary<string, Shade> serverShadesLookUpTable = new Dictionary<string, Shade>();
+        private bool hasReceivedId = false;
+        private List<short> shadesIDs = new List<short>();
+        private Dictionary<short, Shade> shadesLookUpTable = new Dictionary<short, Shade>();
 
         void Start()
         {
-            solarSystemTransform = GameObject.Find("HomePlanet_graybox").transform;
-            client = GameObject.Find("QSAClient").GetComponent<ClientMod>()._clientSide;
+            GameObject go = GameObject.Find("QSAClient");
+            client = go.GetComponent<ClientMod>()._clientSide;
+            entityPacketCourier = go.GetComponent<Client_NetworkedEntityPacketCourier>();
 
             client.Connection += Client_Connection;
             client.Disconnection += Client_Disconnection;
@@ -38,7 +35,6 @@ namespace ClientSide.PacketCouriers.Shades
         private void Client_Connection()
         {
             playerShade = GameObject.CreatePrimitive(PrimitiveType.Cylinder).AddComponent<Shade>();
-
             Debug.Log("Conectados no Servidor!");
         }
 
@@ -46,41 +42,24 @@ namespace ClientSide.PacketCouriers.Shades
         private void Client_Disconnection()
         {
             playerShade.DestroyShade();
-            serverShadesLookUpTable.Clear();
+
+            foreach(short ID in shadesIDs)
+                shadesLookUpTable[ID].DestroyShade();
+
+            shadesIDs.Clear();
+            shadesLookUpTable.Clear();
+
+            hasReceivedId = false;
             Debug.Log("Desconectados do servidor");
         }
         
         void FixedUpdate()
         {
-            //Lendo as novas posições dadas pelo servidor e dando-as para as respectivas shades
-            if (playerID != "")
+            if (hasReceivedId)
             {
-                foreach (var shadeTransf in serverSnapshots)
-                {
-                    if (serverShadesLookUpTable.ContainsKey(shadeTransf.Key.ID))
-                    {
 
-                        //Delta Syncs
-                        if (serverShadesLookUpTable[shadeTransf.Key.ID].rigidbody != null)
-                        {
-                            if (shadeTransf.Key.ShadeTransform.isDeltaSync)
-                            {
-                                serverShadesLookUpTable[shadeTransf.Key.ID].rigidbody.position = solarSystemTransform.TransformDirection(shadeTransf.Key.ShadeTransform.Position) + shadeTransf.Key.ShadeTransform.Position + playerShade.rigidbody.position;
-                                serverShadesLookUpTable[shadeTransf.Key.ID].rigidbody.rotation = serverShadesLookUpTable[shadeTransf.Key.ID].rigidbody.rotation * shadeTransf.Key.ShadeTransform.Rotation;
-                            }
-                            else
-                            {
-                                serverShadesLookUpTable[shadeTransf.Key.ID].rigidbody.position = solarSystemTransform.TransformPoint(shadeTransf.Key.ShadeTransform.Position);
-                                serverShadesLookUpTable[shadeTransf.Key.ID].rigidbody.rotation = shadeTransf.Key.ShadeTransform.Rotation * solarSystemTransform.rotation;
-                            }
-                        }
-                    }
-                }
-                if (serverSnapshots.Count > 0)
-                    serverSnapshots.Clear();
                 //Enviando os botões pressionados pelo cliente ao servidor
-
-                PacketWriter pk = new PacketWriter(); 
+                PacketWriter pk = new PacketWriter();
                 pk.Write((byte)Header.SHADE_PC);
                 pk.Write((byte)ShadeHeader.MOVEMENT);
                 pk.Write(DateTime.UtcNow);
@@ -95,105 +74,63 @@ namespace ClientSide.PacketCouriers.Shades
             }
             else if (playerShade != null && (int)(Time.realtimeSinceStartup * 10) % 10 == 0)
             {
-                PacketWriter pk = new PacketWriter(); 
+                PacketWriter pk = new PacketWriter();
                 pk.Write((byte)Header.SHADE_PC);
                 pk.Write((byte)ShadeHeader.SHADE_SYNC);
                 client.Send(pk.GetBytes());
             }
         }
+
         public void Receive(ref PacketReader packet)
         {
-            DateTime arriveTime;
-            ShadeTransform shadeTransform;
-            string shadeID;
-
+            short shadeID;
             switch ((ShadeHeader)packet.ReadByte())
             {
-                case ShadeHeader.DELTA_SYNC:
-                    arriveTime = packet.ReadDateTime();
-                    shadeID = packet.ReadString();
-
-                    shadeTransform = new ShadeTransform(packet.ReadVector3(), packet.ReadQuaternion());
-                    serverSnapshots.Add(new KeyValuePair<ShadeTransformIDPair, DateTime>(new ShadeTransformIDPair(shadeTransform,shadeID), arriveTime));
-                    break;
-
-                case ShadeHeader.TRANSFORM_SYNC:
-                    arriveTime = packet.ReadDateTime();
-                    int amountOfShades = packet.ReadByte();
-                    for (int i = 0; i < amountOfShades; i++)
-                    {
-                        shadeID = packet.ReadString();
-                        shadeTransform = new ShadeTransform(packet.ReadVector3(), packet.ReadQuaternion(), false);
-                        serverSnapshots.Add(new KeyValuePair<ShadeTransformIDPair, DateTime>(new ShadeTransformIDPair(shadeTransform, shadeID), arriveTime));
-                    }
-                    break;
-
                 case ShadeHeader.SHADE_SYNC:
-                    int amountOfNewShades = packet.ReadByte();
-                    shadeID = packet.ReadString(); 
-                    if (shadeID != playerID)
+                    int amountOfShades = packet.ReadByte();
+                    shadeID = packet.ReadInt16();
+                    shadesIDs.Add(shadeID);
+                    if (shadeID != playerShade.ID || !hasReceivedId)
                     {
-                        playerID = shadeID;
-                        serverShadesLookUpTable.Add(shadeID, playerShade);
+                        hasReceivedId = true;
+                        shadesLookUpTable.Add(shadeID, playerShade);
+                        entityPacketCourier.SetEntitySync(playerShade, shadeID);
                     }
 
-                    for (int i = 0; i < amountOfNewShades; i++)
-                    {
-                        shadeID = packet.ReadString();
-                        
-                        if (!serverShadesLookUpTable.ContainsKey(shadeID))
-                            serverShadesLookUpTable.Add(shadeID, GameObject.CreatePrimitive(PrimitiveType.Cylinder).AddComponent<Shade>());
-                    }
+                    for (int i = 0; i < amountOfShades; i++)
+                        ReceiveNewShade(ref packet);
 
-                    Debug.Log($"Recebendo as novas shades que existem! Temos no total agora: {serverShadesLookUpTable.Keys.Count}; sendo que nós nos chamamos {playerID}!");
+                    Debug.Log($"Recebendo as novas shades que existem! Temos no total agora: {shadesLookUpTable.Keys.Count}; sendo que nosso ID é {playerShade.ID}!");
                     break;
 
                 case ShadeHeader.SHADE_DELTA_MINUS_SYNC:
-                    shadeID = packet.ReadString();
-                    serverShadesLookUpTable.Remove(shadeID);
+                    shadeID = packet.ReadInt16();
+                    shadesIDs.Remove(shadeID);
+                    shadesLookUpTable[shadeID].DestroyShade();
+                    shadesLookUpTable.Remove(shadeID);
+                    entityPacketCourier.RemoveEntitySync(shadeID);
                     break;
 
                 case ShadeHeader.SHADE_DELTA_PLUS_SYNC:
-                    shadeID = packet.ReadString();
-                    if (!serverShadesLookUpTable.ContainsKey(shadeID))
-                        serverShadesLookUpTable.Add(shadeID, GameObject.CreatePrimitive(PrimitiveType.Cylinder).AddComponent<Shade>());
+                    ReceiveNewShade(ref packet);
                     break;
 
                 default:
                     break;
             }
         }
-    }
-    
-    public struct ShadeTransformIDPair
-    {
-        public ShadeTransform ShadeTransform;
-        public string ID;
 
-        public ShadeTransformIDPair(ShadeTransform ShadeTransform, string ID)
+        private void ReceiveNewShade(ref PacketReader packet)
         {
-            this.ShadeTransform = ShadeTransform;
-            this.ID = ID;
-        }
-    }
-
-    public struct ShadeTransform
-    {
-        public Vector3 Position;
-        public Quaternion Rotation;
-        public bool isDeltaSync;
-
-        public ShadeTransform(Vector3 position, Quaternion rotation, bool isDeltaSync = true)
-        {
-            Position = position;
-            Rotation = rotation;
-            this.isDeltaSync = isDeltaSync;
-        }
-        public ShadeTransform(Rigidbody rigidbody, bool isDeltaSync = true)
-        {
-            Position = rigidbody.position;
-            Rotation = rigidbody.rotation;
-            this.isDeltaSync = isDeltaSync;
+            short shadeID = packet.ReadInt16();
+            shadesIDs.Add(shadeID);
+            Shade addedShade;
+            if (!shadesLookUpTable.ContainsKey(shadeID))
+            {
+                addedShade = GameObject.CreatePrimitive(PrimitiveType.Cylinder).AddComponent<Shade>();
+                shadesLookUpTable.Add(shadeID, addedShade);
+                entityPacketCourier.SetEntitySync(addedShade, shadeID);
+            }
         }
     }
 
@@ -201,8 +138,6 @@ namespace ClientSide.PacketCouriers.Shades
     {
         MOVEMENT,
         SET_NAME,
-        DELTA_SYNC,
-        TRANSFORM_SYNC,
         SHADE_SYNC, //Para que a quantidade de shades nos dois lados seja igual (Para novos clientes)
         SHADE_DELTA_PLUS_SYNC, //  /\ (Para já conectados)
         SHADE_DELTA_MINUS_SYNC,

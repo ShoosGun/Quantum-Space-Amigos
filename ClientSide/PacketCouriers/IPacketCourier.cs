@@ -4,7 +4,7 @@ using System.Text;
 using UnityEngine;
 using ClientSide.Sockets;
 
-namespace ClientSide.Sync
+namespace ClientSide.PacketCouriers
 {
     public interface IPacketCourier
     {
