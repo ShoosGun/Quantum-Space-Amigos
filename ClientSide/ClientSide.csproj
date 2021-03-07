@@ -49,8 +49,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ClientMod.cs" />
+    <Compile Include="PacketCouriers\Entities\IEntityOwner.cs" />
     <Compile Include="PacketCouriers\Entities\NetworkedEntity.cs" />
     <Compile Include="PacketCouriers\Entities\Client_NetworkedEntityPacketCourier.cs" />
+    <Compile Include="PacketCouriers\PersistentOWRigd\Client_PersistentOWRigdPacketCourier.cs" />
     <Compile Include="PacketCouriers\Shades\MovementConstraints\OWRigidbodyFollowsAnother.cs" />
     <Compile Include="PacketCouriers\Shades\Client_ShadePacketCourier.cs" />
     <Compile Include="SettingsMenu\ClientModSettingsMenu.cs" />

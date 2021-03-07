@@ -20,15 +20,18 @@ namespace ClientSide.PacketCouriers.Entities
         protected NetworkedEntity[] entities = new NetworkedEntity[MAX_AMOUNT_OF_ENTITIES];
         private List<short> entitiesIDs = new List<short>();
 
+        private IEntityOwner[] entityOwners = new IEntityOwner[254];
 
         private List<SnapshotTick> snapshotsTicks = new List<SnapshotTick>();
         private List<EntityGameSnapshot> serverSnapshots = new List<EntityGameSnapshot>();
         private const int MAX_SNAPSHOTS = 3; //Número máxmo fotos que se pode ter do jogo
 
-        private void Awake()
+        private void Start()
         {
-            ReferenceFrameTransform = GameObject.Find("HomePlanet_graybox").transform;
+            ReferenceFrameTransform = GameObject.Find("TimberHearth_Body").transform;
+            
             Client = GameObject.Find("QSAClient").GetComponent<ClientMod>()._clientSide;
+
             Client.Disconnection += Client_Disconnection;
         }
         private void OnDestroy()
@@ -48,7 +51,7 @@ namespace ClientSide.PacketCouriers.Entities
             snapshotsTicks.Clear();
         }
 
-        //private SnapshotTick ourCurrentSnapshot;
+        //private SnapshotTick ourCurrentSnapshot; //O cliente pode estar em uma snapshot diferente da do servidor, ele guardara qual aki
         private void FixedUpdate()
         {
             //Ler as snapshots vindas do servidor
@@ -78,37 +81,16 @@ namespace ClientSide.PacketCouriers.Entities
         }
 
         /// <summary>
-        /// When you receive the id of the synced entity, place it here with its ID for syncing
+        /// When you receive the id of the entityOwner, place it here with a callback for receiving the ids of entities.
         /// </summary>
-        /// <param name="entity"></param>
-        /// <param name="ID">The ID received for this entity</param>
+        /// <param name="ID">The ID received for this entityOwner</param>
         /// <returns></returns>
-        public void SetEntitySync(NetworkedEntity entity, short ID)
+        public void SetEntityOwner(byte ID, IEntityOwner entityOwner)
         {
-            if (ID < MAX_AMOUNT_OF_ENTITIES)
-            {
-                entitiesIDs.Add(ID);
-                entities[ID] = entity;
-                entity.ID = ID;
-            }
+            if (ID < 255)
+                entityOwners[ID] = entityOwner;
         }
-
-        /// <summary>
-        /// When you receive the id of a no longer synced entity, place it here with its ID for stop syncing
-        /// </summary>
-        /// <param name="ID">The ID of this entity</param>
-        /// <returns></returns>
-        public void RemoveEntitySync(short ID)
-        {
-            if (entities[ID] == null)
-                return;
-            
-            entities[ID].ID = MAX_AMOUNT_OF_ENTITIES;
-            entities[ID] = null;
-            entitiesIDs.Remove(ID);
-        }
-
-
+        
         public void Receive(ref PacketReader packet)
         {
             switch ((EntityHeader)packet.ReadByte())
@@ -124,6 +106,40 @@ namespace ClientSide.PacketCouriers.Entities
                         serverSnapshots.RemoveAt(0);
                     serverSnapshots.Add(ReadEntityGameSnapshots(ref packet,false));
                     break;
+
+                case EntityHeader.ENTITY_SYNC:
+                    short amountOfEntities = packet.ReadInt16();
+                    for(int i = 0; i < amountOfEntities; i++)
+                        ReadAddEntity(ref packet);
+                    break;
+
+                case EntityHeader.ENTITY_DELTA_PLUS_SYNC:
+                    ReadAddEntity(ref packet);
+                    break;
+
+                case EntityHeader.ENTITY_DELTA_MINUS_SYNC:
+                    short entityId = packet.ReadInt16();
+                    if (entitiesIDs.Contains(entityId))
+                    {
+                        entityOwners[entities[entityId].PCOwner].OnRemoveEntity(entityId);
+                        entitiesIDs.Remove(entityId);
+                        entities[entityId] = null;
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        private void ReadAddEntity(ref PacketReader packet)
+        {
+            short entityId = packet.ReadInt16();
+            byte ownerId = packet.ReadByte();
+            if (entityOwners[ownerId] != null && !entitiesIDs.Contains(entityId))
+            {
+                entities[entityId] = entityOwners[ownerId].OnAddEntity(entityId);
+                entitiesIDs.Add(entityId);
             }
         }
 
@@ -152,11 +168,15 @@ namespace ClientSide.PacketCouriers.Entities
                 EntityTransformWithIds = entityTransformWithIds;
             }
         }
+        
     }
     public enum EntityHeader : byte
     {
         DELTA_SYNC,
         TRANSFORM_SYNC,
+        ENTITY_SYNC, //Para que a quantidade de shades nos dois lados seja igual (Para novos clientes)
+        ENTITY_DELTA_PLUS_SYNC, //  /\ (Para já conectados)
+        ENTITY_DELTA_MINUS_SYNC,// /  \ 
     }
     public struct EntityTransformWithId
     {

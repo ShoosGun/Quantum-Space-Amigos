@@ -20,6 +20,11 @@ namespace ServerSide.PacketCouriers.Shades
 
         private Dictionary<string, short> clientsIDsConversionTable = new Dictionary<string, short>(); //Para converter Id do cliente -> id da entidade (shade)
         
+        /// <summary>
+        /// The ID for using the NetworkedEntityPC
+        /// </summary>
+        private byte SHADEPC_ID;
+
         void Start()
         {
             GameObject serverGO = GameObject.Find("QSAServer");
@@ -28,17 +33,6 @@ namespace ServerSide.PacketCouriers.Shades
 
             server.NewConnectionID += Server_NewConnectionID;
             server.DisconnectionID += Server_DisconnectionID;
-
-            serverShade = GameObject.CreatePrimitive(PrimitiveType.Cylinder).AddComponent<Shade>();
-
-            short serverShadeID = entityPacketCourier.AddEntitySync(serverShade); //A posição e rotação serão "automaticamente" sincronizadas
-
-            serverShade.gameObject.collider.enabled = false;
-            serverShade.gameObject.AddComponent<MovementConstraints.OWRigidbodyFollowsAnother>();
-
-            ShadePacketPair shadePacketPair = new ShadePacketPair(serverShade);
-            shadesIDs.Add(serverShadeID);
-            shadesLookUpTable.Add(serverShadeID, shadePacketPair);
         }
 
         void OnDestroy()
@@ -50,7 +44,7 @@ namespace ServerSide.PacketCouriers.Shades
         private void Server_NewConnectionID(string clientID)
         {
             Shade newShade = GameObject.CreatePrimitive(PrimitiveType.Cylinder).AddComponent<Shade>();
-            short shadeID = entityPacketCourier.AddEntitySync(newShade);
+            short shadeID = entityPacketCourier.AddEntitySync(newShade, SHADEPC_ID);
 
             //Criando e guardando a shade do cliente que acabou de conectar
             clientsIDsConversionTable.Add(clientID, shadeID);
@@ -60,28 +54,16 @@ namespace ServerSide.PacketCouriers.Shades
             shadesLookUpTable.Add(shadeID, shadePacketPair);
             shadesIDs.Add(shadeID);
 
-            //Mandar para quem chegou quem são os conectados
-            PacketWriter packetForClients = new PacketWriter();
+            //Mandar para quem chegou o ID do grupo de shades que receberá e o id da sua shade
+            PacketWriter packetForClient = new PacketWriter();
 
-            packetForClients.Write((byte)Header.SHADE_PC);
-            packetForClients.Write((byte)ShadeHeader.SHADE_SYNC);
-            packetForClients.Write((byte)shadesIDs.Count);
-            packetForClients.Write(shadeID);
-            foreach (short id in shadesIDs)
-                packetForClients.Write(id);
-
-            server.Send(clientID, packetForClients.GetBytes()); //Tem PacketWriter.Close() incluso
-
-
-            //Mandar para todos os conectados quem acabou de chegar (menos para quem chegou)
-            packetForClients = new PacketWriter();
-            packetForClients.Write((byte)Header.SHADE_PC);
-            packetForClients.Write((byte)ShadeHeader.SHADE_DELTA_PLUS_SYNC);
-            packetForClients.Write(shadeID);
-            server.SendAll(packetForClients.GetBytes(), clientID);
-            //---
-
-            Debug.Log($"Nova Shade!\n Quantidade de Shades no momento: {shadesIDs.Count}");
+            packetForClient.Write((byte)Header.SHADE_PC);
+            packetForClient.Write((byte)ShadeHeader.ENTITY_OWNER_ID);
+            packetForClient.Write(SHADEPC_ID);
+            packetForClient.Write(shadeID);
+            server.Send(clientID, packetForClient.GetBytes());
+            
+            Debug.Log($"Nova Shade! ID = {shadeID}\n Quantidade de Shades no momento: {shadesIDs.Count}");
         }
 
 
@@ -93,14 +75,7 @@ namespace ServerSide.PacketCouriers.Shades
 
                 shadesLookUpTable[shadeID].Shade.DestroyShade();
                 shadesLookUpTable[shadeID].MovementPacketsCache.Clear();
-
-                var packetForClients = new PacketWriter();
-                packetForClients.Write((byte)Header.SHADE_PC);
-                packetForClients.Write((byte)ShadeHeader.SHADE_DELTA_MINUS_SYNC);
-                packetForClients.Write(shadeID);
-                server.SendAll(packetForClients.GetBytes());
-
-                //Remover da lista primeiro para não usarmos algo nulo para apagar essa cópia
+                
                 entityPacketCourier.RemoveEntitySync(shadeID); //Falar para ele parar de fazer sync com esse ID
 
                 shadesIDs.Remove(shadeID);
@@ -112,7 +87,21 @@ namespace ServerSide.PacketCouriers.Shades
         private bool wasThereOWRigdb = false;
         void Update()
         {
-            if (serverShade.GetAttachedOWRigidbody() != null && !wasThereOWRigdb)
+            if(serverShade == null)
+            {
+                serverShade = GameObject.CreatePrimitive(PrimitiveType.Cylinder).AddComponent<Shade>();
+
+                SHADEPC_ID = entityPacketCourier.AddEntityOwner();
+                short serverShadeID = entityPacketCourier.AddEntitySync(serverShade, SHADEPC_ID);
+
+                serverShade.gameObject.collider.enabled = false;
+                serverShade.gameObject.AddComponent<MovementConstraints.OWRigidbodyFollowsAnother>();
+
+                ShadePacketPair shadePacketPair = new ShadePacketPair(serverShade);
+                shadesIDs.Add(serverShadeID);
+                shadesLookUpTable.Add(serverShadeID, shadePacketPair);
+            }
+            else if (serverShade.GetAttachedOWRigidbody() != null && !wasThereOWRigdb)
             {
                 serverShade.GetComponent<MovementConstraints.OWRigidbodyFollowsAnother>().SetConstrain(GameObject.FindGameObjectWithTag("Player").GetAttachedOWRigidbody());
                 wasThereOWRigdb = true;
@@ -150,19 +139,30 @@ namespace ServerSide.PacketCouriers.Shades
                         shadesLookUpTable[clientsIDsConversionTable[clientID]].Shade.Name = packet.ReadString();
                     break;
 
-                case ShadeHeader.SHADE_SYNC:
-                    PacketWriter packetForClients = new PacketWriter();
-                    short requestingClientShadeId = clientsIDsConversionTable[clientID];
+                case ShadeHeader.ENTITY_OWNER_ID:
+                    PacketWriter packetForClient = new PacketWriter();
+                    Debug.Log($"Enviando o ID da nossa PC = {SHADEPC_ID} e do cliente {clientsIDsConversionTable[clientID]}");
+                    packetForClient.Write((byte)Header.SHADE_PC);
+                    packetForClient.Write((byte)ShadeHeader.ENTITY_OWNER_ID);
+                    packetForClient.Write(SHADEPC_ID);//byte
+                    packetForClient.Write(clientsIDsConversionTable[clientID]);//short
+                    server.Send(clientID, packetForClient.GetBytes());
 
-                    packetForClients.Write((byte)Header.SHADE_PC);
-                    packetForClients.Write((byte)ShadeHeader.SHADE_SYNC);
-                    packetForClients.Write((byte)shadesIDs.Count);
-                    packetForClients.Write(requestingClientShadeId);
-                    foreach (short id in shadesIDs)
-                        if (id != requestingClientShadeId)
-                            packetForClients.Write(id);
-                    server.Send(clientID, packetForClients.GetBytes());
                     break;
+
+                //case (byte)EntityHeader.ENTITY_SYNC:
+                //    PacketWriter packetForClients = new PacketWriter();
+                //    short requestingClientShadeId = clientsIDsConversionTable[clientID];
+
+                //    packetForClients.Write((byte)Header.SHADE_PC);
+                //    packetForClients.Write((byte)EntityHeader.ENTITY_SYNC);
+                //    packetForClients.Write((byte)shadesIDs.Count);
+                //    packetForClients.Write(requestingClientShadeId);
+                //    foreach (short id in shadesIDs)
+                //        if (id != requestingClientShadeId)
+                //            packetForClients.Write(id);
+                //    server.Send(clientID, packetForClients.GetBytes());
+                //    break;
                 default:
                     break;
             }
@@ -216,11 +216,9 @@ namespace ServerSide.PacketCouriers.Shades
     }
     public enum ShadeHeader : byte
     {
+        ENTITY_OWNER_ID,
         MOVEMENT,
-        SET_NAME,
-        SHADE_SYNC, //Para que a quantidade de shades nos dois lados seja igual (Para novos clientes)
-        SHADE_DELTA_PLUS_SYNC, //  /\ (Para já conectados)
-        SHADE_DELTA_MINUS_SYNC,
+        SET_NAME
     }
 
     public enum ShadeMovementHeader : byte

@@ -19,7 +19,7 @@ namespace ServerSide.PacketCouriers.Shades.MovementConstraints
         public void SetConstrain(OWRigidbody rigidbodyToFollow)
         {
             this.rigidbodyToFollow = rigidbodyToFollow;
-            oWRigidbody = OWUtilities.GetAttachedOWRigidbody(gameObject, false);
+            oWRigidbody = gameObject.GetAttachedOWRigidbody();
         }
         
         private void FixedUpdate()

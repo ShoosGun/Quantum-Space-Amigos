@@ -14,8 +14,10 @@ namespace ServerSide.PacketCouriers.Shades
 
         public string Name = "";
 
-        private void Start()
+        override protected void  Start()
         {
+            base.Start();
+            
             Transform playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
             transform.parent = playerTransform.root;
             gameObject.layer= LayerMask.NameToLayer("Primitive");
@@ -26,7 +28,9 @@ namespace ServerSide.PacketCouriers.Shades
             GetComponent<Rigidbody>().mass = 0.001f;
             GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezeRotation;
 
-            Collider taggedComponent = OWUtilities.GetTaggedComponent<Collider>(gameObject,"Player");
+            gameObject.AddComponent<OWRigidbody>();
+
+            Collider taggedComponent = playerTransform.collider/*OWUtilities.GetTaggedComponent<Collider>(gameObject,"Player")*/;
 
             if (taggedComponent.enabled)
             {

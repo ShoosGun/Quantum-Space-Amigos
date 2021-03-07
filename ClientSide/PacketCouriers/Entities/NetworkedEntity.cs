@@ -3,13 +3,17 @@
 namespace ClientSide.PacketCouriers.Entities
 {
     /// <summary>
-    /// Give this script for the OWRigidbody that you want to be synced
+    /// Give this script for the OWRigidbody that you want to be synced. Must have an Rigidbody
     /// </summary>
     /// 
-
-    [RequireComponent(typeof(OWRigidbody))]
     public abstract class NetworkedEntity : MonoBehaviour
     {
         public short ID;
+
+        /// <summary>
+        /// The PacketCourier that owns this ID/Entity
+        /// </summary>
+        public byte PCOwner;
+
     }
 }

@@ -7,27 +7,29 @@ namespace ClientSide.PacketCouriers.Shades
     {
         public string Name = "";
 
-        private void Start()
+        protected void Start()//GameObject.CreatePrimitive(PrimitiveType.Cylinder).AddComponent<Shade>();
         {
+
             Transform playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
             //center
-            gameObject.layer= LayerMask.NameToLayer("Primitive");
+            gameObject.layer = LayerMask.NameToLayer("Primitive");
 
             GetComponent<CapsuleCollider>().radius = 0.5f;
             GetComponent<CapsuleCollider>().height = 2f;
 
-            Rigidbody shadeRidigbody = gameObject.AddComponent<Rigidbody>();
-            shadeRidigbody.mass = 0.001f;
-
-            gameObject.AddComponent<OWRigidbody>().MakeKinematic();
+            gameObject.AddComponent<Rigidbody>();
+            rigidbody.mass = 0.001f;
+            rigidbody.drag = 0f;
+            rigidbody.angularDrag = 0f;
+            rigidbody.isKinematic = true;
 
             //if (taggedComponent.enabled)
             //{
             //    Physics.IgnoreCollision(collider, taggedComponent);
             //}
+            gameObject.AddComponent<OWRigidbody>();
 
-            collider.enabled = false; //Desabilitar colisões, ao menos se for extrapolar
-
+            collider.enabled = false;
             //Após testes reabilitar esses componentes mais deixalos com enable = false, e só liga-los se uma extrapolação for ocorrer
             //         GameObject shadeGODetector = new GameObject
             //         {
@@ -47,10 +49,12 @@ namespace ClientSide.PacketCouriers.Shades
             transform.position = playerTransform.position;
             transform.rotation = playerTransform.rotation;
 
-            transform.parent = playerTransform.root;
+            transform.parent = GameObject.Find("TimberHearth_Body").transform;
+
             //         //Serve para fazer o player seguir o shade, "não importa o que ocorra"
             //         playerTransform.GetComponent<PlayerCharacterController>().LockMovement(false);
             //         playerTransform.gameObject.AddComponent<OWRigidbodyFollowsAnother>().SetConstrain(OWUtilities.GetAttachedOWRigidbody(gameObject, false));
+
         }
 
         public void DestroyShade()

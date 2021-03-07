@@ -52,6 +52,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="PacketCouriers\PersistentOWRigd\Server_PersistentOWRigdPacketCourier.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PacketCouriers\Shades\MovementConstraints\OWRigidbodyFollowsAnother.cs" />
     <Compile Include="PacketCouriers\Shades\ShadeDetachHandler.cs" />

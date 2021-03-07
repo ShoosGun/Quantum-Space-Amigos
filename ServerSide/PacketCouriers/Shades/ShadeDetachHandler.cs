@@ -21,7 +21,7 @@ namespace ServerSide.PacketCouriers.Shades
             gameObject.transform.rotation = playerT.rotation;
             Collider taggedComponent = playerT.gameObject.collider;
             bool enabled = taggedComponent.enabled;
-            if (enabled)
+            if (enabled && gameObject.collider.enabled)
             {
                 Physics.IgnoreCollision(gameObject.collider, taggedComponent);
             }
