@@ -19,11 +19,13 @@ namespace ClientSide.PacketCouriers.Shades
         {
             Transform playerT = OWUtilities.GetTaggedComponent<Transform>(gameObject, "Player");
             gameObject.transform.rotation = playerT.rotation;
+
             Collider taggedComponent = playerT.gameObject.collider;
             bool enabled = taggedComponent.enabled;
-            if (enabled)
+
+            if (enabled && collider.enabled)
             {
-                Physics.IgnoreCollision(gameObject.collider, taggedComponent);
+                Physics.IgnoreCollision(collider, taggedComponent);
             }
         }
     }

@@ -5,9 +5,11 @@ using UnityEngine;
 using CAMOWA;
 using DIMOWAModLoader;
 using ClientSide.Sockets;
+using ClientSide.SettingsMenu;
+
 using ClientSide.PacketCouriers.Shades;
 using ClientSide.PacketCouriers.Entities;
-using ClientSide.SettingsMenu;
+using ClientSide.PacketCouriers.PersistentOWRigd;
 
 namespace ClientSide
 {
@@ -42,7 +44,9 @@ namespace ClientSide
         private void Start()
         {
             _debugger = GameObject.Find("DIMOWALevelLoaderHandler").GetComponent<ClientDebuggerSide>();
-            _clientSide = new Client(_debugger, gameObject.AddComponent<Client_ShadePacketCourier>(), gameObject.AddComponent<Client_NetworkedEntityPacketCourier>());
+            _clientSide = new Client(_debugger, gameObject.AddComponent<Client_ShadePacketCourier>(), 
+                gameObject.AddComponent<Client_NetworkedEntityPacketCourier>(), gameObject.AddComponent<Client_PersistentOWRigdPacketCourier>());
+
             gameObject.AddComponent<ClientModSettingsMenu>();
             //balão falando que não se está conectado
             //no menu de settings ter uma opção chamada "conectar", e com ela aparecer uma caia de texto de um botão para se conectar ao servidor

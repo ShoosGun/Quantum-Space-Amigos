@@ -9,6 +9,7 @@ using System.IO;
 
 using ServerSide.PacketCouriers.Shades;
 using ServerSide.PacketCouriers.Entities;
+using ServerSide.PacketCouriers.PersistentOWRigdSync;
 
 namespace ServerSide.Sockets.Servers
 {
@@ -36,14 +37,16 @@ namespace ServerSide.Sockets.Servers
         //Parte legal
         private Server_ShadePacketCourier shadePacketCourier;
         private Server_NetworkedEntityPacketCourier networkedEntityPacketCourier;
+        private Server_PersistentOWRigdPacketCourier persistentOWRigdPacketCourier;
         //Fotografias do jogo, uma a cada..., transformar tudo em uma entidade, a qual pode recebe dados de acordo e envia de maneira semelhante
 
 
-        public Server(ClientDebuggerSide debugger, Server_ShadePacketCourier shadePacketCourier, Server_NetworkedEntityPacketCourier networkedEntityPacketCourier)
+        public Server(ClientDebuggerSide debugger, Server_ShadePacketCourier shadePacketCourier, Server_NetworkedEntityPacketCourier networkedEntityPacketCourier, Server_PersistentOWRigdPacketCourier persistentOWRigdPacketCourier)
         {
             this.debugger = debugger;
             this.shadePacketCourier = shadePacketCourier;
             this.networkedEntityPacketCourier = networkedEntityPacketCourier;
+            this.persistentOWRigdPacketCourier = persistentOWRigdPacketCourier;
 
             clients = new List<Client>();
             clientsLookUpTable = new Dictionary<string, Client>();
@@ -140,6 +143,10 @@ namespace ServerSide.Sockets.Servers
 
                         case Header.NET_ENTITY_PC:
                             networkedEntityPacketCourier.Receive(ref packet, c.ID);
+                            break;
+
+                        case Header.PERSISTENT_RIGIDB_PC:
+                            persistentOWRigdPacketCourier.Receive(ref packet, c.ID);
                             break;
 
                         case Header.REFRESH:

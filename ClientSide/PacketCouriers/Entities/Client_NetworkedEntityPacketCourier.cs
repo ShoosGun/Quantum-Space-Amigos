@@ -16,9 +16,9 @@ namespace ClientSide.PacketCouriers.Entities
         private Transform ReferenceFrameTransform;
         private Client Client;
 
-        public const short MAX_AMOUNT_OF_ENTITIES = 2048;
+        public const ushort MAX_AMOUNT_OF_ENTITIES = 2048;
         protected NetworkedEntity[] entities = new NetworkedEntity[MAX_AMOUNT_OF_ENTITIES];
-        private List<short> entitiesIDs = new List<short>();
+        private List<ushort> entitiesIDs = new List<ushort>();
 
         private IEntityOwner[] entityOwners = new IEntityOwner[254];
 
@@ -41,7 +41,7 @@ namespace ClientSide.PacketCouriers.Entities
 
         private void Client_Disconnection()
         {
-            foreach (short ID in entitiesIDs)
+            foreach (ushort ID in entitiesIDs)
             {
                 entities[ID].ID = MAX_AMOUNT_OF_ENTITIES;
                 entities[ID] = null;
@@ -71,7 +71,7 @@ namespace ClientSide.PacketCouriers.Entities
                         else
                         {
                             networkedEntity.rigidbody.position = ReferenceFrameTransform.TransformPoint(transformWithId.EntityTransform.Position);
-                            networkedEntity.rigidbody.rotation = transformWithId.EntityTransform.Rotation * ReferenceFrameTransform.rotation;
+                            networkedEntity.rigidbody.rotation = ReferenceFrameTransform.rotation * transformWithId.EntityTransform.Rotation ;
                         }
                     }
                 }
@@ -118,7 +118,7 @@ namespace ClientSide.PacketCouriers.Entities
                     break;
 
                 case EntityHeader.ENTITY_DELTA_MINUS_SYNC:
-                    short entityId = packet.ReadInt16();
+                    ushort entityId = packet.ReadUInt16();
                     if (entitiesIDs.Contains(entityId))
                     {
                         entityOwners[entities[entityId].PCOwner].OnRemoveEntity(entityId);
@@ -134,13 +134,14 @@ namespace ClientSide.PacketCouriers.Entities
 
         private void ReadAddEntity(ref PacketReader packet)
         {
-            short entityId = packet.ReadInt16();
+            ushort entityId = packet.ReadUInt16();
             byte ownerId = packet.ReadByte();
             if (entityOwners[ownerId] != null && !entitiesIDs.Contains(entityId))
             {
                 entities[entityId] = entityOwners[ownerId].OnAddEntity(entityId);
                 entitiesIDs.Add(entityId);
             }
+            Debug.Log($"Nova entidade de {ownerId}! Id = {entityId}");
         }
 
         private EntityGameSnapshot ReadEntityGameSnapshots(ref PacketReader packet, bool isDeltaSync)
@@ -151,7 +152,7 @@ namespace ClientSide.PacketCouriers.Entities
             EntityTransformWithId[] entityTransforms = new EntityTransformWithId[amountOfEntities];
             for (int i = 0; i < amountOfEntities; i++)
             {
-                short ID = packet.ReadInt16();
+                ushort ID = packet.ReadUInt16();
                 entityTransforms[i] = new EntityTransformWithId(new EntityTransform(packet.ReadVector3(), packet.ReadQuaternion()), ID, isDeltaSync);
             }
             return new EntityGameSnapshot(entityTransforms, arriveTime);
@@ -181,10 +182,10 @@ namespace ClientSide.PacketCouriers.Entities
     public struct EntityTransformWithId
     {
         public EntityTransform EntityTransform;
-        public short ID;
+        public ushort ID;
         public bool IsDeltaSync;
 
-        public EntityTransformWithId(EntityTransform entityTransform, short id, bool isDeltaSync)
+        public EntityTransformWithId(EntityTransform entityTransform, ushort id, bool isDeltaSync)
         {
             EntityTransform = entityTransform;
             ID = id;

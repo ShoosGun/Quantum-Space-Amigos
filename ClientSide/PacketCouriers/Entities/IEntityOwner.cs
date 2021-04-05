@@ -6,7 +6,7 @@ namespace ClientSide.PacketCouriers.Entities
 {
     public interface IEntityOwner
     {
-        NetworkedEntity OnAddEntity(short id);
-        void OnRemoveEntity(short id);
+        NetworkedEntity OnAddEntity(ushort id);
+        void OnRemoveEntity(ushort id);
     }
 }

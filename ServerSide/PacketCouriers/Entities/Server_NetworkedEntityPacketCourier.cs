@@ -15,14 +15,14 @@ namespace ServerSide.PacketCouriers.Entities
         private Transform ReferenceFrameTransform;
         private Server Server;
 
-        private const short MAX_AMOUNT_OF_ENTITIES = 2048;
+        private const ushort MAX_AMOUNT_OF_ENTITIES = 2048;
         protected NetworkedEntity[] entities = new NetworkedEntity[MAX_AMOUNT_OF_ENTITIES];
 
         static byte lastEntityOwnerID = 0;
 
-        private List<short> entitiesIDs = new List<short>();
-        private List<short> availlablePositions = new List<short>();
-        public static short LastID { get; private set; }
+        private List<ushort> entitiesIDs = new List<ushort>();
+        private List<ushort> availlablePositions = new List<ushort>();
+        public static ushort LastID { get; private set; }
 
         static private List<EntityGameSnapshot> gameSnapshots = new List<EntityGameSnapshot>();
         const int MAX_SNAPSHOTS = 10; //Número máxmo fotos que se pode ter do jogo
@@ -77,10 +77,13 @@ namespace ServerSide.PacketCouriers.Entities
         /// <returns></returns>
         public byte AddEntityOwner()
         {
-            Debug.Log("Novo dono de entidades");
-
             if (lastEntityOwnerID < 254)
-                return ++lastEntityOwnerID;
+            {
+                byte thisOwnerID = lastEntityOwnerID;
+                lastEntityOwnerID++;
+                Debug.Log($"Novo dono de entidades ID = {thisOwnerID}");
+                return thisOwnerID;
+            }
             else
                 return 255;
         }
@@ -90,14 +93,14 @@ namespace ServerSide.PacketCouriers.Entities
         /// </summary>
         /// <param name="entity"></param>
         /// <returns> Returns the ID of the synced entity</returns>
-        public short AddEntitySync(NetworkedEntity entity, byte ownerID)
+        public ushort AddEntitySync(NetworkedEntity entity, byte ownerID)
         {
             Debug.Log($"Nova entidade de dono com ID = {ownerID}");
 
             if (ownerID > 255)
                 return MAX_AMOUNT_OF_ENTITIES;
 
-            short ID = MAX_AMOUNT_OF_ENTITIES;
+            ushort ID = MAX_AMOUNT_OF_ENTITIES;
 
             if (availlablePositions.Count > 0)
             {
@@ -130,7 +133,7 @@ namespace ServerSide.PacketCouriers.Entities
             return ID;
         }
 
-        public void RemoveEntitySync(short ID)
+        public void RemoveEntitySync(ushort ID)
         {
             Debug.Log($"Removendo a entidade de ID = {ID}");
 
@@ -153,8 +156,8 @@ namespace ServerSide.PacketCouriers.Entities
             Debug.Log($"Fazendo o sync das entidades");
             packet.Write((byte)Header.NET_ENTITY_PC);
             packet.Write((byte)EntityHeader.ENTITY_SYNC);
-            packet.Write((short)entitiesIDs.Count);
-            foreach(short id in entitiesIDs)
+            packet.Write((ushort)entitiesIDs.Count);
+            foreach(ushort id in entitiesIDs)
             {
                 packet.Write(id); //O id da entidade
                 packet.Write(entities[id].PCOwner); //O id de quem pediu para sincroniza-la
@@ -179,16 +182,16 @@ namespace ServerSide.PacketCouriers.Entities
 
         public struct EntityGameSnapshot
         {
-            public KeyValuePair<EntityTransform, short>[] TransformsWithIds;
+            public KeyValuePair<EntityTransform, ushort>[] TransformsWithIds;
             public SnapshotTick SnapshotTick;
 
-            public EntityGameSnapshot(ref List<short> entitiesIds, Transform InertialReference, ref NetworkedEntity[] entities, SnapshotTick snapshotTick)
+            public EntityGameSnapshot(ref List<ushort> entitiesIds, Transform InertialReference, ref NetworkedEntity[] entities, SnapshotTick snapshotTick)
             {
                 SnapshotTick = snapshotTick;
 
-                TransformsWithIds = new KeyValuePair<EntityTransform, short>[entitiesIds.Count];
+                TransformsWithIds = new KeyValuePair<EntityTransform, ushort>[entitiesIds.Count];
                 for (int i = 0; i < entitiesIds.Count; i++)
-                    TransformsWithIds[i] = new KeyValuePair<EntityTransform, short>(new EntityTransform(InertialReference.InverseTransformPoint(entities[entitiesIds[i]].rigidbody.position), entities[entitiesIds[i]].rigidbody.rotation), entitiesIds[i]);
+                    TransformsWithIds[i] = new KeyValuePair<EntityTransform, ushort>(new EntityTransform(InertialReference.InverseTransformPoint(entities[entitiesIds[i]].rigidbody.position), Quaternion.Inverse(InertialReference.rigidbody.rotation) * entities[entitiesIds[i]].rigidbody.rotation), entitiesIds[i]);
             }
         }
     }

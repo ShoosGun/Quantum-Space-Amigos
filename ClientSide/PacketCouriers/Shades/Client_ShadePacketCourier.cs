@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using ClientSide.Sockets;
 using ClientSide.PacketCouriers.Entities;
+using ClientSide.PacketCouriers.Shades.MovementConstraints;
 
 namespace ClientSide.PacketCouriers.Shades
 {
@@ -10,12 +11,13 @@ namespace ClientSide.PacketCouriers.Shades
     {
         private Client client;
         private Client_NetworkedEntityPacketCourier entityPacketCourier;
+        private OWRigidbodyFollowsAnother playerConstrain;
         
         private Shade playerShade;
-        private short playerShadeId;
+        private ushort playerShadeId;
         private bool hasReceivedId = false;
-        private List<short> shadesIDs = new List<short>();
-        private Dictionary<short, Shade> shadesLookUpTable = new Dictionary<short, Shade>();
+        private List<ushort> shadesIDs = new List<ushort>();
+        private Dictionary<ushort, Shade> shadesLookUpTable = new Dictionary<ushort, Shade>();
 
         bool connectedToServer = false;
 
@@ -26,6 +28,8 @@ namespace ClientSide.PacketCouriers.Shades
 
         void Start()
         {
+            playerConstrain = GameObject.FindGameObjectWithTag("Player").AddComponent<OWRigidbodyFollowsAnother>();
+
             GameObject go = GameObject.Find("QSAClient");
             client = go.GetComponent<ClientMod>()._clientSide;
             entityPacketCourier = go.GetComponent<Client_NetworkedEntityPacketCourier>();
@@ -42,7 +46,6 @@ namespace ClientSide.PacketCouriers.Shades
 
         private void Client_Connection()
         {
-            //playerShade = GameObject.CreatePrimitive(PrimitiveType.Cylinder).AddComponent<Shade>();
             connectedToServer = true;
             Debug.Log("Conectados no Servidor!");
         }
@@ -51,8 +54,9 @@ namespace ClientSide.PacketCouriers.Shades
         private void Client_Disconnection()
         {
             playerShade = null;
+            playerConstrain.Reset();
 
-            foreach(short ID in shadesIDs)
+            foreach (ushort ID in shadesIDs)
                 shadesLookUpTable[ID].DestroyShade();
 
             shadesIDs.Clear();
@@ -63,18 +67,23 @@ namespace ClientSide.PacketCouriers.Shades
             Debug.Log("Desconectados do servidor");
         }
         
-        public NetworkedEntity OnAddEntity(short id)
+        public NetworkedEntity OnAddEntity(ushort id)
         {
             shadesIDs.Add(id);
             if (!shadesLookUpTable.ContainsKey(id))
             {
-                Shade addedShade = GameObject.CreatePrimitive(PrimitiveType.Cylinder).AddComponent<Shade>();
+                Shade addedShade = GameObject.CreatePrimitive(PrimitiveType.Cylinder).AddComponent<Shade>().GenerateShade();
                 shadesLookUpTable.Add(id, addedShade);
 
                 if (id == playerShadeId)
+                {
                     playerShade = addedShade;
+                    //playerConstrain.SetConstrain(playerShade.GetAttachedOWRigidbody());
+                }
 
                 Debug.Log($"Nova Shade! ID = {id}");
+                addedShade.GoToNetworkedMode();
+                Debug.Log("Shade em modo de sincronizacao");
 
                 return addedShade;
             }
@@ -82,9 +91,10 @@ namespace ClientSide.PacketCouriers.Shades
                 return shadesLookUpTable[id];
         }
 
-        public void OnRemoveEntity(short id)
+        public void OnRemoveEntity(ushort id)
         {
             shadesIDs.Remove(id);
+            shadesLookUpTable[id].GoToSimulationMode();
             shadesLookUpTable[id].DestroyShade();
             shadesLookUpTable.Remove(id);
         }
@@ -112,8 +122,6 @@ namespace ClientSide.PacketCouriers.Shades
                 PacketWriter pk = new PacketWriter();
                 pk.Write((byte)Header.SHADE_PC);
                 pk.Write((byte)ShadeHeader.ENTITY_OWNER_ID);
-                pk.Write((byte)Header.NET_ENTITY_PC);
-                pk.Write((byte)EntityHeader.ENTITY_SYNC);
                 client.Send(pk.GetBytes());
             }
         }
@@ -131,7 +139,7 @@ namespace ClientSide.PacketCouriers.Shades
                         entityPacketCourier.SetEntityOwner(SHADEPC_ID, this);
                     }
 
-                    short shadeID = packet.ReadInt16();
+                    ushort shadeID = packet.ReadUInt16();
                     if (shadeID != playerShadeId)
                     {
                         playerShadeId = shadeID;
@@ -150,7 +158,6 @@ namespace ClientSide.PacketCouriers.Shades
                     break;
             }
         }
-
     }
 
     public enum ShadeHeader : byte

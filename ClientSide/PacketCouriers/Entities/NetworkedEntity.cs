@@ -8,7 +8,7 @@ namespace ClientSide.PacketCouriers.Entities
     /// 
     public abstract class NetworkedEntity : MonoBehaviour
     {
-        public short ID;
+        public ushort ID;
 
         /// <summary>
         /// The PacketCourier that owns this ID/Entity

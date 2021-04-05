@@ -6,8 +6,10 @@ using System.Net.Sockets;
 using System.Threading;
 using DIMOWAModLoader;
 using System.IO;
+
 using ClientSide.PacketCouriers.Shades;
 using ClientSide.PacketCouriers.Entities;
+using ClientSide.PacketCouriers.PersistentOWRigd;
 
 namespace ClientSide.Sockets
 {
@@ -27,19 +29,21 @@ namespace ClientSide.Sockets
 
         private Client_ShadePacketCourier shadePacketCourier;
         private Client_NetworkedEntityPacketCourier networkedEntityPacketCourier;
+        private Client_PersistentOWRigdPacketCourier persistentOWRigdPacketCourier;
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="debugger"></param>
         /// <param name="receivingLimit"> In packets/s </param>
-        public Client(ClientDebuggerSide debugger,Client_ShadePacketCourier shadePacketCourier, Client_NetworkedEntityPacketCourier networkedEntityPacketCourier, int receivingLimit = 100)
+        public Client(ClientDebuggerSide debugger,Client_ShadePacketCourier shadePacketCourier, Client_NetworkedEntityPacketCourier networkedEntityPacketCourier, Client_PersistentOWRigdPacketCourier persistentOWRigdPacketCourier, int receivingLimit = 100)
         {
             Connected = false;
             this.receivingLimit = receivingLimit;
             this.debugger = debugger;
             this.shadePacketCourier = shadePacketCourier;
             this.networkedEntityPacketCourier = networkedEntityPacketCourier;
+            this.persistentOWRigdPacketCourier = persistentOWRigdPacketCourier;
         }
 
         /// <summary>
@@ -166,6 +170,10 @@ namespace ClientSide.Sockets
 
                         case Header.NET_ENTITY_PC:
                             networkedEntityPacketCourier.Receive(ref packet);
+                            break;
+
+                        case Header.PERSISTENT_RIGIDB_PC:
+                            persistentOWRigdPacketCourier.Receive(ref packet);
                             break;
 
                         case Header.REFRESH:

@@ -9,16 +9,15 @@ namespace ServerSide.PacketCouriers.Shades
 {
     public class Server_ShadePacketCourier : MonoBehaviour, IPacketCourier
     {
-        //Achar o que aki está null
         private Server server;
         private Server_NetworkedEntityPacketCourier entityPacketCourier;
 
         private Shade serverShade;
 
-        private List<short> shadesIDs = new List<short>();
-        private Dictionary<short, ShadePacketPair> shadesLookUpTable = new Dictionary<short, ShadePacketPair>();
+        private List<ushort> shadesIDs = new List<ushort>();
+        private Dictionary<ushort, ShadePacketPair> shadesLookUpTable = new Dictionary<ushort, ShadePacketPair>();
 
-        private Dictionary<string, short> clientsIDsConversionTable = new Dictionary<string, short>(); //Para converter Id do cliente -> id da entidade (shade)
+        private Dictionary<string, ushort> clientsIDsConversionTable = new Dictionary<string, ushort>(); //Para converter Id do cliente -> id da entidade (shade)
         
         /// <summary>
         /// The ID for using the NetworkedEntityPC
@@ -44,7 +43,7 @@ namespace ServerSide.PacketCouriers.Shades
         private void Server_NewConnectionID(string clientID)
         {
             Shade newShade = GameObject.CreatePrimitive(PrimitiveType.Cylinder).AddComponent<Shade>();
-            short shadeID = entityPacketCourier.AddEntitySync(newShade, SHADEPC_ID);
+            ushort shadeID = entityPacketCourier.AddEntitySync(newShade, SHADEPC_ID);
 
             //Criando e guardando a shade do cliente que acabou de conectar
             clientsIDsConversionTable.Add(clientID, shadeID);
@@ -71,7 +70,7 @@ namespace ServerSide.PacketCouriers.Shades
         {
             if (clientsIDsConversionTable.ContainsKey(clientID))
             {
-                short shadeID = clientsIDsConversionTable[clientID];
+                ushort shadeID = clientsIDsConversionTable[clientID];
 
                 shadesLookUpTable[shadeID].Shade.DestroyShade();
                 shadesLookUpTable[shadeID].MovementPacketsCache.Clear();
@@ -92,7 +91,7 @@ namespace ServerSide.PacketCouriers.Shades
                 serverShade = GameObject.CreatePrimitive(PrimitiveType.Cylinder).AddComponent<Shade>();
 
                 SHADEPC_ID = entityPacketCourier.AddEntityOwner();
-                short serverShadeID = entityPacketCourier.AddEntitySync(serverShade, SHADEPC_ID);
+                ushort serverShadeID = entityPacketCourier.AddEntitySync(serverShade, SHADEPC_ID);
 
                 serverShade.gameObject.collider.enabled = false;
                 serverShade.gameObject.AddComponent<MovementConstraints.OWRigidbodyFollowsAnother>();
@@ -111,7 +110,7 @@ namespace ServerSide.PacketCouriers.Shades
         void FixedUpdate()
         {
             //Dá a movimentação recebida dos clientes para suas shades
-            foreach (short shadeID in shadesIDs)
+            foreach (ushort shadeID in shadesIDs)
             {
                 ShadePacketPair shadePacketPair = shadesLookUpTable[shadeID];
                 if (shadePacketPair.MovementPacketsCache.Count > 0)
@@ -149,20 +148,6 @@ namespace ServerSide.PacketCouriers.Shades
                     server.Send(clientID, packetForClient.GetBytes());
 
                     break;
-
-                //case (byte)EntityHeader.ENTITY_SYNC:
-                //    PacketWriter packetForClients = new PacketWriter();
-                //    short requestingClientShadeId = clientsIDsConversionTable[clientID];
-
-                //    packetForClients.Write((byte)Header.SHADE_PC);
-                //    packetForClients.Write((byte)EntityHeader.ENTITY_SYNC);
-                //    packetForClients.Write((byte)shadesIDs.Count);
-                //    packetForClients.Write(requestingClientShadeId);
-                //    foreach (short id in shadesIDs)
-                //        if (id != requestingClientShadeId)
-                //            packetForClients.Write(id);
-                //    server.Send(clientID, packetForClients.GetBytes());
-                //    break;
                 default:
                     break;
             }
@@ -195,7 +180,7 @@ namespace ServerSide.PacketCouriers.Shades
 
             if (clientsIDsConversionTable.ContainsKey(clientID))
             {
-                short shadeID = clientsIDsConversionTable[clientID];
+                ushort shadeID = clientsIDsConversionTable[clientID];
                 if (shadesLookUpTable[shadeID].MovementPacketsCache.Count == 10)
                     shadesLookUpTable[shadeID].MovementPacketsCache.RemoveAt(0); // Caso, CASO, acumulem
 

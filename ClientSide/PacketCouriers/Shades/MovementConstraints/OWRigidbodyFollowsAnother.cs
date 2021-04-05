@@ -9,6 +9,7 @@ namespace ClientSide.PacketCouriers.Shades.MovementConstraints
     public class OWRigidbodyFollowsAnother : MonoBehaviour
     {
         private const float _acceptableDistanceSqr = 1E-10f;
+        private bool Constrain = false;
 
         private OWRigidbody rigidbodyToFollow;
         private OWRigidbody oWRigidbody;
@@ -20,16 +21,25 @@ namespace ClientSide.PacketCouriers.Shades.MovementConstraints
         {
             this.rigidbodyToFollow = rigidbodyToFollow;
             oWRigidbody = OWUtilities.GetAttachedOWRigidbody(gameObject, false);
+            Constrain = true;
+        }
+
+        public void Reset()
+        {
+            Constrain = false;
         }
         
         private void FixedUpdate()
         {
-            Vector3 distance = rigidbodyToFollow.GetPosition() - oWRigidbody.GetPosition();
-
-            if (distance.sqrMagnitude > _acceptableDistanceSqr)
+            if (Constrain)
             {
-                oWRigidbody.MoveToPosition(distance + oWRigidbody.GetPosition());
-                oWRigidbody.AddVelocityChange(oWRigidbody.GetRelativeVelocity(rigidbodyToFollow));
+                Vector3 distance = rigidbodyToFollow.GetPosition() - oWRigidbody.GetPosition();
+
+                if (distance.sqrMagnitude > _acceptableDistanceSqr)
+                {
+                    oWRigidbody.MoveToPosition(distance + oWRigidbody.GetPosition());
+                    oWRigidbody.AddVelocityChange(oWRigidbody.GetRelativeVelocity(rigidbodyToFollow));
+                }
             }
         }
     }

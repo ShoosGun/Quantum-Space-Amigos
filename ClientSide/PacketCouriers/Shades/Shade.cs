@@ -1,13 +1,14 @@
 ﻿using UnityEngine;
 using ClientSide.PacketCouriers.Entities;
+using ClientSide.PacketCouriers.PersistentOWRigd;
 
 namespace ClientSide.PacketCouriers.Shades
 {
-    public class Shade : NetworkedEntity
+    public class Shade : OWRigidbodyNetworker
     {
         public string Name = "";
 
-        protected void Start()//GameObject.CreatePrimitive(PrimitiveType.Cylinder).AddComponent<Shade>();
+        public Shade GenerateShade()//GameObject.CreatePrimitive(PrimitiveType.Cylinder).AddComponent<Shade>();
         {
 
             Transform playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
@@ -22,29 +23,30 @@ namespace ClientSide.PacketCouriers.Shades
             rigidbody.drag = 0f;
             rigidbody.angularDrag = 0f;
             rigidbody.isKinematic = true;
+            
+            if (playerTransform.collider.enabled && collider.enabled)
+            {
+                Physics.IgnoreCollision(collider, playerTransform.collider);
+            }
 
-            //if (taggedComponent.enabled)
-            //{
-            //    Physics.IgnoreCollision(collider, taggedComponent);
-            //}
             gameObject.AddComponent<OWRigidbody>();
-
-            collider.enabled = false;
+            
             //Após testes reabilitar esses componentes mais deixalos com enable = false, e só liga-los se uma extrapolação for ocorrer
-            //         GameObject shadeGODetector = new GameObject
-            //         {
-            //             layer = LayerMask.NameToLayer("BasicEffectVolume")
-            //         };
+            GameObject shadeGODetector = new GameObject
+            {
+                layer = LayerMask.NameToLayer("BasicEffectVolume")
+            };
 
-            //         shadeGODetector.GetComponent<Transform>().parent = transform;
-            //         shadeGODetector.GetComponent<Transform>().name = "Detector";
-            //         shadeGODetector.AddComponent<SphereCollider>().isTrigger = true;
+            shadeGODetector.GetComponent<Transform>().parent = transform;
+            shadeGODetector.GetComponent<Transform>().name = "Detector";
+            shadeGODetector.AddComponent<SphereCollider>().isTrigger = true;
 
-            //         shadeGODetector.AddComponent<AlignmentFieldDetector>();
-            //         gameObject.AddComponent<AlignWithField>();
+            shadeGODetector.AddComponent<AlignmentFieldDetector>();
+            gameObject.AddComponent<AlignWithField>();
+            
+            gameObject.AddComponent<ShadeDetachHandler>();
 
-            //         MovementModel = gameObject.AddComponent<ShadeMovementModel>();
-            //         gameObject.AddComponent<ShadeDetachHandler>(); 
+            Colliders = new Transform[] { shadeGODetector.transform, collider.transform };
 
             transform.position = playerTransform.position;
             transform.rotation = playerTransform.rotation;
@@ -55,6 +57,7 @@ namespace ClientSide.PacketCouriers.Shades
             //         playerTransform.GetComponent<PlayerCharacterController>().LockMovement(false);
             //         playerTransform.gameObject.AddComponent<OWRigidbodyFollowsAnother>().SetConstrain(OWUtilities.GetAttachedOWRigidbody(gameObject, false));
 
+            return this;
         }
 
         public void DestroyShade()
