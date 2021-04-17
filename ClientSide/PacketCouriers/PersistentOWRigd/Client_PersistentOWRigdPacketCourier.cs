@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using ClientSide.PacketCouriers.Entities;
+using ClientSide.PacketCouriers.Shades.MovementConstraints;
 using ClientSide.Sockets;
 using UnityEngine;
 
@@ -11,7 +12,7 @@ namespace ClientSide.PacketCouriers.PersistentOWRigd
     /// <summary>
     /// For OWRigidbodies that will be synced and are always active, like moons, planets, anglerfishes, the balls in the observatory, the model ship, ...
     /// </summary>
-    public class Client_PersistentOWRigdPacketCourier : MonoBehaviour, IPacketCourier, IEntityOwner
+    public class Client_PersistentOWRigdPacketCourier : MonoBehaviour, IPacketCourier, IEntityOwner //Usar o OWRigidFollowsAnother para consetar isso, transforma-los em kinematic não é suficiente
     {
         private Client client;
         private Client_NetworkedEntityPacketCourier entityPacketCourier;
@@ -19,8 +20,8 @@ namespace ClientSide.PacketCouriers.PersistentOWRigd
         //Nomes dos OWRigidbodies que serão syncados
         private readonly PersistentOWRigdStuff[] OWRigidbodiesGONames = new PersistentOWRigdStuff[]
         {
-            new PersistentOWRigdStuff("ModelShip_Body","Detector","Colliders/body","Colliders/landingGear"),
-            //new PersistentOWRigdStuff("Satellite_Body","Detector","Collider"),
+            new PersistentOWRigdStuff("ModelShip_Body", "Detector", "Colliders/body", "Colliders/landingGear"),
+            //new PersistentOWRigdStuff("Moon_Body"),
         };
 
         ////Nomes do grupo em que eles estão, e ai automaticamente procura por eles (para quando os nomes serem iguais. Ex.: as bolas do observatório)
@@ -28,7 +29,7 @@ namespace ClientSide.PacketCouriers.PersistentOWRigd
         //{ "GravityBallRoot", //Origem das pelotas do observatório, são 3 no total todas chamadas de Ball_Body
         //};
 
-        private OWRigidbodyNetworker[] SyncedOWRigidbodies;
+        private FakePersistentOWRigdNE[] SyncedOWRigidbodies;
         private Dictionary<ushort,int> SyncedOWRigidbodiesIDsWithPositions;
 
         private byte THIS_PC_ID = 255;
@@ -39,12 +40,15 @@ namespace ClientSide.PacketCouriers.PersistentOWRigd
         public void Awake()
         {
             //Pegar referencias de todos os OWRigid que serão sincronizados
-            List<OWRigidbodyNetworker> SyncedOWRigidbodiesList = new List<OWRigidbodyNetworker>();
+            List<FakePersistentOWRigdNE> SyncedOWRigidbodiesList = new List<FakePersistentOWRigdNE>();
 
             for (int i = 0; i < OWRigidbodiesGONames.Length; i++)
             {
-                OWRigidbodyNetworker oW = GameObject.Find(OWRigidbodiesGONames[i].GOName).AddComponent<OWRigidbodyNetworker>();
-                oW.GetCollidersFromPaths(OWRigidbodiesGONames[i].Colliders);
+                Transform t = GameObject.Find(OWRigidbodiesGONames[i].GOName).transform;
+                FakePersistentOWRigdNE oW = CreateFakePersRigd();
+                oW.SetToConstrain(t.GetComponent<OWRigidbody>());
+                oW.GetCollidersFromPaths(OWRigidbodiesGONames[i].Colliders,t);
+
                 SyncedOWRigidbodiesList.Add(oW);
             }
 
@@ -123,17 +127,13 @@ namespace ClientSide.PacketCouriers.PersistentOWRigd
             Debug.Log($"Recebendo a id para sincronizar : {id}");
 
             int positionInArray = SyncedOWRigidbodiesIDsWithPositions[id];
-
-
+            
             Debug.Log($"Posicao na fila : {positionInArray}");
 
             SyncedOWRigidbodies[positionInArray].GoToNetworkedMode();
-
-            ////Teste para ver se o problema com a nave é virar kinematic
-            //if (SyncedOWRigidbodies[positionInArray].name == "ModelShip_Body")
-            //    SyncedOWRigidbodies[positionInArray].rigidbody.isKinematic = false;
-
             Debug.Log("GO preparado para sincronizar");
+            SyncedOWRigidbodies[positionInArray].Constrain();
+            Debug.Log("GO impedindo movimentos do objeto alvo");
 
             return SyncedOWRigidbodies[positionInArray];
         }
@@ -142,10 +142,28 @@ namespace ClientSide.PacketCouriers.PersistentOWRigd
         {
             int positionInArray = SyncedOWRigidbodiesIDsWithPositions[id];
 
-            SyncedOWRigidbodies[positionInArray].GoToSimulationMode();
+            SyncedOWRigidbodies[positionInArray].GoToSimulationMode(true);
+            SyncedOWRigidbodies[positionInArray].ResetConstraint();
+
             SyncedOWRigidbodiesIDsWithPositions.Remove(id);
         }
+
+
+        FakePersistentOWRigdNE CreateFakePersRigd()
+        {
+            GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            go.AddComponent<Rigidbody>().isKinematic = true;
+            go.AddComponent<OWRigidbody>();
+
+            go.collider.enabled = false;
+            go.layer = LayerMask.NameToLayer("Primitive");
+            go.transform.parent = GameObject.Find("TimberHearth_Body").transform;
+
+            return go.AddComponent<FakePersistentOWRigdNE>();
+        }
     }
+
+
     enum PersistentOWRigd_Header : byte
     {
         ENTITY_OWNER_ID,

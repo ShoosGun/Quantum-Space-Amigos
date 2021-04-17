@@ -1,16 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using ClientSide.PacketCouriers.Entities;
 using UnityEngine;
 
-namespace ClientSide.PacketCouriers.PersistentOWRigd
+namespace ClientSide.PacketCouriers.Entities
 {
     public class OWRigidbodyNetworker : NetworkedEntity
     {
-        public bool isItInSimulationMode = true;
+        public bool isItInSimulationMode { get; protected set; } = true;
         
-        public Transform[] Colliders;
+        public Transform[] Colliders = new Transform[] { };
         
         /// <summary>
         /// Dissables the ability of the game object of feeling gravity fields, makes it kinematic and disables collision/detectors
@@ -21,8 +20,6 @@ namespace ClientSide.PacketCouriers.PersistentOWRigd
 
             foreach (var col in Colliders)
                 col.collider.enabled = false;
-
-            gameObject.rigidbody.velocity = Vector3.zero;
 
             isItInSimulationMode = false;
         }
@@ -39,13 +36,17 @@ namespace ClientSide.PacketCouriers.PersistentOWRigd
            
             isItInSimulationMode = true;
         }
-
         public void GetCollidersFromPaths(string[] CollidersNames)
+        {
+            GetCollidersFromPaths(CollidersNames, transform);
+        }
+
+        public void GetCollidersFromPaths(string[] CollidersNames, Transform parentTransform)
         {
             List<Transform> colliders = new List<Transform>();
 
             foreach (string name in CollidersNames)
-                colliders.Add(transform.FindChild(name));
+                colliders.Add(parentTransform.FindChild(name));
 
             Colliders = colliders.ToArray();
         }

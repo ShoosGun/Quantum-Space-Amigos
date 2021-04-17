@@ -12,7 +12,7 @@ namespace ServerSide.PacketCouriers.PersistentOWRigdSync
     /// <summary>
     /// For OWRigidbodies that will be synced and are always active, like moons, planets, anglerfishes, the balls in the observatory, the model ship, ...
     /// </summary>
-    public class Server_PersistentOWRigdPacketCourier : MonoBehaviour, IPacketCourier
+    public class Server_PersistentOWRigdPacketCourier : MonoBehaviour, IPacketCourier 
     {
         private Server server;
         private Server_NetworkedEntityPacketCourier entityPacketCourier;
@@ -21,7 +21,7 @@ namespace ServerSide.PacketCouriers.PersistentOWRigdSync
         private readonly string[] OWRigidbodiesGONames = new string[]
         {
             "ModelShip_Body",
-            //"Satellite_Body",
+            //"Moon_Body",
         };
 
         ////Nomes do grupo em que eles estão, e ai automaticamente procura por eles (para quando os nomes serem iguais. Ex.: as bolas do observatório)

@@ -8,7 +8,7 @@ namespace ClientSide.PacketCouriers.Shades.MovementConstraints
     //Achar um nome melhor
     public class OWRigidbodyFollowsAnother : MonoBehaviour
     {
-        private const float _acceptableDistanceSqr = 1E-10f;
+        private const float _acceptableDistanceSqr = 1E-9f;
         private bool Constrain = false;
 
         private OWRigidbody rigidbodyToFollow;
@@ -16,7 +16,7 @@ namespace ClientSide.PacketCouriers.Shades.MovementConstraints
         //Pode ser usado para fazer um shade ou um player seguir entre si
         //melhor não usar nos dois
 
-        //não podemos usar construtores, o que mais você quer que eu fassa
+        //não podemos usar construtores, o que mais você quer que eu faça
         public void SetConstrain(OWRigidbody rigidbodyToFollow)
         {
             this.rigidbodyToFollow = rigidbodyToFollow;
@@ -35,12 +35,15 @@ namespace ClientSide.PacketCouriers.Shades.MovementConstraints
             {
                 Vector3 distance = rigidbodyToFollow.GetPosition() - oWRigidbody.GetPosition();
 
-                if (distance.sqrMagnitude > _acceptableDistanceSqr)
+                if (distance.sqrMagnitude >= _acceptableDistanceSqr)
                 {
                     oWRigidbody.MoveToPosition(distance + oWRigidbody.GetPosition());
                     oWRigidbody.AddVelocityChange(oWRigidbody.GetRelativeVelocity(rigidbodyToFollow));
                 }
+                else if(oWRigidbody.GetRelativeVelocity(rigidbodyToFollow).sqrMagnitude >= _acceptableDistanceSqr)
+                    oWRigidbody.AddVelocityChange(oWRigidbody.GetRelativeVelocity(rigidbodyToFollow));
             }
         }
+
     }
 }
