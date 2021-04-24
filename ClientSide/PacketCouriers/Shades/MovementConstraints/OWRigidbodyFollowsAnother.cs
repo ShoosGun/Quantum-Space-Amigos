@@ -12,15 +12,30 @@ namespace ClientSide.PacketCouriers.Shades.MovementConstraints
         private bool Constrain = false;
 
         private OWRigidbody rigidbodyToFollow;
-        private OWRigidbody oWRigidbody;
+        private OWRigidbody rigidbodyThatFollows;
         //Pode ser usado para fazer um shade ou um player seguir entre si
         //melhor não usar nos dois
 
         //não podemos usar construtores, o que mais você quer que eu faça
-        public void SetConstrain(OWRigidbody rigidbodyToFollow)
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="rigidbody"></param>
+        /// <param name="isAConstrainer">If set to false, the object with the script will be the one who follows, and if set to true, the opposite happens.</param>
+        public void SetConstrain(OWRigidbody rigidbody , bool isAConstrainer = false)
         {
-            this.rigidbodyToFollow = rigidbodyToFollow;
-            oWRigidbody = OWUtilities.GetAttachedOWRigidbody(gameObject, false);
+            if (!isAConstrainer)
+            {
+                rigidbodyToFollow = rigidbody;
+                rigidbodyThatFollows = OWUtilities.GetAttachedOWRigidbody(gameObject, false);
+            }
+            else
+            {
+                rigidbodyToFollow = OWUtilities.GetAttachedOWRigidbody(gameObject, false);
+                rigidbodyThatFollows = rigidbody;
+            }
+
             Constrain = true;
         }
 
@@ -33,15 +48,20 @@ namespace ClientSide.PacketCouriers.Shades.MovementConstraints
         {
             if (Constrain)
             {
-                Vector3 distance = rigidbodyToFollow.GetPosition() - oWRigidbody.GetPosition();
+                //Vector3 distance = rigidbodyToFollow.GetPosition() - rigidbodyThatFollows.GetPosition();
 
-                if (distance.sqrMagnitude >= _acceptableDistanceSqr)
-                {
-                    oWRigidbody.MoveToPosition(distance + oWRigidbody.GetPosition());
-                    oWRigidbody.AddVelocityChange(oWRigidbody.GetRelativeVelocity(rigidbodyToFollow));
-                }
-                else if(oWRigidbody.GetRelativeVelocity(rigidbodyToFollow).sqrMagnitude >= _acceptableDistanceSqr)
-                    oWRigidbody.AddVelocityChange(oWRigidbody.GetRelativeVelocity(rigidbodyToFollow));
+                //if (distance.sqrMagnitude >= _acceptableDistanceSqr)
+                //{
+                    rigidbodyThatFollows.MoveToPosition(rigidbodyToFollow.GetPosition());
+                    rigidbodyThatFollows.AddVelocityChange(rigidbodyThatFollows.GetRelativeVelocity(rigidbodyToFollow));
+                //}
+                //else if(rigidbodyThatFollows.GetRelativeVelocity(rigidbodyToFollow).sqrMagnitude >= _acceptableDistanceSqr)
+                //    rigidbodyThatFollows.AddVelocityChange(rigidbodyThatFollows.GetRelativeVelocity(rigidbodyToFollow));
+
+                //Quaternion rotation = Quaternion.Inverse(rigidbodyToFollow.GetRotation()) * rigidbodyThatFollows.GetRotation();
+                rigidbodyThatFollows.MoveToRotation(rigidbodyToFollow.GetRotation());
+                rigidbodyThatFollows.SetAngularVelocity(rigidbodyToFollow.GetAngularVelocity());
+                
             }
         }
 

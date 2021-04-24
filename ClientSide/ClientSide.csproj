@@ -54,7 +54,7 @@
     <Compile Include="PacketCouriers\Entities\Client_NetworkedEntityPacketCourier.cs" />
     <Compile Include="PacketCouriers\PersistentOWRigd\Client_PersistentOWRigdPacketCourier.cs" />
     <Compile Include="PacketCouriers\Entities\OWRigidbodyNetworker.cs" />
-    <Compile Include="PacketCouriers\PersistentOWRigd\FakePersistentOWRigdNE.cs" />
+    <Compile Include="PacketCouriers\PersistentOWRigd\PersistentOWRigdNE.cs" />
     <Compile Include="PacketCouriers\Shades\MovementConstraints\OWRigidbodyFollowsAnother.cs" />
     <Compile Include="PacketCouriers\Shades\Client_ShadePacketCourier.cs" />
     <Compile Include="SettingsMenu\ClientModSettingsMenu.cs" />

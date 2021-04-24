@@ -65,13 +65,16 @@ namespace ClientSide.PacketCouriers.Entities
                         //Delta Syncs
                         if (transformWithId.IsDeltaSync)
                         {
-                            networkedEntity.rigidbody.position = ReferenceFrameTransform.TransformDirection(transformWithId.EntityTransform.Position) + networkedEntity.rigidbody.position;
-                            networkedEntity.rigidbody.rotation = transformWithId.EntityTransform.Rotation * networkedEntity.rigidbody.rotation;
+                            networkedEntity.transform.position += ReferenceFrameTransform.TransformDirection(transformWithId.EntityTransform.Position);
+                            networkedEntity.transform.rotation = transformWithId.EntityTransform.Rotation * networkedEntity.transform.rotation;
                         }
                         else
                         {
-                            networkedEntity.rigidbody.position = ReferenceFrameTransform.TransformPoint(transformWithId.EntityTransform.Position);
-                            networkedEntity.rigidbody.rotation = ReferenceFrameTransform.rotation * transformWithId.EntityTransform.Rotation ;
+                            networkedEntity.transform.position = ReferenceFrameTransform.TransformPoint(transformWithId.EntityTransform.Position);
+                            networkedEntity.transform.rotation = ReferenceFrameTransform.rotation * transformWithId.EntityTransform.Rotation ;
+
+                            if (networkedEntity.transform.name == "ModelShip_Body" && Math.Floor(Time.realtimeSinceStartup + 0.5f) % 10 == 0)
+                                Debug.Log($"Pos {networkedEntity.rigidbody.position} vs (Transform)Pos {networkedEntity.transform.position}");
                         }
                     }
                 }

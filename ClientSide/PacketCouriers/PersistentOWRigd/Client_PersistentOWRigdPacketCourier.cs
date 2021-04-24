@@ -29,7 +29,7 @@ namespace ClientSide.PacketCouriers.PersistentOWRigd
         //{ "GravityBallRoot", //Origem das pelotas do observatório, são 3 no total todas chamadas de Ball_Body
         //};
 
-        private FakePersistentOWRigdNE[] SyncedOWRigidbodies;
+        private PersistentOWRigdNE[] SyncedOWRigidbodies;
         private Dictionary<ushort,int> SyncedOWRigidbodiesIDsWithPositions;
 
         private byte THIS_PC_ID = 255;
@@ -40,15 +40,15 @@ namespace ClientSide.PacketCouriers.PersistentOWRigd
         public void Awake()
         {
             //Pegar referencias de todos os OWRigid que serão sincronizados
-            List<FakePersistentOWRigdNE> SyncedOWRigidbodiesList = new List<FakePersistentOWRigdNE>();
+            List<PersistentOWRigdNE> SyncedOWRigidbodiesList = new List<PersistentOWRigdNE>();
 
             for (int i = 0; i < OWRigidbodiesGONames.Length; i++)
             {
-                Transform t = GameObject.Find(OWRigidbodiesGONames[i].GOName).transform;
-                FakePersistentOWRigdNE oW = CreateFakePersRigd();
-                oW.SetToConstrain(t.GetComponent<OWRigidbody>());
-                oW.GetCollidersFromPaths(OWRigidbodiesGONames[i].Colliders,t);
+                PersistentOWRigdNE oW = GameObject.Find(OWRigidbodiesGONames[i].GOName).AddComponent<PersistentOWRigdNE>();
+                //FakePersistentOWRigdNE oW = CreateFakePersRigd();
+                //oW.SetToConstrain(t.GetComponent<OWRigidbody>());
 
+                oW.GetCollidersFromPaths(OWRigidbodiesGONames[i].Colliders);
                 SyncedOWRigidbodiesList.Add(oW);
             }
 
@@ -132,8 +132,7 @@ namespace ClientSide.PacketCouriers.PersistentOWRigd
 
             SyncedOWRigidbodies[positionInArray].GoToNetworkedMode();
             Debug.Log("GO preparado para sincronizar");
-            SyncedOWRigidbodies[positionInArray].Constrain();
-            Debug.Log("GO impedindo movimentos do objeto alvo");
+            //Debug.Log("GO impedindo movimentos do objeto alvo");
 
             return SyncedOWRigidbodies[positionInArray];
         }
@@ -142,25 +141,24 @@ namespace ClientSide.PacketCouriers.PersistentOWRigd
         {
             int positionInArray = SyncedOWRigidbodiesIDsWithPositions[id];
 
-            SyncedOWRigidbodies[positionInArray].GoToSimulationMode(true);
-            SyncedOWRigidbodies[positionInArray].ResetConstraint();
+            SyncedOWRigidbodies[positionInArray].GoToSimulationMode();
 
             SyncedOWRigidbodiesIDsWithPositions.Remove(id);
         }
 
 
-        FakePersistentOWRigdNE CreateFakePersRigd()
-        {
-            GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            go.AddComponent<Rigidbody>().isKinematic = true;
-            go.AddComponent<OWRigidbody>();
+        //FakePersistentOWRigdNE CreateFakePersRigd()
+        //{
+        //    GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        //    go.AddComponent<Rigidbody>().isKinematic = true;
+        //    go.AddComponent<OWRigidbody>();
 
-            go.collider.enabled = false;
-            go.layer = LayerMask.NameToLayer("Primitive");
-            go.transform.parent = GameObject.Find("TimberHearth_Body").transform;
+        //    go.collider.enabled = false;
+        //    go.layer = LayerMask.NameToLayer("Primitive");
+        //    go.transform.parent = GameObject.Find("TimberHearth_Body").transform;
 
-            return go.AddComponent<FakePersistentOWRigdNE>();
-        }
+        //    return go.AddComponent<FakePersistentOWRigdNE>();
+        //}
     }
 
 
