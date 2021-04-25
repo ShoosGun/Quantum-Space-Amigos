@@ -41,7 +41,7 @@ namespace ServerSide.PacketCouriers.Entities
             if (gameSnapshots.Count > 0)
             {
                 PacketWriter packet = new PacketWriter();
-                packet.Write((byte)Header.NET_ENTITY_PC);                      //
+                packet.Write((byte)Header.Header_Size + 1);                      //
                 packet.Write((byte)EntityHeader.TRANSFORM_SYNC); //Só position sync por enquanto
                 packet.Write(gameSnapshots[0].SnapshotTick.Tick);     //Referencial no passado(do cl.Key)       Referencial do presente (do lookUpTable)
                 packet.Write((short)gameSnapshots[0].TransformsWithIds.Length);
@@ -123,7 +123,7 @@ namespace ServerSide.PacketCouriers.Entities
 
                 //Mandando o surgimento uma entidade para os clientes
                 PacketWriter packet = new PacketWriter();
-                packet.Write((byte)Header.NET_ENTITY_PC);
+                packet.Write((byte)Header.Header_Size + 1);
                 packet.Write((byte)EntityHeader.ENTITY_DELTA_PLUS_SYNC);
                 packet.Write(ID);
                 packet.Write(ownerID);
@@ -145,7 +145,7 @@ namespace ServerSide.PacketCouriers.Entities
 
             //Mandando o surgimento uma entidade para os clientes
             PacketWriter packet = new PacketWriter();
-            packet.Write((byte)Header.NET_ENTITY_PC);
+            packet.Write((byte)Header.Header_Size + 1);
             packet.Write((byte)EntityHeader.ENTITY_DELTA_MINUS_SYNC);
             packet.Write(ID);
             Server.SendAll(packet.GetBytes());
@@ -154,7 +154,7 @@ namespace ServerSide.PacketCouriers.Entities
         public void WriteEntitySync(ref PacketWriter packet)
         {
             Debug.Log($"Fazendo o sync das entidades");
-            packet.Write((byte)Header.NET_ENTITY_PC);
+            packet.Write((byte)Header.Header_Size + 1);
             packet.Write((byte)EntityHeader.ENTITY_SYNC);
             packet.Write((ushort)entitiesIDs.Count);
             foreach(ushort id in entitiesIDs)
@@ -191,7 +191,7 @@ namespace ServerSide.PacketCouriers.Entities
 
                 TransformsWithIds = new KeyValuePair<EntityTransform, ushort>[entitiesIds.Count];
                 for (int i = 0; i < entitiesIds.Count; i++)
-                    TransformsWithIds[i] = new KeyValuePair<EntityTransform, ushort>(new EntityTransform(InertialReference.InverseTransformPoint(entities[entitiesIds[i]].rigidbody.position), Quaternion.Inverse(InertialReference.rigidbody.rotation) * entities[entitiesIds[i]].rigidbody.rotation), entitiesIds[i]);
+                    TransformsWithIds[i] = new KeyValuePair<EntityTransform, ushort>(new EntityTransform(InertialReference.InverseTransformPoint(entities[entitiesIds[i]].transform.position), Quaternion.Inverse(InertialReference.transform.rotation) * entities[entitiesIds[i]].transform.rotation), entitiesIds[i]);
             }
         }
     }

@@ -72,9 +72,6 @@ namespace ClientSide.PacketCouriers.Entities
                         {
                             networkedEntity.transform.position = ReferenceFrameTransform.TransformPoint(transformWithId.EntityTransform.Position);
                             networkedEntity.transform.rotation = ReferenceFrameTransform.rotation * transformWithId.EntityTransform.Rotation ;
-
-                            if (networkedEntity.transform.name == "ModelShip_Body" && Math.Floor(Time.realtimeSinceStartup + 0.5f) % 10 == 0)
-                                Debug.Log($"Pos {networkedEntity.rigidbody.position} vs (Transform)Pos {networkedEntity.transform.position}");
                         }
                     }
                 }

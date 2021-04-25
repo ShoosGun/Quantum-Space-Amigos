@@ -56,7 +56,7 @@ namespace ServerSide.PacketCouriers.Shades
             //Mandar para quem chegou o ID do grupo de shades que receberá e o id da sua shade
             PacketWriter packetForClient = new PacketWriter();
 
-            packetForClient.Write((byte)Header.SHADE_PC);
+            packetForClient.Write((byte)Header.Header_Size + 0);
             packetForClient.Write((byte)ShadeHeader.ENTITY_OWNER_ID);
             packetForClient.Write(SHADEPC_ID);
             packetForClient.Write(shadeID);
@@ -141,7 +141,7 @@ namespace ServerSide.PacketCouriers.Shades
                 case ShadeHeader.ENTITY_OWNER_ID:
                     PacketWriter packetForClient = new PacketWriter();
                     Debug.Log($"Enviando o ID da nossa PC = {SHADEPC_ID} e do cliente {clientsIDsConversionTable[clientID]}");
-                    packetForClient.Write((byte)Header.SHADE_PC);
+                    packetForClient.Write((byte)Header.Header_Size + 0);
                     packetForClient.Write((byte)ShadeHeader.ENTITY_OWNER_ID);
                     packetForClient.Write(SHADEPC_ID);//byte
                     packetForClient.Write(clientsIDsConversionTable[clientID]);//short

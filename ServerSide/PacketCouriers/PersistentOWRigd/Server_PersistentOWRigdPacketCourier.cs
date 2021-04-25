@@ -86,7 +86,7 @@ namespace ServerSide.PacketCouriers.PersistentOWRigdSync
             {
                 case PersistentOWRigd_Header.ENTITY_OWNER_ID:
                     PacketWriter packetForClient = new PacketWriter();
-                    packetForClient.Write((byte)Header.PERSISTENT_RIGIDB_PC);
+                    packetForClient.Write((byte)Header.Header_Size + 2);
                     packetForClient.Write((byte)PersistentOWRigd_Header.ENTITY_OWNER_ID);
                     packetForClient.Write(THIS_PC_ID);//byte
                     packetForClient.Write(SyncedOWRigidbodies.Length);//int

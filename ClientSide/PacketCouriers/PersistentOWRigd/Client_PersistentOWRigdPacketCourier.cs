@@ -84,7 +84,7 @@ namespace ClientSide.PacketCouriers.PersistentOWRigd
             if (connectedToServer && !hasReceivedId && (int)(Time.realtimeSinceStartup * 10) % 10 == 0)
             {
                 PacketWriter pk = new PacketWriter();
-                pk.Write((byte)Header.PERSISTENT_RIGIDB_PC);
+                pk.Write((byte)Header.Header_Size + 2);
                 pk.Write((byte)PersistentOWRigd_Header.ENTITY_OWNER_ID);
                 client.Send(pk.GetBytes());
             }
@@ -112,7 +112,7 @@ namespace ClientSide.PacketCouriers.PersistentOWRigd
                             SyncedOWRigidbodiesIDsWithPositions.Add(entityID, i);
                     }
                     PacketWriter pk = new PacketWriter();
-                    pk.Write((byte)Header.NET_ENTITY_PC);
+                    pk.Write((byte)Header.Header_Size + 1);
                     pk.Write((byte)EntityHeader.ENTITY_SYNC);
                     client.Send(pk.GetBytes());
 

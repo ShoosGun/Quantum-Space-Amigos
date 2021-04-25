@@ -105,7 +105,7 @@ namespace ClientSide.PacketCouriers.Shades
             {
                 //Enviando os botões pressionados pelo cliente ao servidor
                 PacketWriter pk = new PacketWriter();
-                pk.Write((byte)Header.SHADE_PC);
+                pk.Write((byte)Header.Header_Size + 0);
                 pk.Write((byte)ShadeHeader.MOVEMENT);
                 pk.Write(DateTime.UtcNow);
 
@@ -120,7 +120,7 @@ namespace ClientSide.PacketCouriers.Shades
             else if (connectedToServer && !hasReceivedId && (int)(Time.realtimeSinceStartup * 10) % 10 == 0)
             {
                 PacketWriter pk = new PacketWriter();
-                pk.Write((byte)Header.SHADE_PC);
+                pk.Write((byte)Header.Header_Size + 0);
                 pk.Write((byte)ShadeHeader.ENTITY_OWNER_ID);
                 client.Send(pk.GetBytes());
             }
@@ -147,7 +147,7 @@ namespace ClientSide.PacketCouriers.Shades
                             playerShade = shadesLookUpTable[playerShadeId];
                     }
                     PacketWriter pk = new PacketWriter();
-                    pk.Write((byte)Header.NET_ENTITY_PC);
+                    pk.Write((byte)Header.Header_Size + 1); //do Entity PC
                     pk.Write((byte)EntityHeader.ENTITY_SYNC);
                     client.Send(pk.GetBytes());
                     Debug.Log($"Recebendo o ID do PC = {SHADEPC_ID} e da nossa shade {shadeID}");

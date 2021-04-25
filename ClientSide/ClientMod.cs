@@ -7,6 +7,7 @@ using DIMOWAModLoader;
 using ClientSide.Sockets;
 using ClientSide.SettingsMenu;
 
+using ClientSide.PacketCouriers;
 using ClientSide.PacketCouriers.Shades;
 using ClientSide.PacketCouriers.Entities;
 using ClientSide.PacketCouriers.PersistentOWRigd;
@@ -43,11 +44,20 @@ namespace ClientSide
 
         private void Start()
         {
+
+            IPacketCourier[] PacketCouriers = new IPacketCourier[]
+            {
+                gameObject.AddComponent<Client_ShadePacketCourier>(),
+                gameObject.AddComponent<Client_NetworkedEntityPacketCourier>(),
+                gameObject.AddComponent<Client_PersistentOWRigdPacketCourier>()
+            };
+            
+
             _debugger = GameObject.Find("DIMOWALevelLoaderHandler").GetComponent<ClientDebuggerSide>();
-            _clientSide = new Client(_debugger, gameObject.AddComponent<Client_ShadePacketCourier>(), 
-                gameObject.AddComponent<Client_NetworkedEntityPacketCourier>(), gameObject.AddComponent<Client_PersistentOWRigdPacketCourier>());
+            _clientSide = new Client(_debugger, PacketCouriers);
 
             gameObject.AddComponent<ClientModSettingsMenu>();
+
             //balão falando que não se está conectado
             //no menu de settings ter uma opção chamada "conectar", e com ela aparecer uma caia de texto de um botão para se conectar ao servidor
             //balão falando que se está tentando conectar e depois se a conecção deu certo
@@ -55,7 +65,7 @@ namespace ClientSide
             //se o cliente foi desconectado do servido voltar ao inicio
 
             //_clientSide.TryConnect(); descobrir maneira do usuario escrever o ip do servidor com GUI
-        }
+        } 
         private void FixedUpdate()
         {
             _clientSide.Update();

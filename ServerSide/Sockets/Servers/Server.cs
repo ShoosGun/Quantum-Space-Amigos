@@ -7,9 +7,7 @@ using System.Threading;
 using System.IO;
 
 
-using ServerSide.PacketCouriers.Shades;
-using ServerSide.PacketCouriers.Entities;
-using ServerSide.PacketCouriers.PersistentOWRigdSync;
+using ServerSide.PacketCouriers;
 
 namespace ServerSide.Sockets.Servers
 {
@@ -35,18 +33,21 @@ namespace ServerSide.Sockets.Servers
 
 
         //Parte legal
-        private Server_ShadePacketCourier shadePacketCourier;
-        private Server_NetworkedEntityPacketCourier networkedEntityPacketCourier;
-        private Server_PersistentOWRigdPacketCourier persistentOWRigdPacketCourier;
-        //Fotografias do jogo, uma a cada..., transformar tudo em uma entidade, a qual pode recebe dados de acordo e envia de maneira semelhante
+        private IPacketCourier[] PacketCouriers;
+
+        //private Server_ShadePacketCourier shadePacketCourier;
+        //private Server_NetworkedEntityPacketCourier networkedEntityPacketCourier;
+        //private Server_PersistentOWRigdPacketCourier persistentOWRigdPacketCourier;
 
 
-        public Server(ClientDebuggerSide debugger, Server_ShadePacketCourier shadePacketCourier, Server_NetworkedEntityPacketCourier networkedEntityPacketCourier, Server_PersistentOWRigdPacketCourier persistentOWRigdPacketCourier)
+        public Server(ClientDebuggerSide debugger, IPacketCourier[] PacketCouriers)
         {
             this.debugger = debugger;
-            this.shadePacketCourier = shadePacketCourier;
-            this.networkedEntityPacketCourier = networkedEntityPacketCourier;
-            this.persistentOWRigdPacketCourier = persistentOWRigdPacketCourier;
+
+            this.PacketCouriers = PacketCouriers;
+            //this.shadePacketCourier = shadePacketCourier;
+            //this.networkedEntityPacketCourier = networkedEntityPacketCourier;
+            //this.persistentOWRigdPacketCourier = persistentOWRigdPacketCourier;
 
             clients = new List<Client>();
             clientsLookUpTable = new Dictionary<string, Client>();
@@ -135,26 +136,17 @@ namespace ServerSide.Sockets.Servers
             {
                 try
                 {
-                    switch ((Header)packet.ReadByte())
-                    {
-                        case Header.SHADE_PC:
-                            shadePacketCourier.Receive(ref packet, c.ID);
-                            break;
-
-                        case Header.NET_ENTITY_PC:
-                            networkedEntityPacketCourier.Receive(ref packet, c.ID);
-                            break;
-
-                        case Header.PERSISTENT_RIGIDB_PC:
-                            persistentOWRigdPacketCourier.Receive(ref packet, c.ID);
-                            break;
-
-                        case Header.REFRESH:
-                            break;
-
-                        default:
-                            throw new EndOfStreamException();
-                    }
+                    byte header = packet.ReadByte();
+                    if (header >= (byte)Header.Header_Size)
+                        PacketCouriers[header - (byte)Header.Header_Size].Receive(ref packet, clientID);
+                    else
+                        switch ((Header)header)
+                        {
+                            case Header.REFRESH:
+                                break;
+                            default:
+                                throw new EndOfStreamException();
+                        }
                 }
                 catch (Exception ex)
                 {
