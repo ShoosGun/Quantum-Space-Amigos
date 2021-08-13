@@ -35,14 +35,16 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Assembly-CSharp - Copia">
-      <HintPath>..\..\..\..\OuterWilds Alpha 1_2\OuterWilds_Alpha_1_2_Data\Managed\Assembly-CSharp - Copia.dll</HintPath>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>..\..\..\..\..\OuterWilds Alpha 1_2\OuterWilds_Alpha_1_2_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
-    <Reference Include="CAMOWA">
-      <HintPath>..\..\DIMOWA\Instalador\CAMOWA.dll</HintPath>
+    <Reference Include="CAMOWA, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\DIMOWA\CAMOWA\bin\OWA\CAMOWA.dll</HintPath>
     </Reference>
-    <Reference Include="DIMOWAModLoader">
-      <HintPath>..\..\DIMOWA\Instalador\DIMOWAModLoader.dll</HintPath>
+    <Reference Include="DIMOWAModLoader, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\DIMOWA\DIMOWAModLoader\bin\Release\DIMOWAModLoader.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -52,6 +54,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="PacketCouriers\NetworkedMessenger\Server_NetworkedMessengerPacketCourier.cs" />
     <Compile Include="PacketCouriers\PersistentOWRigd\Server_PersistentOWRigdPacketCourier.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PacketCouriers\Shades\MovementConstraints\OWRigidbodyFollowsAnother.cs" />
@@ -62,6 +65,7 @@
     <Compile Include="Sockets\Clients\Client.cs" />
     <Compile Include="Sockets\Headers.cs" />
     <Compile Include="Sockets\PacketIO.cs" />
+    <Compile Include="Sockets\Servers\DynamicPacketIO.cs" />
     <Compile Include="Sockets\Servers\Listener.cs" />
     <Compile Include="Sockets\Servers\Server.cs" />
     <Compile Include="Sockets\Servers\UpdatesTypes.cs" />

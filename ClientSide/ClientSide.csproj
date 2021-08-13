@@ -52,6 +52,7 @@
     <Compile Include="PacketCouriers\Entities\IEntityOwner.cs" />
     <Compile Include="PacketCouriers\Entities\NetworkedEntity.cs" />
     <Compile Include="PacketCouriers\Entities\Client_NetworkedEntityPacketCourier.cs" />
+    <Compile Include="PacketCouriers\NetworkedMessenger\Client_NetworkedMessengerPacketCourier.cs" />
     <Compile Include="PacketCouriers\PersistentOWRigd\Client_PersistentOWRigdPacketCourier.cs" />
     <Compile Include="PacketCouriers\Entities\OWRigidbodyNetworker.cs" />
     <Compile Include="PacketCouriers\PersistentOWRigd\PersistentOWRigdNE.cs" />

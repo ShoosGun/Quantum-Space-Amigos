@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using ServerSide.Sockets.Servers;
-using DIMOWAModLoader;
 using CAMOWA;
+using DIMOWAModLoader;
 
-
-using ServerSide.PacketCouriers;
-using ServerSide.PacketCouriers.Shades;
-using ServerSide.PacketCouriers.Entities;
-using ServerSide.PacketCouriers.PersistentOWRigdSync;
+//using ServerSide.PacketCouriers;
+//using ServerSide.PacketCouriers.Shades;
+//using ServerSide.PacketCouriers.Entities;
+//using ServerSide.PacketCouriers.PersistentOWRigdSync;
 
 namespace ServerSide
 {
@@ -36,9 +35,9 @@ namespace ServerSide
         {
             IPacketCourier[] PacketCouriers = new IPacketCourier[]
             {
-                gameObject.AddComponent<Server_ShadePacketCourier>(),
-                gameObject.AddComponent<Server_NetworkedEntityPacketCourier>(),
-                gameObject.AddComponent<Server_PersistentOWRigdPacketCourier>()
+                gameObject.AddComponent<Server_ShadePacketCourier>(), //0
+                gameObject.AddComponent<Server_NetworkedEntityPacketCourier>(), //1
+                gameObject.AddComponent<Server_PersistentOWRigdPacketCourier>() //2
             };
 
             _debugger = GameObject.Find("DIMOWALevelLoaderHandler").GetComponent<ClientDebuggerSide>();

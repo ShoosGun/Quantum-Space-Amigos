@@ -33,28 +33,21 @@ namespace ServerSide.Sockets.Servers
 
 
         //Parte legal
-        private IPacketCourier[] PacketCouriers;
+        //private IPacketCourier[] PacketCouriers;
+        public DynamicPacketIO dynamicPacketIO;
 
-        //private Server_ShadePacketCourier shadePacketCourier;
-        //private Server_NetworkedEntityPacketCourier networkedEntityPacketCourier;
-        //private Server_PersistentOWRigdPacketCourier persistentOWRigdPacketCourier;
-
-
-        public Server(ClientDebuggerSide debugger, IPacketCourier[] PacketCouriers)
+        public Server(ClientDebuggerSide debugger)
         {
             this.debugger = debugger;
 
-            this.PacketCouriers = PacketCouriers;
-            //this.shadePacketCourier = shadePacketCourier;
-            //this.networkedEntityPacketCourier = networkedEntityPacketCourier;
-            //this.persistentOWRigdPacketCourier = persistentOWRigdPacketCourier;
+            dynamicPacketIO = new DynamicPacketIO();
 
             clients = new List<Client>();
             clientsLookUpTable = new Dictionary<string, Client>();
             l = new Listener(2121, AllowedConnections.ANY, this.debugger);
             l.SocketAccepted += L_SocketAccepted;
             l.Start();
-            
+
         }
 
         /// <summary>
@@ -81,9 +74,9 @@ namespace ServerSide.Sockets.Servers
             string clientsString = "";
             foreach (Client c in clients)
             {
-                clientsString = clientsString + "\n" + c.ID + "\n===================";
+                clientsString += string.Format("\n{0}\n===================", c.ID);
             }
-            
+
             debugger.SendLog("Lista dos clientes conectados ate agora:" + clientsString, DebugType.LOG);
         }
         private void NewConnections(List<Client> newClients)
@@ -129,40 +122,26 @@ namespace ServerSide.Sockets.Servers
         /// <returns></returns>
         private void ReceivedData(string clientID, byte[] data)
         {
-            Client c = clientsLookUpTable[clientID];
-
-            PacketReader packet = new PacketReader(data);
-            while (true)
+            if (data.Length > 0)
             {
+                Client c = clientsLookUpTable[clientID];
+                PacketReader packet = new PacketReader(data);
                 try
                 {
-                    byte header = packet.ReadByte();
-                    if (header >= (byte)Header.Header_Size)
-                        PacketCouriers[header - (byte)Header.Header_Size].Receive(ref packet, clientID);
-                    else
-                        switch ((Header)header)
-                        {
-                            case Header.REFRESH:
-                                break;
-                            default:
-                                throw new EndOfStreamException();
-                        }
+                    dynamicPacketIO.ReadReceivedPacket(packet);
                 }
                 catch (Exception ex)
                 {
-                    if (ex.GetType() != typeof(EndOfStreamException)) //Quando chegar no final da Stream, ele joga um EndOfStreamException, então sabemos que ela acabou
-                        debugger.SendLog($"Erro ao ler dados de {c.ID}: {ex.Source} | {ex.Message}", DebugType.ERROR);
-                    packet.Close();
-                    break;
+                    debugger.SendLog($"Erro ao ler dados de {c.ID}: {ex.Source} | {ex.Message}", DebugType.ERROR);
                 }
             }
         }
         private void ReceivedData(Dictionary<string, byte[][]> receivedData, bool resetDataArrays = true)
         {
             //Ideias: 
-            // 1 - Fazer a leitura de dados no async
-            // 2 - Fazer a leitura de dados em uma Coroutine da unity
-            // 3 - No lugar de enviar byte[]'s enviamos PacketReaders um pouco tratadas
+            // 1 - Fazer a leitura de dados no async (X)
+            // 2 - Fazer a leitura de dados em uma Coroutine da unity (X)
+            // 3 - No lugar de enviar byte[]'s enviamos PacketReaders um pouco tratadas (X)
             for (int i = 0; i < clients.Count; i++)
             {
                 string clientID = clients[i].ID;
@@ -182,6 +161,9 @@ namespace ServerSide.Sockets.Servers
 
         public void FixedUpdate()
         {
+            //Send data
+            SendAll(dynamicPacketIO.GetAllData());
+
             bool NCC_NotLoked = Monitor.TryEnter(NCC_lock, 10);
             try
             {
@@ -275,33 +257,42 @@ namespace ServerSide.Sockets.Servers
         /// </summary>
         /// <param name="shade">The client's in-game representation</param>
         /// <param name="buffer"></param>
-        public void Send(string clientID, byte[] buffer)
+        public void Send(byte[] buffer, string clientID)
         {
-            if(clientsLookUpTable.ContainsKey(clientID))
+            if (clientsLookUpTable.ContainsKey(clientID))
                 clientsLookUpTable[clientID].Send(buffer);
         }
         /// <summary>
-        /// Sends a buffer of information to an array of especified Clients. It is faster, and safer, to use SendAll if you want to send some information to all connected clients.
+        /// Sends a buffer of information to an array of especified Clients. It is faster, to use SendAll if you want to send some information to all connected clients.
         /// </summary>
         /// <param name="shades"></param>
         /// <param name="buffer"></param>
-        public void Send(string[] clientIDs, byte[] buffer)
+        public void Send(byte[] buffer, params string[] clientIDs)
         {
-            foreach(string id in clientIDs)
+            foreach (string id in clientIDs)
             {
-                Send(id, buffer);
+                Send(buffer, id);
             }
         }
         /// <summary>
-        /// Sends a buffer of information to all Clients. By iterating through all the Clients and sending with their sockets, it can be faster compared to seraching for all Shades and then using Send().
+        /// Sends a buffer of information to all Clients. By iterating through all the Clients and sending with their sockets, it can be faster compared to searching for all ClientID's and then using Send().
         /// </summary>
-        /// <param name="Exception"> The id of the one you don't want to send to</param>
+        /// <param name="Exceptions"> The ids of the ones you don't want to send to</param>
         /// <param name="buffer"></param>
-        public void SendAll(byte[] buffer, string Exception = "")
+        public void SendAll(byte[] buffer, params string[] Exceptions)
         {
-            foreach(Client c in clients)
+            foreach (Client c in clients)
             {
-                if(c.ID != Exception)
+                bool isInExceptions = false;
+                foreach (string s in Exceptions)
+                {
+                    if (c.ID == s)
+                    {
+                        isInExceptions = true;
+                        break;
+                    }
+                }
+                if (!isInExceptions)
                     c.Send(buffer);
             }
         }
@@ -309,7 +300,6 @@ namespace ServerSide.Sockets.Servers
         public void Stop()
         {
             debugger.SendLog("Fechando o servidor . . .", DebugType.LOG);
-            //FixedUpdate();// ultimo Upddate para limpar o cache de updates
             l.Stop();
         }
 
