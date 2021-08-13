@@ -33,15 +33,8 @@ namespace ServerSide
 
         private void Start()
         {
-            IPacketCourier[] PacketCouriers = new IPacketCourier[]
-            {
-                gameObject.AddComponent<Server_ShadePacketCourier>(), //0
-                gameObject.AddComponent<Server_NetworkedEntityPacketCourier>(), //1
-                gameObject.AddComponent<Server_PersistentOWRigdPacketCourier>() //2
-            };
-
             _debugger = GameObject.Find("DIMOWALevelLoaderHandler").GetComponent<ClientDebuggerSide>();
-            _serverSide = new Server(_debugger, PacketCouriers);
+            _serverSide = new Server(_debugger);
         }
 
         private void FixedUpdate()

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using ServerSide.Utils;
 using ServerSide.Sockets.Servers;
 using ServerSide.Sockets;
 using UnityEngine;
@@ -13,21 +14,6 @@ namespace ServerSide.PacketCouriers.NetworkedMessenger
         private Server Server;
         
         private Dictionary<long, List<string>> eventTable = new Dictionary<long, List<string>>();
-
-        // Código de Cpp em C# 0_0
-        public static long GerarHash(string s) //Gerar o Hash code de strings
-        {
-            const int p = 53;
-            const int m = 1000000000 + 9; //10e9 + 9
-            long hash_value = 0;
-            long p_pow = 1;
-            foreach (char c in s)
-            {
-                hash_value = (hash_value + (c - 'a' + 1) * p_pow) % m;
-                p_pow = p_pow * p % m;
-            }
-            return hash_value;
-        }
 
         public void Start()
         {
@@ -56,7 +42,7 @@ namespace ServerSide.PacketCouriers.NetworkedMessenger
         //Falar que o evento ocorreu
         public void FireEvent(string eventType)
         {
-            long hash = GerarHash(eventType);
+            long hash = Util.GerarHash(eventType);
             if (!eventTable.ContainsKey(hash))
                 return;
             PacketWriter packet = new PacketWriter();

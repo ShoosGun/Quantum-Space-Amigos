@@ -7,6 +7,7 @@ namespace ServerSide.Sockets.Servers
 {
     public class ReadPacketHolder
     {
+        public const byte MAX_HEADER_VALUE = byte.MaxValue - 1;
         public delegate void ReadPacket(PacketReader packet);
 
         public byte HeaderValue { get; private set; }
@@ -21,21 +22,21 @@ namespace ServerSide.Sockets.Servers
         private static byte lastHeaderValue = 0;
         private byte GetUniqueHeaderValue()
         {
-            if (lastHeaderValue < byte.MaxValue -1)
+            if (lastHeaderValue < MAX_HEADER_VALUE)
             {
                 byte thisHeaderValue = lastHeaderValue;
                 lastHeaderValue++;
                 return thisHeaderValue;
             }
             else
-                return byte.MaxValue;
+                return MAX_HEADER_VALUE + 1;
         }
     }
     //Teremos a classe ReadPacketHolder que guardara todos os dados para que possamos ter um IO dos pacotes
     //E teremos a classe DynamicPacketIO que cuidara dos valores que HeaderValue terão
     public class DynamicPacketIO
     {
-        private ReadPacketHolder[] readPacketHolders = new ReadPacketHolder[byte.MaxValue];
+        private ReadPacketHolder[] readPacketHolders = new ReadPacketHolder[ReadPacketHolder.MAX_HEADER_VALUE];
         private PacketWriter packetWriter;
         
         public byte[] GetAllData()
@@ -65,7 +66,7 @@ namespace ServerSide.Sockets.Servers
                 {
                     byte HeaderValue = packetReader.ReadByte();
                     if (readPacketHolders[HeaderValue] == null)
-                        throw new Exception(string.Format("This HeaderValue doesn't exist {0}", HeaderValue));
+                        throw new OperationCanceledException(string.Format("This HeaderValue doesn't exist {0}", HeaderValue));
 
                     readPacketHolders[HeaderValue].PacketRead(packetReader);
                 }
@@ -73,7 +74,7 @@ namespace ServerSide.Sockets.Servers
                 {
                     packetReader.Close();
                     continueLoop = false;
-                    if (ex.GetType() != typeof(EndOfStreamException)) //Quando chegar no final da Stream, ele joga um EndOfStreamException, então sabemos que ela acabou
+                    if (ex.GetType() != typeof(EndOfStreamException)) //Quando chegar no final da Stream, ele joga um EndOfStreamException, então sabemos que ela acabou sem outros erros
                         throw ex;
                 }
             }
@@ -87,7 +88,7 @@ namespace ServerSide.Sockets.Servers
                 return byte.MaxValue;
 
             if (readPacketHolders[newReadPacketHolder.HeaderValue] != null)
-                throw new Exception(string.Format("This HeaderValue is already being used {0}", newReadPacketHolder.HeaderValue));
+                throw new OperationCanceledException(string.Format("This HeaderValue is already being used {0}", newReadPacketHolder.HeaderValue));
 
             readPacketHolders[newReadPacketHolder.HeaderValue] = newReadPacketHolder;
             return newReadPacketHolder.HeaderValue;

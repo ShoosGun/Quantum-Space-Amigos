@@ -7,7 +7,7 @@ using System.Threading;
 using System.IO;
 
 
-using ServerSide.PacketCouriers;
+using ServerSide.PacketCouriers.Essentials;
 
 namespace ServerSide.Sockets.Servers
 {
@@ -34,13 +34,20 @@ namespace ServerSide.Sockets.Servers
 
         //Parte legal
         //private IPacketCourier[] PacketCouriers;
-        public DynamicPacketIO dynamicPacketIO;
+        private DynamicPacketIO dynamicPacketIO;
+        public DynamicPacketCourierHandler dynamicPacketCourierHandler { get; private set; }
+        private const int OBLIGATORY_HEADER_VALUE_OF_DPCH = 0;
 
         public Server(ClientDebuggerSide debugger)
         {
             this.debugger = debugger;
 
             dynamicPacketIO = new DynamicPacketIO();
+            dynamicPacketCourierHandler = new DynamicPacketCourierHandler(ref dynamicPacketIO);
+
+            if(dynamicPacketCourierHandler.HeaderValue != OBLIGATORY_HEADER_VALUE_OF_DPCH)
+                throw new OperationCanceledException(string.Format("dynamicPacketCourierHandler tem que ter como HeaderValue o valor de {0}, mas no lugar tem {1}"
+                    , OBLIGATORY_HEADER_VALUE_OF_DPCH, dynamicPacketCourierHandler.HeaderValue));
 
             clients = new List<Client>();
             clientsLookUpTable = new Dictionary<string, Client>();
@@ -117,7 +124,7 @@ namespace ServerSide.Sockets.Servers
             }
         }
         /// <summary>
-        /// Handles new data sent by the clients on the in game loop and passes it to the respective in-game representation
+        /// Handles new data sent by the clients on the in-game loop
         /// </summary>
         /// <returns></returns>
         private void ReceivedData(string clientID, byte[] data)
@@ -136,6 +143,12 @@ namespace ServerSide.Sockets.Servers
                 }
             }
         }
+
+        /// <summary>
+        ///  Handles the new packets sent by all the clients on the in-game loop
+        /// </summary>
+        /// <param name="receivedData">Holds the packets in an array separated by the clients ids</param>
+        /// <param name="resetDataArrays"></param>
         private void ReceivedData(Dictionary<string, byte[][]> receivedData, bool resetDataArrays = true)
         {
             //Ideias: 
@@ -162,6 +175,7 @@ namespace ServerSide.Sockets.Servers
         public void FixedUpdate()
         {
             //Send data
+            dynamicPacketCourierHandler.UpdateHeaders();
             SendAll(dynamicPacketIO.GetAllData());
 
             bool NCC_NotLoked = Monitor.TryEnter(NCC_lock, 10);
