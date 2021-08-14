@@ -7,7 +7,7 @@ using System.Threading;
 using DIMOWAModLoader;
 using System.IO;
 
-using ClientSide.PacketCouriers;
+using ClientSide.PacketCouriers.Essentials;
 
 namespace ClientSide.Sockets
 {
@@ -25,18 +25,24 @@ namespace ClientSide.Sockets
         private int receivingLimit;
         private bool wasConnected = false;
 
-        private IPacketCourier[] PacketCouriers;
+        //private IPacketCourier[] PacketCouriers;
+        private DynamicPacketIO dynamicPacketIO;
+        public Client_DynamicPacketCourierHandler dynamicPacketCourierHandler { get; private set; }
+        private const int OBLIGATORY_HEADER_VALUE_OF_DPCH = 0;
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="debugger"></param>
         /// <param name="receivingLimit"> In packets/s </param>
-        public Client(ClientDebuggerSide debugger,  IPacketCourier[] PacketCouriers, int receivingLimit = 100)
+        public Client(ClientDebuggerSide debugger, int receivingLimit = 100)
         {
             Connected = false;
             this.receivingLimit = receivingLimit;
             this.debugger = debugger;
+
+            dynamicPacketIO = new DynamicPacketIO();
+            dynamicPacketCourierHandler = new Client_DynamicPacketCourierHandler(ref dynamicPacketIO, OBLIGATORY_HEADER_VALUE_OF_DPCH);            
         }
 
         /// <summary>
@@ -124,7 +130,7 @@ namespace ClientSide.Sockets
                     wasConnected = true;
                     Connection?.Invoke();
                 }
-
+                Send(dynamicPacketIO.GetAllData());
                 //Ler dados
                 bool packetBuffers_NotLocked = Monitor.TryEnter(packetBuffers_lock, 10);
                 try
@@ -147,39 +153,24 @@ namespace ClientSide.Sockets
                 Disconnection?.Invoke();
             }
         }
-
-        private void ReceiveData(byte[] buffer)
-        {
-            PacketReader packet = new PacketReader(buffer);
-            while (true)
-            {
-                try
-                {
-                    byte header = packet.ReadByte();
-                    if (header >= (byte)Header.Header_Size)
-                        PacketCouriers[header - (byte)Header.Header_Size].Receive(ref packet);                    
-                    else
-                        switch ((Header)header)
-                        {
-                            case Header.REFRESH:
-                                break;
-                            default:
-                                throw new EndOfStreamException();
-                        }
-                }
-                catch (Exception ex)
-                {
-                    if (ex.GetType() != typeof(EndOfStreamException)) //Quando chegar no final da Stream, ele joga um EndOfStreamException, então sabemos que ela acabou
-                        debugger.SendLog($"Erro ao ler dados do servidor: {ex.Source} | {ex.Message}", DebugType.ERROR);
-                    packet.Close();
-                    break;
-                }
-            }
-        }
         private void ReceiveData(List<byte[]> packets)
         {
-            foreach (var pk in packets)
-                ReceiveData(pk);
+            for(int i =0; i< packets.Count; i++)
+            {
+                byte[] data = packets[i];
+                if (data.Length > 0)
+                {
+                    PacketReader packet = new PacketReader(data);
+                    try
+                    {
+                        dynamicPacketIO.ReadReceivedPacket(packet);
+                    }
+                    catch (Exception ex)
+                    {
+                        debugger.SendLog($"Erro ao ler dados do servidor: {ex.Source} | {ex.Message}", DebugType.ERROR);
+                    }
+                }
+            }
         }
         public void Send(byte[] data)
         {

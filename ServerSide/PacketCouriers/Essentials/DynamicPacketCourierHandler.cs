@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using ServerSide.Utils;
 using ServerSide.Sockets.Servers;
 using ServerSide.Sockets;
 
@@ -12,6 +11,7 @@ namespace ServerSide.PacketCouriers.Essentials
     {
         public DynamicPacketIO DynamicPacketIO { get; private set; }
         public int HeaderValue { get; private set; }
+
         private List<int> UsedHashes;
         private List<KeyValuePair<int, int>> HashesToUpdate;
         public DynamicPacketCourierHandler(ref DynamicPacketIO dynamicPacketIO)
@@ -43,6 +43,9 @@ namespace ServerSide.PacketCouriers.Essentials
                 throw new OperationCanceledException(string.Format("O hash de {0} ja esta gravado, use outra string que apresente um hash diferente de {1}", localizationString, hash));
 
             int courierHeaderValue = DynamicPacketIO.AddPacketCourier(readPacket);
+            if(courierHeaderValue == ReadPacketHolder.MAX_AMOUNT_OF_HEADER_VALUES)
+                throw new OperationCanceledException(string.Format("Alcancou-se o maximo permitido de PacketCouriers de {0}", ReadPacketHolder.MAX_AMOUNT_OF_HEADER_VALUES ));
+
             UsedHashes.Add(hash);
             HashesToUpdate.Add(new KeyValuePair<int, int>(hash, courierHeaderValue));
             return courierHeaderValue;

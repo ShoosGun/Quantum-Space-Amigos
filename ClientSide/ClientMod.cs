@@ -7,11 +7,6 @@ using DIMOWAModLoader;
 using ClientSide.Sockets;
 using ClientSide.SettingsMenu;
 
-using ClientSide.PacketCouriers;
-using ClientSide.PacketCouriers.Shades;
-using ClientSide.PacketCouriers.Entities;
-using ClientSide.PacketCouriers.PersistentOWRigd;
-
 namespace ClientSide
 {
     public class ClientMod : MonoBehaviour
@@ -45,16 +40,16 @@ namespace ClientSide
         private void Start()
         {
 
-            IPacketCourier[] PacketCouriers = new IPacketCourier[]
-            {
-                gameObject.AddComponent<Client_ShadePacketCourier>(),
-                gameObject.AddComponent<Client_NetworkedEntityPacketCourier>(),
-                gameObject.AddComponent<Client_PersistentOWRigdPacketCourier>()
-            };
+            //IPacketCourier[] PacketCouriers = new IPacketCourier[]
+            //{
+            //    gameObject.AddComponent<Client_ShadePacketCourier>(),
+            //    gameObject.AddComponent<Client_NetworkedEntityPacketCourier>(),
+            //    gameObject.AddComponent<Client_PersistentOWRigdPacketCourier>()
+            //};
             
 
             _debugger = GameObject.Find("DIMOWALevelLoaderHandler").GetComponent<ClientDebuggerSide>();
-            _clientSide = new Client(_debugger, PacketCouriers);
+            _clientSide = new Client(_debugger);
 
             gameObject.AddComponent<ClientModSettingsMenu>();
 

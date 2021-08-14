@@ -3,33 +3,18 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace ServerSide.Sockets.Servers
+namespace ClientSide.Sockets
 {
     public class ReadPacketHolder
     {
         public const byte MAX_AMOUNT_OF_HEADER_VALUES = byte.MaxValue;
         public delegate void ReadPacket(PacketReader packet);
-
-        public byte HeaderValue { get; private set; }
+        
         public ReadPacket PacketRead { get; private set; }
 
         public ReadPacketHolder(ReadPacket readPacket)
         {
-            HeaderValue = GetUniqueHeaderValue();
             PacketRead = readPacket;
-        }
-
-        private static byte lastHeaderValue = 0;
-        private byte GetUniqueHeaderValue()
-        {
-            if (lastHeaderValue < MAX_AMOUNT_OF_HEADER_VALUES)
-            {
-                byte thisHeaderValue = lastHeaderValue;
-                lastHeaderValue++;
-                return thisHeaderValue;
-            }
-            else
-                return MAX_AMOUNT_OF_HEADER_VALUES;
         }
     }
     //Teremos a classe ReadPacketHolder que guardara todos os dados para que possamos ter um IO dos pacotes
@@ -80,18 +65,15 @@ namespace ServerSide.Sockets.Servers
             }
         }
 
-        public int AddPacketCourier(ReadPacketHolder.ReadPacket readPacket)
+        public void SetPacketCourier(int headerValue, ReadPacketHolder.ReadPacket readPacket)
         {
-            ReadPacketHolder newReadPacketHolder = new ReadPacketHolder(readPacket);
+            if (headerValue == ReadPacketHolder.MAX_AMOUNT_OF_HEADER_VALUES - 1)
+                throw new IndexOutOfRangeException(string.Format("The HeaderValue cannot be equal or bigger then ", ReadPacketHolder.MAX_AMOUNT_OF_HEADER_VALUES - 1));
 
-            if (newReadPacketHolder.HeaderValue == ReadPacketHolder.MAX_AMOUNT_OF_HEADER_VALUES)
-                return ReadPacketHolder.MAX_AMOUNT_OF_HEADER_VALUES;
+            if (readPacketHolders[headerValue] != null)
+                throw new OperationCanceledException(string.Format("This HeaderValue is already being used {0}", headerValue));
 
-            if (readPacketHolders[newReadPacketHolder.HeaderValue] != null)
-                throw new OperationCanceledException(string.Format("This HeaderValue is already being used {0}", newReadPacketHolder.HeaderValue));
-
-            readPacketHolders[newReadPacketHolder.HeaderValue] = newReadPacketHolder;
-            return newReadPacketHolder.HeaderValue;
+            readPacketHolders[headerValue] = new ReadPacketHolder(readPacket);
         }
     }
 }
