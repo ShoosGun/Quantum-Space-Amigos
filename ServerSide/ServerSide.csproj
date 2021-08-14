@@ -54,7 +54,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PacketCouriers\Essentials\DynamicPacketCourierHandler.cs" />
+    <Compile Include="PacketCouriers\Essentials\Server_DynamicPacketCourierHandler.cs" />
     <Compile Include="PacketCouriers\GameRelated\NetworkedMessenger\Server_NetworkedMessengerPacketCourier.cs" />
     <Compile Include="PacketCouriers\GameRelated\PersistentOWRigd\Server_PersistentOWRigdPacketCourier.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -66,7 +66,7 @@
     <Compile Include="Sockets\Clients\Client.cs" />
     <Compile Include="Sockets\Headers.cs" />
     <Compile Include="Sockets\PacketIO.cs" />
-    <Compile Include="Sockets\Servers\DynamicPacketIO.cs" />
+    <Compile Include="Sockets\Servers\Server_DynamicPacketIO.cs" />
     <Compile Include="Sockets\Servers\Listener.cs" />
     <Compile Include="Sockets\Servers\Server.cs" />
     <Compile Include="Sockets\Servers\UpdatesTypes.cs" />

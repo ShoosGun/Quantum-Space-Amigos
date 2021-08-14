@@ -5,6 +5,7 @@ using ServerSide.Sockets;
 using ServerSide.PacketCouriers.Entities;
 using UnityEngine;
 using ServerSide.Sockets.Servers;
+using ServerSide.PacketCouriers.Essentials;
 
 namespace ServerSide.PacketCouriers.PersistentOWRigdSync
 {
@@ -14,7 +15,10 @@ namespace ServerSide.PacketCouriers.PersistentOWRigdSync
     /// </summary>
     public class Server_PersistentOWRigdPacketCourier : MonoBehaviour, IPacketCourier 
     {
-        private Server server;
+        private Server_DynamicPacketCourierHandler dynamicPacketCourierHandler;
+        const string POW_LOCALIZATION_STRING = "PersistentOWRigdPacketCourier";
+        private int HeaderValue;
+
         private Server_NetworkedEntityPacketCourier entityPacketCourier;
 
         //Nomes dos OWRigidbodies que serão syncados
@@ -59,9 +63,11 @@ namespace ServerSide.PacketCouriers.PersistentOWRigdSync
         public void Start()
         {
             GameObject serverGO = GameObject.Find("QSAServer");
-            server = serverGO.GetComponent<ServerMod>()._serverSide;
+
+            dynamicPacketCourierHandler = serverGO.GetComponent<ServerMod>()._serverSide.dynamicPacketCourierHandler;
+            HeaderValue = dynamicPacketCourierHandler.AddPacketCourier(POW_LOCALIZATION_STRING, Receive);
+
             entityPacketCourier = serverGO.GetComponent<Server_NetworkedEntityPacketCourier>();
-            
         }
 
         public void Update()
@@ -80,20 +86,20 @@ namespace ServerSide.PacketCouriers.PersistentOWRigdSync
             }
         }
 
-        public void Receive(ref PacketReader packet, string ClientID)
+        public void Receive(byte[] data, string ClientID)
         {
+            PacketReader packet = new PacketReader(data);
             switch ((PersistentOWRigd_Header)packet.ReadByte())
             {
                 case PersistentOWRigd_Header.ENTITY_OWNER_ID:
                     PacketWriter packetForClient = new PacketWriter();
-                    packetForClient.Write((byte)Header.Header_Size + 2);
                     packetForClient.Write((byte)PersistentOWRigd_Header.ENTITY_OWNER_ID);
                     packetForClient.Write(THIS_PC_ID);//byte
                     packetForClient.Write(SyncedOWRigidbodies.Length);//int
                     foreach (NetworkedEntity entity in SyncedOWRigidbodies)
                         packetForClient.Write(entity.ID);//short
 
-                    server.Send(ClientID, packetForClient.GetBytes());
+                    dynamicPacketCourierHandler.DynamicPacketIO.SendPackedData((byte)HeaderValue, packetForClient.GetBytes(), ClientID);
                     break;
                 default:
                     break;

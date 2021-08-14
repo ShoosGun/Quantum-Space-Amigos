@@ -7,8 +7,8 @@ using CAMOWA;
 using DIMOWAModLoader;
 
 //using ServerSide.PacketCouriers;
-//using ServerSide.PacketCouriers.Shades;
-//using ServerSide.PacketCouriers.Entities;
+using ServerSide.PacketCouriers.Shades;
+using ServerSide.PacketCouriers.Entities;
 //using ServerSide.PacketCouriers.PersistentOWRigdSync;
 
 namespace ServerSide
@@ -35,6 +35,9 @@ namespace ServerSide
         {
             _debugger = GameObject.Find("DIMOWALevelLoaderHandler").GetComponent<ClientDebuggerSide>();
             _serverSide = new Server(_debugger);
+
+            gameObject.AddComponent<Server_NetworkedEntityPacketCourier>();
+            gameObject.AddComponent<Server_ShadePacketCourier>();
         }
 
         private void FixedUpdate()

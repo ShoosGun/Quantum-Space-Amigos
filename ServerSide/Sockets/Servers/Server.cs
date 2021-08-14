@@ -34,16 +34,16 @@ namespace ServerSide.Sockets.Servers
 
         //Parte legal
         //private IPacketCourier[] PacketCouriers;
-        private DynamicPacketIO dynamicPacketIO;
-        public DynamicPacketCourierHandler dynamicPacketCourierHandler { get; private set; }
+        private Server_DynamicPacketIO dynamicPacketIO;
+        public Server_DynamicPacketCourierHandler dynamicPacketCourierHandler { get; private set; }
         private const int OBLIGATORY_HEADER_VALUE_OF_DPCH = 0;
 
         public Server(ClientDebuggerSide debugger)
         {
             this.debugger = debugger;
 
-            dynamicPacketIO = new DynamicPacketIO();
-            dynamicPacketCourierHandler = new DynamicPacketCourierHandler(ref dynamicPacketIO);
+            dynamicPacketIO = new Server_DynamicPacketIO();
+            dynamicPacketCourierHandler = new Server_DynamicPacketCourierHandler(ref dynamicPacketIO, this);
 
             if(dynamicPacketCourierHandler.HeaderValue != OBLIGATORY_HEADER_VALUE_OF_DPCH)
                 throw new OperationCanceledException(string.Format("dynamicPacketCourierHandler tem que ter como HeaderValue o valor de {0}, mas no lugar tem {1}"
@@ -135,7 +135,7 @@ namespace ServerSide.Sockets.Servers
                 PacketReader packet = new PacketReader(data);
                 try
                 {
-                    dynamicPacketIO.ReadReceivedPacket(packet);
+                    dynamicPacketIO.ReadReceivedPacket(packet, clientID);
                 }
                 catch (Exception ex)
                 {
@@ -168,15 +168,28 @@ namespace ServerSide.Sockets.Servers
                             receivedData[clientID][j] = new byte[] { };
                     }
                 }
-
             }
         }
 
         public void FixedUpdate()
         {
             //Send data
-            dynamicPacketCourierHandler.UpdateHeaders();
-            SendAll(dynamicPacketIO.GetAllData());
+            dynamicPacketCourierHandler.SendUpdateHeaders();
+
+            //Global Data
+            byte[] globalDataBuffer = dynamicPacketIO.GetGlobalPacketWriterData();
+            if (globalDataBuffer.Length > 0)
+                SendAll(globalDataBuffer);
+
+            //Client Specific Data
+            for (int i =0; i< clients.Count; i++)
+            {
+                byte[] clientSpecificBuffer = dynamicPacketIO.GetClientSpecificPacketWriterData(clients[i].ID);
+                if (clientSpecificBuffer.Length > 0)
+                    Send(clientSpecificBuffer, clients[i].ID);
+            }
+            dynamicPacketIO.ResetClientSpecificDataHolder();
+            //
 
             bool NCC_NotLoked = Monitor.TryEnter(NCC_lock, 10);
             try

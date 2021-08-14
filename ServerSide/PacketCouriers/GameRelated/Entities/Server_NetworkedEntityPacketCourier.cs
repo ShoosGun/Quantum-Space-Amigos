@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using ServerSide.Sockets.Servers;
 using ServerSide.Sockets;
+using ServerSide.PacketCouriers.Essentials;
 
 namespace ServerSide.PacketCouriers.Entities
 {
@@ -12,8 +13,11 @@ namespace ServerSide.PacketCouriers.Entities
     }
     public class Server_NetworkedEntityPacketCourier : MonoBehaviour , IPacketCourier
     {
+        private Server_DynamicPacketCourierHandler dynamicPacketCourierHandler;
+        const string NE_LOCALIZATION_STRING = "NetworkedEntityPacketCourier";
+        private int HeaderValue;
+
         private Transform ReferenceFrameTransform;
-        private Server Server;
 
         private const ushort MAX_AMOUNT_OF_ENTITIES = 2048;
         protected NetworkedEntity[] entities = new NetworkedEntity[MAX_AMOUNT_OF_ENTITIES];
@@ -31,7 +35,8 @@ namespace ServerSide.PacketCouriers.Entities
         private void Start()
         {
             ReferenceFrameTransform = GameObject.Find("TimberHearth_Body").transform;
-            Server = GameObject.Find("QSAServer").GetComponent<ServerMod>()._serverSide;
+            dynamicPacketCourierHandler = GameObject.Find("QSAServer").GetComponent<ServerMod>()._serverSide.dynamicPacketCourierHandler;
+            HeaderValue = dynamicPacketCourierHandler.AddPacketCourier(NE_LOCALIZATION_STRING, Receive);
         }
 
         private byte numberOfLoops = 0;
@@ -40,8 +45,7 @@ namespace ServerSide.PacketCouriers.Entities
             //Enviar o delta para cada shade, dependendo dos seus casos(ping)
             if (gameSnapshots.Count > 0)
             {
-                PacketWriter packet = new PacketWriter();
-                packet.Write((byte)Header.Header_Size + 1);                      //
+                PacketWriter packet = new PacketWriter();               //
                 packet.Write((byte)EntityHeader.TRANSFORM_SYNC); //Só position sync por enquanto
                 packet.Write(gameSnapshots[0].SnapshotTick.Tick);     //Referencial no passado(do cl.Key)       Referencial do presente (do lookUpTable)
                 packet.Write((short)gameSnapshots[0].TransformsWithIds.Length);
@@ -53,7 +57,7 @@ namespace ServerSide.PacketCouriers.Entities
                     packet.Write(cl.Key.Rotation);
                 }
 
-                Server.SendAll(packet.GetBytes()); //Mandar para todos
+                dynamicPacketCourierHandler.DynamicPacketIO.SendPackedData((byte)HeaderValue, packet.GetBytes()); //Mandar para todos
                 gameSnapshots.RemoveAt(0);
             }
 
@@ -123,11 +127,10 @@ namespace ServerSide.PacketCouriers.Entities
 
                 //Mandando o surgimento uma entidade para os clientes
                 PacketWriter packet = new PacketWriter();
-                packet.Write((byte)Header.Header_Size + 1);
                 packet.Write((byte)EntityHeader.ENTITY_DELTA_PLUS_SYNC);
                 packet.Write(ID);
                 packet.Write(ownerID);
-                Server.SendAll(packet.GetBytes());
+                dynamicPacketCourierHandler.DynamicPacketIO.SendPackedData((byte)HeaderValue,packet.GetBytes());
             }
 
             return ID;
@@ -145,16 +148,15 @@ namespace ServerSide.PacketCouriers.Entities
 
             //Mandando o surgimento uma entidade para os clientes
             PacketWriter packet = new PacketWriter();
-            packet.Write((byte)Header.Header_Size + 1);
             packet.Write((byte)EntityHeader.ENTITY_DELTA_MINUS_SYNC);
             packet.Write(ID);
-            Server.SendAll(packet.GetBytes());
+            dynamicPacketCourierHandler.DynamicPacketIO.SendPackedData((byte)HeaderValue, packet.GetBytes());
         }
 
-        public void WriteEntitySync(ref PacketWriter packet)
+        public void SendEntitySync(params string[] ClientIDs)
         {
             Debug.Log($"Fazendo o sync das entidades");
-            packet.Write((byte)Header.Header_Size + 1);
+            PacketWriter packet = new PacketWriter();
             packet.Write((byte)EntityHeader.ENTITY_SYNC);
             packet.Write((ushort)entitiesIDs.Count);
             foreach(ushort id in entitiesIDs)
@@ -162,17 +164,19 @@ namespace ServerSide.PacketCouriers.Entities
                 packet.Write(id); //O id da entidade
                 packet.Write(entities[id].PCOwner); //O id de quem pediu para sincroniza-la
             }
+
+            dynamicPacketCourierHandler.DynamicPacketIO.SendPackedData((byte)HeaderValue, packet.GetBytes(), ClientIDs);
         }
 
 
-        public void Receive(ref PacketReader packet, string ClientID)
+        public void Receive(byte[] data, string ClientID)
         {
+            PacketReader packet = new PacketReader(data);
             switch ((EntityHeader)packet.ReadByte())
             {
                 case EntityHeader.ENTITY_SYNC:
                     PacketWriter packetToSend = new PacketWriter();
-                    WriteEntitySync(ref packetToSend);
-                    Server.Send(ClientID, packetToSend.GetBytes());
+                    SendEntitySync(ClientID);
                     break;
                 default:
                     break;

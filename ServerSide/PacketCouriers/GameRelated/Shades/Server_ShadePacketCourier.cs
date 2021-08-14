@@ -4,13 +4,18 @@ using UnityEngine;
 using ServerSide.Sockets;
 using ServerSide.Sockets.Servers;
 using ServerSide.PacketCouriers.Entities;
+using ServerSide.PacketCouriers.Essentials;
 
 namespace ServerSide.PacketCouriers.Shades
 {
     public class Server_ShadePacketCourier : MonoBehaviour, IPacketCourier
     {
-        private Server server;
+        private Server_DynamicPacketCourierHandler dynamicPacketCourierHandler;
+        const string SHADE_LOCALIZATION_STRING = "ShadePacketCourier";
+        private int HeaderValue;
+
         private Server_NetworkedEntityPacketCourier entityPacketCourier;
+        private Server server;
 
         private Shade serverShade;
 
@@ -27,7 +32,11 @@ namespace ServerSide.PacketCouriers.Shades
         void Start()
         {
             GameObject serverGO = GameObject.Find("QSAServer");
+
             server = serverGO.GetComponent<ServerMod>()._serverSide;
+
+            dynamicPacketCourierHandler = server.dynamicPacketCourierHandler;
+            HeaderValue = dynamicPacketCourierHandler.AddPacketCourier(SHADE_LOCALIZATION_STRING, Receive);
             entityPacketCourier = serverGO.GetComponent<Server_NetworkedEntityPacketCourier>();
 
             server.NewConnectionID += Server_NewConnectionID;
@@ -55,12 +64,11 @@ namespace ServerSide.PacketCouriers.Shades
 
             //Mandar para quem chegou o ID do grupo de shades que receberá e o id da sua shade
             PacketWriter packetForClient = new PacketWriter();
-
-            packetForClient.Write((byte)Header.Header_Size + 0);
             packetForClient.Write((byte)ShadeHeader.ENTITY_OWNER_ID);
             packetForClient.Write(SHADEPC_ID);
             packetForClient.Write(shadeID);
-            server.Send(clientID, packetForClient.GetBytes());
+
+            dynamicPacketCourierHandler.DynamicPacketIO.SendPackedData((byte)HeaderValue, packetForClient.GetBytes(), clientID);
             
             Debug.Log($"Nova Shade! ID = {shadeID}\n Quantidade de Shades no momento: {shadesIDs.Count}");
         }
@@ -125,8 +133,9 @@ namespace ServerSide.PacketCouriers.Shades
             }
         }
 
-        public void Receive(ref PacketReader packet, string clientID)
+        public void Receive(byte[] data, string clientID)
         {
+            PacketReader packet = new PacketReader(data);
             switch ((ShadeHeader)packet.ReadByte())
             {
                 case ShadeHeader.MOVEMENT:
@@ -141,12 +150,11 @@ namespace ServerSide.PacketCouriers.Shades
                 case ShadeHeader.ENTITY_OWNER_ID:
                     PacketWriter packetForClient = new PacketWriter();
                     Debug.Log($"Enviando o ID da nossa PC = {SHADEPC_ID} e do cliente {clientsIDsConversionTable[clientID]}");
-                    packetForClient.Write((byte)Header.Header_Size + 0);
                     packetForClient.Write((byte)ShadeHeader.ENTITY_OWNER_ID);
                     packetForClient.Write(SHADEPC_ID);//byte
                     packetForClient.Write(clientsIDsConversionTable[clientID]);//short
-                    server.Send(clientID, packetForClient.GetBytes());
 
+                    dynamicPacketCourierHandler.DynamicPacketIO.SendPackedData((byte)HeaderValue, packetForClient.GetBytes(), clientID);
                     break;
                 default:
                     break;

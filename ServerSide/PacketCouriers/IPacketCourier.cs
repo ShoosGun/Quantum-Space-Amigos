@@ -4,7 +4,6 @@ namespace ServerSide.PacketCouriers
 {
     public interface IPacketCourier
     {
-       void Receive(ref PacketReader packet, string ClientID);
-
+       void Receive(byte[] data, string ClientID);
     }
 }

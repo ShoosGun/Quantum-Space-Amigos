@@ -26,7 +26,7 @@ namespace ClientSide.Sockets
         private bool wasConnected = false;
 
         //private IPacketCourier[] PacketCouriers;
-        private DynamicPacketIO dynamicPacketIO;
+        private Client_DynamicPacketIO dynamicPacketIO;
         public Client_DynamicPacketCourierHandler dynamicPacketCourierHandler { get; private set; }
         private const int OBLIGATORY_HEADER_VALUE_OF_DPCH = 0;
 
@@ -41,7 +41,7 @@ namespace ClientSide.Sockets
             this.receivingLimit = receivingLimit;
             this.debugger = debugger;
 
-            dynamicPacketIO = new DynamicPacketIO();
+            dynamicPacketIO = new Client_DynamicPacketIO();
             dynamicPacketCourierHandler = new Client_DynamicPacketCourierHandler(ref dynamicPacketIO, OBLIGATORY_HEADER_VALUE_OF_DPCH);            
         }
 

@@ -5,19 +5,23 @@ using ServerSide.Utils;
 using ServerSide.Sockets.Servers;
 using ServerSide.Sockets;
 using UnityEngine;
+using ServerSide.PacketCouriers.Essentials;
 
 namespace ServerSide.PacketCouriers.NetworkedMessenger
 {
     //Será Equivalente ao GlobalMessenger normal (só que não)
     public class Server_NetworkedMessengerPacketCourier : MonoBehaviour, IPacketCourier
     {
-        private Server Server;
-        
+        private Server_DynamicPacketCourierHandler dynamicPacketCourierHandler;
+        const string NM_LOCALIZATION_STRING = "NetworkedMessengerPacketCourier";
+        private int HeaderValue;
+
         private Dictionary<long, List<string>> eventTable = new Dictionary<long, List<string>>();
 
         public void Start()
         {
-            Server = GameObject.Find("QSAServer").GetComponent<ServerMod>()._serverSide;
+            dynamicPacketCourierHandler = GameObject.Find("QSAServer").GetComponent<ServerMod>()._serverSide.dynamicPacketCourierHandler;
+            HeaderValue = dynamicPacketCourierHandler.AddPacketCourier(NM_LOCALIZATION_STRING, Receive);
         }
 
         //Se receber info que o cliente quer participar desse evento, colocalo na lista do evento
@@ -46,14 +50,14 @@ namespace ServerSide.PacketCouriers.NetworkedMessenger
             if (!eventTable.ContainsKey(hash))
                 return;
             PacketWriter packet = new PacketWriter();
-            packet.Write((byte)3);    //Header
             packet.Write(hash); //Hash do Evento
 
-            Server.Send(eventTable[hash].ToArray(), packet.GetBytes());
+            dynamicPacketCourierHandler.DynamicPacketIO.SendPackedData((byte)HeaderValue, packet.GetBytes(), eventTable[hash].ToArray());
         }
 
-        public void Receive(ref PacketReader packet, string ClientID)
+        public void Receive(byte[] data, string ClientID)
         {
+            PacketReader packet = new PacketReader(data);
             switch(packet.ReadByte())
             {
                 case 0: // Entrar

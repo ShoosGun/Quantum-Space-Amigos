@@ -8,14 +8,14 @@ namespace ClientSide.PacketCouriers.Essentials
     //Hibrido de PacketCourier com DynamicPacketIO, ele TEM que ter o HeaderValue IGUAL a 0(ZERO). Assim teremos um canal confiavel para comunicarmos entre os computadores
     public class Client_DynamicPacketCourierHandler
     {
-        public DynamicPacketIO DynamicPacketIO { get; private set; }
+        public Client_DynamicPacketIO DynamicPacketIO { get; private set; }
         public int HeaderValue { get; private set; }
         private Dictionary<int, int> HeaderOfTheCouriersFromHash;
         private Dictionary<int, OnReceiveHeaderValue> WaitingForUpdatePacketCouriers;
 
         public delegate ReadPacketHolder.ReadPacket OnReceiveHeaderValue(int HeaderValue);
 
-        public Client_DynamicPacketCourierHandler(ref DynamicPacketIO dynamicPacketIO, int HeaderValue)
+        public Client_DynamicPacketCourierHandler(ref Client_DynamicPacketIO dynamicPacketIO, int HeaderValue)
         {
             this.HeaderValue = HeaderValue;
             DynamicPacketIO = dynamicPacketIO;
@@ -24,7 +24,7 @@ namespace ClientSide.PacketCouriers.Essentials
             WaitingForUpdatePacketCouriers = new Dictionary<int, OnReceiveHeaderValue>();
         }
 
-        public void UpdateHeaders()
+        public void RequestHeaders()
         {
         }
         public void SetPacketCourier(string localizationString, OnReceiveHeaderValue receiveEvent)
@@ -46,11 +46,27 @@ namespace ClientSide.PacketCouriers.Essentials
                 throw new OperationCanceledException(string.Format("O hash de {0} ainda nao foi recebido", localizationString));
             return foundHeader;
         }
-        public void ReadPacket(PacketReader reader)
+        public void ReadPacket(byte[] data)
+        {
+            PacketReader reader = new PacketReader(data);
+            DPCHHeaders DPCHHeader = (DPCHHeaders)reader.ReadByte();
+            switch (DPCHHeader)
+            {
+                case DPCHHeaders.UPDATE_HEADERS:
+                    ReadUpdateHeaders(ref reader);
+                    return;
+                case DPCHHeaders.SEND_ALL_HEADERS:
+                    ReadReturnAllHeaders(ref reader);
+                    return;
+                default:
+                    return;
+            }
+        }
+        private void ReadUpdateHeaders(ref PacketReader reader)
         {
             int amountOfHeaders = reader.ReadInt32();
             List<int> hashesWithConflictingData = new List<int>();
-            for(int i =0; i< amountOfHeaders; i++)
+            for (int i = 0; i < amountOfHeaders; i++)
             {
                 int hash = reader.ReadInt32();
                 int headerValue = reader.ReadInt32();
@@ -74,12 +90,33 @@ namespace ClientSide.PacketCouriers.Essentials
             if (hashesWithConflictingData.Count > 0)
             {
                 string s = "Conficting information received in the past and now from the server: ";
-                foreach(int i in hashesWithConflictingData)
+                foreach (int i in hashesWithConflictingData)
                 {
                     s += $"{i} ";
                 }
                 throw new Exception(s);
             }
         }
+        private void ReadReturnAllHeaders(ref PacketReader reader)
+        {
+            int amountOfHeaders = reader.ReadInt32();
+            for (int i = 0; i < amountOfHeaders; i++)
+            {
+                int hash = reader.ReadInt32();
+                int headerValue = reader.ReadInt32();
+
+                HeaderOfTheCouriersFromHash[hash] = headerValue;
+                if (WaitingForUpdatePacketCouriers.TryGetValue(hash, out OnReceiveHeaderValue onReceive))
+                {
+                    DynamicPacketIO.SetPacketCourier(headerValue, onReceive(headerValue));
+                    WaitingForUpdatePacketCouriers.Remove(hash);
+                }
+            }
+        }
+    }
+    public enum DPCHHeaders : byte
+    {
+        UPDATE_HEADERS,
+        SEND_ALL_HEADERS,
     }
 }
