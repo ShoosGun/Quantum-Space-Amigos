@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Text;
 using ClientSide.PacketCouriers.Entities;
+using ClientSide.PacketCouriers.Essentials;
 using ClientSide.PacketCouriers.Shades.MovementConstraints;
 using ClientSide.Sockets;
 using UnityEngine;
 
+//TODO Refazer isso tudo, talvez até deletar xP
 namespace ClientSide.PacketCouriers.PersistentOWRigd
 {
 
@@ -15,7 +17,13 @@ namespace ClientSide.PacketCouriers.PersistentOWRigd
     public class Client_PersistentOWRigdPacketCourier : MonoBehaviour, IPacketCourier, IEntityOwner //Usar o OWRigidFollowsAnother para consetar isso, transforma-los em kinematic não é suficiente
     {
         private Client client;
+        //TODO trocar Client_DynamicPacketCourierHandler pelo "DynamicIO"
+        private Client_DynamicPacketCourierHandler dynamicPacketCourierHandler;
+        const string POW_LOCALIZATION_STRING = "PersistentOWRigdPacketCourier";
+        private int HeaderValue;
+
         private Client_NetworkedEntityPacketCourier entityPacketCourier;
+
 
         //Nomes dos OWRigidbodies que serão syncados
         private readonly PersistentOWRigdStuff[] OWRigidbodiesGONames = new PersistentOWRigdStuff[]
@@ -70,10 +78,22 @@ namespace ClientSide.PacketCouriers.PersistentOWRigd
         {
             GameObject serverGO = GameObject.Find("QSAClient");
             client = serverGO.GetComponent<ClientMod>()._clientSide;
+            dynamicPacketCourierHandler = client.dynamicPacketCourierHandler;
+            dynamicPacketCourierHandler.SetPacketCourier(POW_LOCALIZATION_STRING, OnReceiveHeaderValue);
+
             entityPacketCourier = serverGO.GetComponent<Client_NetworkedEntityPacketCourier>();
             client.Connection += Client_Connection;
         }
+        public void OnDestroy()
+        {
+            client.Connection -= Client_Connection;
+        }
 
+        public ReadPacketHolder.ReadPacket OnReceiveHeaderValue(int HeaderValue)
+        {
+            this.HeaderValue = HeaderValue;
+            return Receive;
+        }
         private void Client_Connection()
         {
             connectedToServer = true;
@@ -84,14 +104,14 @@ namespace ClientSide.PacketCouriers.PersistentOWRigd
             if (connectedToServer && !hasReceivedId && (int)(Time.realtimeSinceStartup * 10) % 10 == 0)
             {
                 PacketWriter pk = new PacketWriter();
-                pk.Write((byte)Header.Header_Size + 2);
                 pk.Write((byte)PersistentOWRigd_Header.ENTITY_OWNER_ID);
-                client.Send(pk.GetBytes());
+                dynamicPacketCourierHandler.DynamicPacketIO.SendPackedData((byte)HeaderValue,pk.GetBytes());
             }
         }
 
-        public void Receive(ref PacketReader packet)
+        public void Receive(byte[] data)
         {
+            PacketReader packet = new PacketReader(data);
             switch ((PersistentOWRigd_Header)packet.ReadByte())
             {
                 case PersistentOWRigd_Header.ENTITY_OWNER_ID:
@@ -112,9 +132,8 @@ namespace ClientSide.PacketCouriers.PersistentOWRigd
                             SyncedOWRigidbodiesIDsWithPositions.Add(entityID, i);
                     }
                     PacketWriter pk = new PacketWriter();
-                    pk.Write((byte)Header.Header_Size + 1);
                     pk.Write((byte)EntityHeader.ENTITY_SYNC);
-                    client.Send(pk.GetBytes());
+                    dynamicPacketCourierHandler.DynamicPacketIO.SendPackedData((byte)entityPacketCourier.HeaderValue, pk.GetBytes());
 
                     break;
                 default:

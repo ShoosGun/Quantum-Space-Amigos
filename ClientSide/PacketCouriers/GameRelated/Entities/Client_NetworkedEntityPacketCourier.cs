@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using ClientSide.Sockets;
-
+using ClientSide.PacketCouriers.Essentials;
 
 namespace ClientSide.PacketCouriers.Entities
 {
@@ -13,8 +13,11 @@ namespace ClientSide.PacketCouriers.Entities
 
     public class Client_NetworkedEntityPacketCourier : MonoBehaviour, IPacketCourier
     {
+        private Client client;
+        const string NE_LOCALIZATION_STRING = "NetworkedEntityPacketCourier";
+        public int HeaderValue { get; private set; }
+
         private Transform ReferenceFrameTransform;
-        private Client Client;
 
         public const ushort MAX_AMOUNT_OF_ENTITIES = 2048;
         protected NetworkedEntity[] entities = new NetworkedEntity[MAX_AMOUNT_OF_ENTITIES];
@@ -30,13 +33,21 @@ namespace ClientSide.PacketCouriers.Entities
         {
             ReferenceFrameTransform = GameObject.Find("TimberHearth_Body").transform;
             
-            Client = GameObject.Find("QSAClient").GetComponent<ClientMod>()._clientSide;
+            client = GameObject.Find("QSAClient").GetComponent<ClientMod>()._clientSide;
+            Client_DynamicPacketCourierHandler dynamicPacketCourierHandler = client.dynamicPacketCourierHandler;
+            dynamicPacketCourierHandler.SetPacketCourier(NE_LOCALIZATION_STRING, OnReceiveHeaderValue);
 
-            Client.Disconnection += Client_Disconnection;
+            client.Disconnection += Client_Disconnection;
         }
+        public ReadPacketHolder.ReadPacket OnReceiveHeaderValue(int HeaderValue)
+        {
+            this.HeaderValue = HeaderValue;
+            return Receive;
+        }
+
         private void OnDestroy()
         {
-            Client.Disconnection -= Client_Disconnection;
+            client.Disconnection -= Client_Disconnection;
         }
 
         private void Client_Disconnection()
@@ -91,8 +102,9 @@ namespace ClientSide.PacketCouriers.Entities
                 entityOwners[ID] = entityOwner;
         }
         
-        public void Receive(ref PacketReader packet)
+        public void Receive(byte[] data)
         {
+            PacketReader packet = new PacketReader(data);
             switch ((EntityHeader)packet.ReadByte())
             {
                 case EntityHeader.DELTA_SYNC:

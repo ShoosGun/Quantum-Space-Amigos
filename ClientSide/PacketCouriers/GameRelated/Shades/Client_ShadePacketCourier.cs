@@ -4,12 +4,18 @@ using UnityEngine;
 using ClientSide.Sockets;
 using ClientSide.PacketCouriers.Entities;
 using ClientSide.PacketCouriers.Shades.MovementConstraints;
+using ClientSide.PacketCouriers.Essentials;
 
 namespace ClientSide.PacketCouriers.Shades
 {
     public class Client_ShadePacketCourier : MonoBehaviour, IPacketCourier , IEntityOwner
     {
         private Client client;
+        //TODO trocar Client_DynamicPacketCourierHandler pelo "DynamicIO"
+        private Client_DynamicPacketCourierHandler dynamicPacketCourierHandler;
+        const string SHADE_LOCALIZATION_STRING = "ShadePacketCourier";
+        public int HeaderValue { get; private set; }
+
         private Client_NetworkedEntityPacketCourier entityPacketCourier;
         private OWRigidbodyFollowsAnother playerConstrain;
         
@@ -32,16 +38,23 @@ namespace ClientSide.PacketCouriers.Shades
 
             GameObject go = GameObject.Find("QSAClient");
             client = go.GetComponent<ClientMod>()._clientSide;
+            dynamicPacketCourierHandler.SetPacketCourier(SHADE_LOCALIZATION_STRING, OnReceiveHeaderValue);
+
             entityPacketCourier = go.GetComponent<Client_NetworkedEntityPacketCourier>();
 
             client.Connection += Client_Connection;
             client.Disconnection += Client_Disconnection;
         }
-
         void OnDestroy()
         {
             client.Connection -= Client_Connection;
             client.Disconnection -= Client_Disconnection;
+        }
+
+        public ReadPacketHolder.ReadPacket OnReceiveHeaderValue(int HeaderValue)
+        {
+            this.HeaderValue = HeaderValue;
+            return Receive;
         }
 
         private void Client_Connection()
@@ -105,7 +118,6 @@ namespace ClientSide.PacketCouriers.Shades
             {
                 //Enviando os botões pressionados pelo cliente ao servidor
                 PacketWriter pk = new PacketWriter();
-                pk.Write((byte)Header.Header_Size + 0);
                 pk.Write((byte)ShadeHeader.MOVEMENT);
                 pk.Write(DateTime.UtcNow);
 
@@ -115,19 +127,19 @@ namespace ClientSide.PacketCouriers.Shades
                 pk.Write(OWInput.GetAxis(GroundInput.turn));
                 pk.Write(OWInput.GetButtonDown(GroundInput.jump));
 
-                client.Send(pk.GetBytes());
+                dynamicPacketCourierHandler.DynamicPacketIO.SendPackedData((byte)HeaderValue, pk.GetBytes());
             }
             else if (connectedToServer && !hasReceivedId && (int)(Time.realtimeSinceStartup * 10) % 10 == 0)
             {
                 PacketWriter pk = new PacketWriter();
-                pk.Write((byte)Header.Header_Size + 0);
                 pk.Write((byte)ShadeHeader.ENTITY_OWNER_ID);
-                client.Send(pk.GetBytes());
+                dynamicPacketCourierHandler.DynamicPacketIO.SendPackedData((byte)HeaderValue, pk.GetBytes());
             }
         }
 
-        public void Receive(ref PacketReader packet)
+        public void Receive(byte[] data)
         {
+            PacketReader packet = new PacketReader(data);
             switch ((ShadeHeader)packet.ReadByte())
             {
                 case ShadeHeader.ENTITY_OWNER_ID:
@@ -147,9 +159,8 @@ namespace ClientSide.PacketCouriers.Shades
                             playerShade = shadesLookUpTable[playerShadeId];
                     }
                     PacketWriter pk = new PacketWriter();
-                    pk.Write((byte)Header.Header_Size + 1); //do Entity PC
                     pk.Write((byte)EntityHeader.ENTITY_SYNC);
-                    client.Send(pk.GetBytes());
+                    dynamicPacketCourierHandler.DynamicPacketIO.SendPackedData((byte)entityPacketCourier.HeaderValue, pk.GetBytes());
                     Debug.Log($"Recebendo o ID do PC = {SHADEPC_ID} e da nossa shade {shadeID}");
 
                     break;

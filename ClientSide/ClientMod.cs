@@ -6,6 +6,8 @@ using CAMOWA;
 using DIMOWAModLoader;
 using ClientSide.Sockets;
 using ClientSide.SettingsMenu;
+using ClientSide.PacketCouriers.Shades;
+using ClientSide.PacketCouriers.Entities;
 
 namespace ClientSide
 {
@@ -39,14 +41,8 @@ namespace ClientSide
 
         private void Start()
         {
-
-            //IPacketCourier[] PacketCouriers = new IPacketCourier[]
-            //{
-            //    gameObject.AddComponent<Client_ShadePacketCourier>(),
-            //    gameObject.AddComponent<Client_NetworkedEntityPacketCourier>(),
-            //    gameObject.AddComponent<Client_PersistentOWRigdPacketCourier>()
-            //};
-            
+            gameObject.AddComponent<Client_ShadePacketCourier>();
+            gameObject.AddComponent<Client_NetworkedEntityPacketCourier>();
 
             _debugger = GameObject.Find("DIMOWALevelLoaderHandler").GetComponent<ClientDebuggerSide>();
             _clientSide = new Client(_debugger);

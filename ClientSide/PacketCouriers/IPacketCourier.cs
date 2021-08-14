@@ -8,7 +8,7 @@ namespace ClientSide.PacketCouriers
 {
     public interface IPacketCourier
     {
-       void Receive(ref PacketReader packet);
+       void Receive(byte[] data);
 
     }
 }
