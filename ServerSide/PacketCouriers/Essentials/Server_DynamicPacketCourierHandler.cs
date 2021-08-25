@@ -1,28 +1,47 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections;
 using System.Text;
 using ServerSide.Sockets.Servers;
+using ServerSide.Utils;
 using ServerSide.Sockets;
+using UnityEngine;
 
 namespace ServerSide.PacketCouriers.Essentials
 {
     //Hibrido de PacketCourier com DynamicPacketIO, ele TEM que ter o HeaderValue IGUAL a 0(ZERO). Assim teremos um canal confiavel para comunicarmos entre os computadores
-    public class Server_DynamicPacketCourierHandler
+    public class Server_DynamicPacketCourierHandler : MonoBehaviour
     {
         public Server_DynamicPacketIO DynamicPacketIO { get; private set; }
         public Server Server { get; private set; }
         public int HeaderValue { get; private set; }
 
-        private List<KeyValuePair<int,int>> HashToHeaderTranslation;
-        private List<KeyValuePair<int, int>> HashesToUpdate;
-        public Server_DynamicPacketCourierHandler(ref Server_DynamicPacketIO dynamicPacketIO, Server server)
+        private List<KeyValuePair<long,int>> HashToHeaderTranslation;
+        private List<KeyValuePair<long, int>> HashesToUpdate;
+
+        public void SetVariables(ref Server_DynamicPacketIO dynamicPacketIO, Server server)
         {
             DynamicPacketIO = dynamicPacketIO;
             HeaderValue = DynamicPacketIO.AddPacketCourier(ReadPacket);
-            HashToHeaderTranslation = new List<KeyValuePair<int, int>>();
-            HashesToUpdate = new List<KeyValuePair<int, int>>();
+            HashToHeaderTranslation = new List<KeyValuePair<long, int>>();
+            HashesToUpdate = new List<KeyValuePair<long, int>>();
 
             Server = server;
+            Server.NewConnectionID += Server_NewConnectionID;
+        }
+        
+        private void Server_NewConnectionID(string clientID)
+        {
+            StartCoroutine("SendToNewConnection", clientID);
+        }
+        IEnumerator SendToNewConnection(string clientID)
+        {
+            for (int i = 0; i < 1; i++)
+            {
+                yield return new WaitForSeconds(Time.deltaTime);
+                Debug.Log(string.Format("Enviando informacoes para {0}, tentativa {1}", clientID, i));
+                SendReturnAllHeaders(clientID);
+            }
         }
 
         public void SendReturnAllHeaders(params string[] ClientIDs)
@@ -61,7 +80,7 @@ namespace ServerSide.PacketCouriers.Essentials
         }
         public int AddPacketCourier(string localizationString, ReadPacketHolder.ReadPacket readPacket)
         {
-            int hash = localizationString.GetHashCode();
+            long hash = Util.GerarHash(localizationString);
             if (HashToHeaderTranslation.Exists(i => i.Key == hash))
                 throw new OperationCanceledException(string.Format("O hash de {0} ja esta gravado, use outra string que apresente um hash diferente de {1}", localizationString, hash));
 
@@ -69,7 +88,7 @@ namespace ServerSide.PacketCouriers.Essentials
             if(courierHeaderValue == ReadPacketHolder.MAX_AMOUNT_OF_HEADER_VALUES)
                 throw new OperationCanceledException(string.Format("Alcancou-se o maximo permitido de PacketCouriers de {0}", ReadPacketHolder.MAX_AMOUNT_OF_HEADER_VALUES ));
 
-            var HashHeaderPair = new KeyValuePair<int, int>(hash, courierHeaderValue);
+            var HashHeaderPair = new KeyValuePair<long, int>(hash, courierHeaderValue);
             HashToHeaderTranslation.Add(HashHeaderPair);
             HashesToUpdate.Add(HashHeaderPair);
             return courierHeaderValue;

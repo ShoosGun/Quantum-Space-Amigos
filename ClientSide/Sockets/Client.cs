@@ -30,6 +30,12 @@ namespace ClientSide.Sockets
         public Client_DynamicPacketCourierHandler dynamicPacketCourierHandler { get; private set; }
         private const int OBLIGATORY_HEADER_VALUE_OF_DPCH = 0;
 
+        private static Client CurrentClient = null;
+        public static Client GetClient()
+        {
+            return CurrentClient;
+        }
+
         /// <summary>
         /// 
         /// </summary>
@@ -42,7 +48,9 @@ namespace ClientSide.Sockets
             this.debugger = debugger;
 
             dynamicPacketIO = new Client_DynamicPacketIO();
-            dynamicPacketCourierHandler = new Client_DynamicPacketCourierHandler(ref dynamicPacketIO, OBLIGATORY_HEADER_VALUE_OF_DPCH);            
+            dynamicPacketCourierHandler = new Client_DynamicPacketCourierHandler(ref dynamicPacketIO, OBLIGATORY_HEADER_VALUE_OF_DPCH);
+
+            CurrentClient = this;
         }
 
         /// <summary>
@@ -116,8 +124,6 @@ namespace ClientSide.Sockets
                 debugger.SendLogMultiThread(ex.Message, DebugType.ERROR);
                 Connected = false;
             }
-
-
         }
 
         public void Update()
@@ -130,7 +136,9 @@ namespace ClientSide.Sockets
                     wasConnected = true;
                     Connection?.Invoke();
                 }
-                Send(dynamicPacketIO.GetAllData());
+                byte[] buffer = dynamicPacketIO.GetAllData();
+                if (buffer.Length > 0)
+                    Send(buffer);
                 //Ler dados
                 bool packetBuffers_NotLocked = Monitor.TryEnter(packetBuffers_lock, 10);
                 try
@@ -155,7 +163,7 @@ namespace ClientSide.Sockets
         }
         private void ReceiveData(List<byte[]> packets)
         {
-            for(int i =0; i< packets.Count; i++)
+            for(int i = 0; i < packets.Count; i++)
             {
                 byte[] data = packets[i];
                 if (data.Length > 0)
@@ -163,7 +171,8 @@ namespace ClientSide.Sockets
                     PacketReader packet = new PacketReader(data);
                     try
                     {
-                        dynamicPacketIO.ReadReceivedPacket(packet);
+                        debugger.SendLog("Lendo info do servidor " + data.Length);
+                        dynamicPacketIO.ReadReceivedPacket(ref packet);
                     }
                     catch (Exception ex)
                     {

@@ -50,6 +50,7 @@
   <ItemGroup>
     <Compile Include="ClientMod.cs" />
     <Compile Include="PacketCouriers\Essentials\Client_DynamicPacketCourierHandler.cs" />
+    <Compile Include="PacketCouriers\Experiments\Client_MarcoPoloExperiment.cs" />
     <Compile Include="PacketCouriers\GameRelated\Entities\IEntityOwner.cs" />
     <Compile Include="PacketCouriers\GameRelated\Entities\NetworkedEntity.cs" />
     <Compile Include="PacketCouriers\GameRelated\Entities\Client_NetworkedEntityPacketCourier.cs" />
@@ -70,6 +71,7 @@
     <Compile Include="Sockets\Headers.cs" />
     <Compile Include="Sockets\PacketIO.cs" />
     <Compile Include="PacketCouriers\IPacketCourier.cs" />
+    <Compile Include="Utils\Util.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

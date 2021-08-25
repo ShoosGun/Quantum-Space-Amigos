@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using ClientSide.Sockets;
+using ClientSide.Utils;
 
 namespace ClientSide.PacketCouriers.Essentials
 {
@@ -10,8 +11,8 @@ namespace ClientSide.PacketCouriers.Essentials
     {
         public Client_DynamicPacketIO DynamicPacketIO { get; private set; }
         public int HeaderValue { get; private set; }
-        private Dictionary<int, int> HeaderOfTheCouriersFromHash;
-        private Dictionary<int, OnReceiveHeaderValue> WaitingForUpdatePacketCouriers;
+        private Dictionary<long, int> HeaderOfTheCouriersFromHash;
+        private Dictionary<long, OnReceiveHeaderValue> WaitingForUpdatePacketCouriers;
 
         public delegate ReadPacketHolder.ReadPacket OnReceiveHeaderValue(int HeaderValue);
 
@@ -20,8 +21,8 @@ namespace ClientSide.PacketCouriers.Essentials
             this.HeaderValue = HeaderValue;
             DynamicPacketIO = dynamicPacketIO;
             DynamicPacketIO.SetPacketCourier(HeaderValue, ReadPacket);
-            HeaderOfTheCouriersFromHash = new Dictionary<int, int>();
-            WaitingForUpdatePacketCouriers = new Dictionary<int, OnReceiveHeaderValue>();
+            HeaderOfTheCouriersFromHash = new Dictionary<long, int>();
+            WaitingForUpdatePacketCouriers = new Dictionary<long, OnReceiveHeaderValue>();
         }
 
         public void RequestHeaders()
@@ -29,10 +30,10 @@ namespace ClientSide.PacketCouriers.Essentials
         }
         public void SetPacketCourier(string localizationString, OnReceiveHeaderValue receiveEvent)
         {
-            int hash = localizationString.GetHashCode();
+            long hash = Util.GerarHash(localizationString);
             if (WaitingForUpdatePacketCouriers.ContainsKey(hash))
                 throw new OperationCanceledException(string.Format("O hash de {0} ja esperando, use outra string que apresente um hash diferente de {1}", localizationString, hash));
-            if(!HeaderOfTheCouriersFromHash.TryGetValue(hash, out int foundHeader))
+            if(HeaderOfTheCouriersFromHash.TryGetValue(hash, out int foundHeader))
             {
                 DynamicPacketIO.SetPacketCourier(foundHeader, receiveEvent(foundHeader));
                 return;
@@ -41,10 +42,10 @@ namespace ClientSide.PacketCouriers.Essentials
         }
         public int GetHeaderValue(string localizationString)
         {
-            int hash = localizationString.GetHashCode();
-            if (!HeaderOfTheCouriersFromHash.TryGetValue(hash, out int foundHeader))
-                throw new OperationCanceledException(string.Format("O hash de {0} ainda nao foi recebido", localizationString));
-            return foundHeader;
+            long hash = Util.GerarHash(localizationString);
+            if (HeaderOfTheCouriersFromHash.TryGetValue(hash, out int foundHeader))
+                return foundHeader;
+            throw new OperationCanceledException(string.Format("O hash de {0} ainda nao foi recebido", localizationString));
         }
         public void ReadPacket(byte[] data)
         {
@@ -68,7 +69,7 @@ namespace ClientSide.PacketCouriers.Essentials
             List<int> hashesWithConflictingData = new List<int>();
             for (int i = 0; i < amountOfHeaders; i++)
             {
-                int hash = reader.ReadInt32();
+                long hash = reader.ReadInt64();
                 int headerValue = reader.ReadInt32();
 
                 if (HeaderOfTheCouriersFromHash.TryGetValue(hash, out int foundHeader))
@@ -102,7 +103,7 @@ namespace ClientSide.PacketCouriers.Essentials
             int amountOfHeaders = reader.ReadInt32();
             for (int i = 0; i < amountOfHeaders; i++)
             {
-                int hash = reader.ReadInt32();
+                long hash = reader.ReadInt64();
                 int headerValue = reader.ReadInt32();
 
                 HeaderOfTheCouriersFromHash[hash] = headerValue;

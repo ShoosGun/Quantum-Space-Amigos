@@ -5,6 +5,7 @@ using ClientSide.PacketCouriers.Essentials;
 using ClientSide.Sockets;
 using UnityEngine;
 
+//TODO Refazer Server_NetworkedMessengerPacketCourier
 namespace ClientSide.PacketCouriers.NetworkedMessenger
 {
     //Será Equivalente ao GlobalMessenger normal (só que não)[porém que sim]

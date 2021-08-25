@@ -16,6 +16,10 @@ namespace DumbClient
         private static List<byte[]> packets = new List<byte[]>();
         private static bool desconectados = false;
         private static bool on = true;
+        
+        //TODO Trocar aonde pega o hash pela função do Utils!
+        const string MP_LOCALIZATION_STRING = "MarcoPoloExperiment";
+        private static int MarcoPoloHeader = -1;
 
         private static void Main(string[] args)
         {
@@ -36,26 +40,19 @@ namespace DumbClient
 
                 Thread.Sleep(100);
 
-                PacketWriter namePacket = new PacketWriter();
-                namePacket.Write((byte)Header.SHADE_PC);
-                namePacket.Write((byte)ShadeHeader.SET_NAME);
-                namePacket.Write(shadeName);
-                byte[] namePacketBuffer = namePacket.GetBytes();
+                //PacketWriter namePacket = new PacketWriter();
+                //namePacket.Write((byte)Header.SHADE_PC);
+                //namePacket.Write((byte)ShadeHeader.SET_NAME);
+                //namePacket.Write(shadeName);
+                //byte[] namePacketBuffer = namePacket.GetBytes();
                 
-                clientSck.Send(BitConverter.GetBytes(namePacketBuffer.Length));
-                clientSck.Send(namePacketBuffer);
+                //clientSck.Send(BitConverter.GetBytes(namePacketBuffer.Length));
+                //clientSck.Send(namePacketBuffer);
 
-                namePacket.Close();
+                //namePacket.Close();
 
                 Console.WriteLine("Precione P para desconectar esse cliente");
-                Console.CursorVisible = false;
-                DateTime start = DateTime.UtcNow;
-
-                bool useRandomInput = true;
-                Vector3 moveInput = Vector3.zero;
-                float turnInput = 0f;
-                bool jumpInput = false;
-                System.Random rnd = new System.Random(start.Millisecond);
+                Console.CursorVisible = false;                
                 while (on)
                 {
                     bool packets_NotLoked = Monitor.TryEnter(packets_lock, 10);
@@ -63,17 +60,47 @@ namespace DumbClient
                     {
                         try
                         {
-                            foreach (var p in packets)
+                            for (int i =0;i<packets.Count;i++)
                             {
-                                while (true)
+                                bool jaFoiPeloPacote = false;
+                                PacketReader reader = new PacketReader(packets[i]);
+                                int j = 0;
+                                Console.WriteLine("Novo Pacote");
+                                while (j<4)
                                 {
+                                    j++;
                                     try
                                     {
-                                        PacketReader pac = new PacketReader(p);
-                                        switch ((Header)pac.ReadByte())
+                                        byte headerValue = reader.ReadByte();
+                                        int dataSize = reader.ReadInt32();
+                                        byte[] data = reader.ReadBytes(dataSize);
+                                        Console.WriteLine("Header " + headerValue);
+                                        Console.WriteLine("Tamanho da mensage: " + dataSize);
+                                        PacketReader packetReader = new PacketReader(data);
+                                        //Console.WriteLine("Tamanho da mensage (2): " + data.Length);
+                                        if (headerValue == 0)
                                         {
-                                            default:
-                                                break;
+                                            Console.WriteLine("Informacao sobre os Headers!!!");
+                                            packetReader.ReadByte();
+                                            int amountOfHeaders = packetReader.ReadInt32();
+                                            Console.WriteLine(amountOfHeaders);
+                                            for (int k = 0; k < amountOfHeaders; k++)
+                                            {
+                                                long hash = packetReader.ReadInt64();
+                                                int value = packetReader.ReadInt32();
+                                                Console.WriteLine("Hash {0}", hash);
+                                                Console.WriteLine("de {0} vem {1}", MP_LOCALIZATION_STRING, GerarHash(MP_LOCALIZATION_STRING));
+                                                if (hash == GerarHash(MP_LOCALIZATION_STRING))
+                                                {
+                                                    MarcoPoloHeader = value;
+                                                    Console.WriteLine("Header de {0} eh {1}", MP_LOCALIZATION_STRING, MarcoPoloHeader);
+                                                }
+                                            }
+                                        }
+                                        else if (headerValue == MarcoPoloHeader && !jaFoiPeloPacote)
+                                        {
+                                            jaFoiPeloPacote = true;
+                                            Console.WriteLine("Mensagem: {0}", packetReader.ReadString());
                                         }
                                     }
                                     catch (Exception ex)
@@ -101,42 +128,6 @@ namespace DumbClient
                             case ConsoleKey.P:
                                 on = false;
                                 break;
-
-                            case ConsoleKey.R:
-                                useRandomInput = !useRandomInput;
-                                break;
-
-                            ////Mover
-                            //case ConsoleKey.W:
-                            //    moveInput.z++;
-                            //    break;
-
-                            //case ConsoleKey.S:
-                            //    moveInput.z--;
-                            //    break;
-
-                            //case ConsoleKey.A:
-                            //    moveInput.x--;
-                            //    break;
-
-                            //case ConsoleKey.D:
-                            //    moveInput.x++;
-                            //    break;
-
-                            ////Virar
-                            //case ConsoleKey.Q:
-                            //    turnInput++;
-                            //    break;
-
-                            //case ConsoleKey.E:
-                            //    turnInput--;
-                            //    break;
-
-                            ////Pular
-                            //case ConsoleKey.Z:
-                            //    jumpInput = true;
-                            //    break;
-
                             default:
                                 break;
                         }
@@ -144,44 +135,6 @@ namespace DumbClient
 
                     if (desconectados)
                         on = false;
-
-                    if (useRandomInput && !desconectados)
-                    {
-                        Thread.Sleep(10);
-                        moveInput = new Vector3(rnd.Next(0, 2), 0f, rnd.Next(0, 2));
-                        turnInput = rnd.Next(-1, 2);
-                        jumpInput = rnd.Next(0, 101) < 11;
-
-
-
-                        //Send packet to server
-                        PacketWriter packet = new PacketWriter();
-                        packet.Write((byte)Header.SHADE_PC);
-                        namePacket.Write((byte)ShadeHeader.SET_NAME);
-
-                        packet.Write(DateTime.UtcNow);
-
-                        packet.Write((byte)3);//Quantos sub pacotes vamos mandar 
-
-                        packet.Write((byte)ShadeMovementSubHeader.HORIZONTAL_MOVEMENT);
-                        packet.Write(moveInput);
-
-                        packet.Write((byte)ShadeMovementSubHeader.SPIN);
-                        packet.Write(turnInput);
-
-                        packet.Write((byte)ShadeMovementSubHeader.JUMP);
-                        packet.Write(jumpInput);
-                        byte[] buffer = packet.GetBytes();
-
-                        clientSck.Send(BitConverter.GetBytes(buffer.Length));
-                        clientSck.Send(buffer);
-
-
-
-                        moveInput = Vector3.zero;
-                        turnInput = 0f;
-                        jumpInput = false;
-                    }
                 }
             }
             catch(Exception ex)
@@ -197,24 +150,19 @@ namespace DumbClient
             try
             {
                 clientSck.EndReceive(ar);
-                Console.Write("Dados foram recebidos, tamanho: ");
                  byte[] receivedBuffer = new byte[4];
                 clientSck.Receive(receivedBuffer, 0, 4, 0);
                 int dataSize = BitConverter.ToInt32(receivedBuffer, 0);
-                Console.WriteLine(dataSize);
 
                 if (dataSize <= 0)
                     throw new SocketException();
-
-                Console.WriteLine("Problema e o loop?");
+                
                 byte[] buffer = new byte[dataSize];
                 int received = clientSck.Receive(buffer, 0, buffer.Length, 0);
-                Console.WriteLine(received);
                 while (received < dataSize)
                 {
                     received += clientSck.Receive(buffer, received, dataSize - received, 0);
                 }
-                Console.WriteLine("Nao, problema e o lock");
                 lock (packets_lock)
                 {
                     packets.Add(buffer);
@@ -231,5 +179,18 @@ namespace DumbClient
             }
         }
 
+        public static long GerarHash(string s) //Gerar o Hash code de strings
+        {
+            const int p = 53;
+            const int m = 1000000000 + 9; //10e9 + 9
+            long hash_value = 0;
+            long p_pow = 1;
+            foreach (char c in s)
+            {
+                hash_value = (hash_value + (c - 'a' + 1) * p_pow) % m;
+                p_pow = p_pow * p % m;
+            }
+            return hash_value;
+        }
     }
 }

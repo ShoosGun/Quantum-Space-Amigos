@@ -38,6 +38,7 @@ namespace ClientSide.PacketCouriers.Shades
 
             GameObject go = GameObject.Find("QSAClient");
             client = go.GetComponent<ClientMod>()._clientSide;
+            dynamicPacketCourierHandler = client.dynamicPacketCourierHandler;
             dynamicPacketCourierHandler.SetPacketCourier(SHADE_LOCALIZATION_STRING, OnReceiveHeaderValue);
 
             entityPacketCourier = go.GetComponent<Client_NetworkedEntityPacketCourier>();
@@ -114,8 +115,8 @@ namespace ClientSide.PacketCouriers.Shades
 
         void FixedUpdate()
         {
-            if (playerShade != null)
-            {
+            //if (playerShade != null)
+            //{
                 //Enviando os botões pressionados pelo cliente ao servidor
                 PacketWriter pk = new PacketWriter();
                 pk.Write((byte)ShadeHeader.MOVEMENT);
@@ -128,12 +129,12 @@ namespace ClientSide.PacketCouriers.Shades
                 pk.Write(OWInput.GetButtonDown(GroundInput.jump));
 
                 dynamicPacketCourierHandler.DynamicPacketIO.SendPackedData((byte)HeaderValue, pk.GetBytes());
-            }
-            else if (connectedToServer && !hasReceivedId && (int)(Time.realtimeSinceStartup * 10) % 10 == 0)
+            //}
+            if (connectedToServer && !hasReceivedId && (int)(Time.realtimeSinceStartup * 10) % 10 == 0)
             {
-                PacketWriter pk = new PacketWriter();
-                pk.Write((byte)ShadeHeader.ENTITY_OWNER_ID);
-                dynamicPacketCourierHandler.DynamicPacketIO.SendPackedData((byte)HeaderValue, pk.GetBytes());
+                PacketWriter pak = new PacketWriter();
+                pak.Write((byte)ShadeHeader.ENTITY_OWNER_ID);
+                dynamicPacketCourierHandler.DynamicPacketIO.SendPackedData((byte)HeaderValue, pak.GetBytes());
             }
         }
 

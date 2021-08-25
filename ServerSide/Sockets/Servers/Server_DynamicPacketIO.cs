@@ -36,11 +36,17 @@ namespace ServerSide.Sockets.Servers
     //E teremos a classe DynamicPacketIO que cuidara dos valores que HeaderValue terão
     public class Server_DynamicPacketIO
     {
-        private ReadPacketHolder[] readPacketHolders = new ReadPacketHolder[ReadPacketHolder.MAX_AMOUNT_OF_HEADER_VALUES];
+        private ReadPacketHolder[] readPacketHolders;
         private PacketWriter globalPacketWriter;
         private Dictionary<string, PacketWriter> clientSpecificPacketWriters;
 
-        private byte[] GetAllData(PacketWriter packetWriter)
+        public Server_DynamicPacketIO()
+        {
+            clientSpecificPacketWriters = new Dictionary<string, PacketWriter>();
+            readPacketHolders = new ReadPacketHolder[ReadPacketHolder.MAX_AMOUNT_OF_HEADER_VALUES];
+        }
+
+        private byte[] GetAllData(ref PacketWriter packetWriter)
         {
             if (packetWriter != null)
             {
@@ -52,14 +58,14 @@ namespace ServerSide.Sockets.Servers
         }
         public byte[] GetGlobalPacketWriterData()
         {
-            return GetAllData(globalPacketWriter);
+            return GetAllData(ref globalPacketWriter);
         }
         public byte[] GetClientSpecificPacketWriterData(string ClientID)
         {
             if (clientSpecificPacketWriters.TryGetValue(ClientID, out PacketWriter packet))
             {
                 clientSpecificPacketWriters.Remove(ClientID);
-                return GetAllData(packet);
+                return GetAllData(ref packet);
             }
             return new byte[] { };
         }
@@ -70,7 +76,7 @@ namespace ServerSide.Sockets.Servers
         }
 
 
-        private void WritePackedData(byte HeaderValue, byte[] data, PacketWriter writer)
+        private void WritePackedData(byte HeaderValue, byte[] data, ref PacketWriter writer)
         {
             if (writer == null)
                 writer = new PacketWriter();
@@ -85,19 +91,26 @@ namespace ServerSide.Sockets.Servers
         {
             if (ClientIDs.Length == 0)
             {
-                WritePackedData(HeaderValue, data, globalPacketWriter);
+                WritePackedData(HeaderValue, data, ref globalPacketWriter);
                 return;
             }
             for (int i = 0; i < ClientIDs.Length; i++)
             {
                 if (!clientSpecificPacketWriters.ContainsKey(ClientIDs[i]))
-                    clientSpecificPacketWriters[ClientIDs[i]] = null;
+                    clientSpecificPacketWriters.Add(ClientIDs[i], new PacketWriter());
 
-                WritePackedData(HeaderValue, data, clientSpecificPacketWriters[ClientIDs[i]]);
+                if (clientSpecificPacketWriters[ClientIDs[i]] == null)
+                    clientSpecificPacketWriters[ClientIDs[i]] = new PacketWriter();
+
+                if (readPacketHolders[HeaderValue] != null)
+                    clientSpecificPacketWriters[ClientIDs[i]].Write(HeaderValue);
+
+                clientSpecificPacketWriters[ClientIDs[i]].Write(data.Length);
+                clientSpecificPacketWriters[ClientIDs[i]].Write(data);
             }
         }
 
-        public void ReadReceivedPacket(PacketReader packetReader, string ClientID)
+        public void ReadReceivedPacket(ref PacketReader packetReader, string ClientID)
         {
             bool continueLoop = true;
             List<int> ReceivedDataFromNonExistingHeaders = new List<int>();

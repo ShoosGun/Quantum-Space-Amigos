@@ -1,28 +1,38 @@
 ﻿using UnityEngine;
+using System;
 
-namespace ServerSide.PacketCouriers.Entities
+namespace ServerSide.PacketCouriers.GameRelated.Entities
 {
-    /// <summary>
-    /// Give this script for the OWRigidbody that you want to be synced
-    /// </summary>
-    /// 
-    
     public class NetworkedEntity : MonoBehaviour
     {
-        public ushort ID;
+        public string prefabName;
+        public byte[][] intantiateData;
+        public Vector3 InitialPosition;
+        public Quaternion InitialRotation;
+        public InstantiateType instantiateType;
 
-        /// <summary>
-        /// The PacketCourier that owns this ID/Entity
-        /// </summary>
-        public byte PCOwner;
+        public int id;
 
-        /// <summary>
-        /// Checks to see if there is a Rigidbody and places one
-        /// </summary>
-        protected virtual void Start()
+        public void SetInstantiateVariables(string prefabName, InstantiateType instantiateType, params byte[][] intantiateData)
         {
-            if (gameObject.GetComponent<Rigidbody>() == null)
-                gameObject.AddComponent<Rigidbody>();
+            this.prefabName = prefabName;
+            this.instantiateType = instantiateType;
+            this.intantiateData = intantiateData;
+
+            InitialPosition = transform.position;
+            InitialRotation = transform.rotation;
         }
+        public byte[] GetDataFromInstantiate(int index)
+        {
+            if (intantiateData.Length - 1 < index)
+                throw new IndexOutOfRangeException();
+
+            return intantiateData[index];
+        }
+		
+		private void OnDestroy()
+		{
+            InstantiadableGameObjectsPrefabHub.RemoveGameObject(id);		
+		}
     }
 }

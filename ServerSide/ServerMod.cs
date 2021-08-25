@@ -5,10 +5,13 @@ using UnityEngine;
 using ServerSide.Sockets.Servers;
 using CAMOWA;
 using DIMOWAModLoader;
+using System.Collections;
 
 //using ServerSide.PacketCouriers;
-using ServerSide.PacketCouriers.Shades;
-using ServerSide.PacketCouriers.Entities;
+//using ServerSide.PacketCouriers.Shades;
+//using ServerSide.PacketCouriers.Entities;
+using ServerSide.PacketCouriers.Experiments;
+using ServerSide.PacketCouriers.Essentials;
 //using ServerSide.PacketCouriers.PersistentOWRigdSync;
 
 namespace ServerSide
@@ -34,12 +37,13 @@ namespace ServerSide
         private void Start()
         {
             _debugger = GameObject.Find("DIMOWALevelLoaderHandler").GetComponent<ClientDebuggerSide>();
-            _serverSide = new Server(_debugger);
 
-            gameObject.AddComponent<Server_NetworkedEntityPacketCourier>();
-            gameObject.AddComponent<Server_ShadePacketCourier>();
-        }
-
+            _serverSide = new Server(_debugger, gameObject.AddComponent<Server_DynamicPacketCourierHandler>());
+            
+            gameObject.AddComponent<Server_MarcoPoloExperiment>();
+            //gameObject.AddComponent<Server_NetworkedEntityPacketCourier>();
+            //gameObject.AddComponent<Server_ShadePacketCourier>();
+        }        
         private void FixedUpdate()
         {
             _serverSide.FixedUpdate(); // Big Brain time

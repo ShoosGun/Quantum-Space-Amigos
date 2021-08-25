@@ -26,9 +26,13 @@ namespace ClientSide.Sockets
         
         public byte[] GetAllData()
         {
-            byte[] data = packetWriter.GetBytes();
-            packetWriter = null;
-            return data;
+            if (packetWriter != null)
+            {
+                byte[] data = packetWriter.GetBytes();
+                packetWriter = null;
+                return data;
+            }
+            return new byte[] { };
         }
 
         public void SendPackedData(byte HeaderValue, byte[] data)
@@ -36,16 +40,16 @@ namespace ClientSide.Sockets
             if(packetWriter == null)
                 packetWriter = new PacketWriter();
 
-            if (readPacketHolders[HeaderValue] != null)
-                packetWriter.Write(HeaderValue);
+            packetWriter.Write(HeaderValue);
 
             packetWriter.Write(data.Length);
             packetWriter.Write(data);
         }
 
-        public void ReadReceivedPacket(PacketReader packetReader)
+        public void ReadReceivedPacket(ref PacketReader packetReader)
         {
             bool continueLoop = true;
+            UnityEngine.Debug.Log("Lendo info recebida");
             List<int> ReceivedDataFromNonExistingHeaders = new List<int>();
             while (continueLoop)
             {
@@ -62,6 +66,7 @@ namespace ClientSide.Sockets
                     {
                         try
                         {
+                            UnityEngine.Debug.Log("Passando para " + HeaderValue);
                             readPacketHolders[HeaderValue].PacketRead(PackedData);
                         }
                         catch(Exception ex) { UnityEngine.Debug.Log(string.Format("{0} - {1} {2}", ex.Message, ex.Source, ex.StackTrace)); }

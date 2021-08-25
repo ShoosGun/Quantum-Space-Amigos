@@ -1,0 +1,8 @@
+{
+	"filename" : "ServerSide.dll",
+	"author": "Locochoco",
+	"name": "QSA-ServerSide",
+	"uniqueName": "Locochoco.QSA_SS",
+	"description": "Adds the hability to create servers that can receive connections from by QSA-ClientSide",	
+	"version": "0.5 - gamma",
+}

@@ -6,8 +6,9 @@ using CAMOWA;
 using DIMOWAModLoader;
 using ClientSide.Sockets;
 using ClientSide.SettingsMenu;
-using ClientSide.PacketCouriers.Shades;
-using ClientSide.PacketCouriers.Entities;
+using ClientSide.PacketCouriers.Experiments;
+//using ClientSide.PacketCouriers.Shades;
+//using ClientSide.PacketCouriers.Entities;
 
 namespace ClientSide
 {
@@ -41,12 +42,13 @@ namespace ClientSide
 
         private void Start()
         {
-            gameObject.AddComponent<Client_ShadePacketCourier>();
-            gameObject.AddComponent<Client_NetworkedEntityPacketCourier>();
 
             _debugger = GameObject.Find("DIMOWALevelLoaderHandler").GetComponent<ClientDebuggerSide>();
             _clientSide = new Client(_debugger);
 
+            //gameObject.AddComponent<Client_NetworkedEntityPacketCourier>();
+            //gameObject.AddComponent<Client_ShadePacketCourier>();
+            gameObject.AddComponent<Client_MarcoPoloExperiment>();
             gameObject.AddComponent<ClientModSettingsMenu>();
 
             //balão falando que não se está conectado

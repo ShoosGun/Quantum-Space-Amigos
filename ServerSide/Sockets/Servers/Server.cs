@@ -38,12 +38,22 @@ namespace ServerSide.Sockets.Servers
         public Server_DynamicPacketCourierHandler dynamicPacketCourierHandler { get; private set; }
         private const int OBLIGATORY_HEADER_VALUE_OF_DPCH = 0;
 
-        public Server(ClientDebuggerSide debugger)
+        private static Server CurrentServer = null;
+        public static Server GetServer()
         {
+            return CurrentServer;
+        }
+
+        public Server(ClientDebuggerSide debugger, Server_DynamicPacketCourierHandler dynamicPacketCourierHandler)
+        {
+            if (CurrentServer != null)
+                return;
+
             this.debugger = debugger;
 
             dynamicPacketIO = new Server_DynamicPacketIO();
-            dynamicPacketCourierHandler = new Server_DynamicPacketCourierHandler(ref dynamicPacketIO, this);
+            this.dynamicPacketCourierHandler = dynamicPacketCourierHandler;
+            this.dynamicPacketCourierHandler.SetVariables(ref dynamicPacketIO, this);
 
             if(dynamicPacketCourierHandler.HeaderValue != OBLIGATORY_HEADER_VALUE_OF_DPCH)
                 throw new OperationCanceledException(string.Format("dynamicPacketCourierHandler tem que ter como HeaderValue o valor de {0}, mas no lugar tem {1}"
@@ -55,6 +65,7 @@ namespace ServerSide.Sockets.Servers
             l.SocketAccepted += L_SocketAccepted;
             l.Start();
 
+            CurrentServer = this;
         }
 
         /// <summary>
@@ -135,7 +146,7 @@ namespace ServerSide.Sockets.Servers
                 PacketReader packet = new PacketReader(data);
                 try
                 {
-                    dynamicPacketIO.ReadReceivedPacket(packet, clientID);
+                    dynamicPacketIO.ReadReceivedPacket(ref packet, clientID);
                 }
                 catch (Exception ex)
                 {
@@ -306,22 +317,10 @@ namespace ServerSide.Sockets.Servers
         /// </summary>
         /// <param name="Exceptions"> The ids of the ones you don't want to send to</param>
         /// <param name="buffer"></param>
-        public void SendAll(byte[] buffer, params string[] Exceptions)
+        public void SendAll(byte[] buffer)
         {
             foreach (Client c in clients)
-            {
-                bool isInExceptions = false;
-                foreach (string s in Exceptions)
-                {
-                    if (c.ID == s)
-                    {
-                        isInExceptions = true;
-                        break;
-                    }
-                }
-                if (!isInExceptions)
-                    c.Send(buffer);
-            }
+                c.Send(buffer);
         }
 
         public void Stop()

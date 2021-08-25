@@ -47,6 +47,9 @@
       <HintPath>..\..\DIMOWA\DIMOWAModLoader\bin\Release\DIMOWAModLoader.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Core">
+      <HintPath>..\..\..\..\..\OuterWilds Alpha 1_2\OuterWilds_Alpha_1_2_Data\Managed\System.Core.dll</HintPath>
+    </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">
@@ -55,6 +58,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="PacketCouriers\Essentials\Server_DynamicPacketCourierHandler.cs" />
+    <Compile Include="PacketCouriers\Experiments\Server_MarcoPoloExperiment.cs" />
+    <Compile Include="PacketCouriers\GameRelated\Entities\Server_EntityInitializer.cs" />
     <Compile Include="PacketCouriers\GameRelated\NetworkedMessenger\Server_NetworkedMessengerPacketCourier.cs" />
     <Compile Include="PacketCouriers\GameRelated\PersistentOWRigd\Server_PersistentOWRigdPacketCourier.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
