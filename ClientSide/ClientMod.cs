@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using UnityEngine;
+﻿using UnityEngine;
 using CAMOWA;
 using DIMOWAModLoader;
+
 using ClientSide.Sockets;
 using ClientSide.SettingsMenu;
+
 using ClientSide.PacketCouriers.Experiments;
-//using ClientSide.PacketCouriers.Shades;
-//using ClientSide.PacketCouriers.Entities;
+using ClientSide.PacketCouriers.GameRelated.Entities;
 
 namespace ClientSide
 {
@@ -49,15 +47,9 @@ namespace ClientSide
             //gameObject.AddComponent<Client_NetworkedEntityPacketCourier>();
             //gameObject.AddComponent<Client_ShadePacketCourier>();
             gameObject.AddComponent<Client_MarcoPoloExperiment>();
-            gameObject.AddComponent<ClientModSettingsMenu>();
+            gameObject.AddComponent<Client_EntityInitializer>();
 
-            //balão falando que não se está conectado
-            //no menu de settings ter uma opção chamada "conectar", e com ela aparecer uma caia de texto de um botão para se conectar ao servidor
-            //balão falando que se está tentando conectar e depois se a conecção deu certo
-            //no lugar de "conectar" agora é "desconectar"
-            //se o cliente foi desconectado do servido voltar ao inicio
-
-            //_clientSide.TryConnect(); descobrir maneira do usuario escrever o ip do servidor com GUI
+            gameObject.AddComponent<ClientModSettingsMenu>();           
         } 
         private void FixedUpdate()
         {

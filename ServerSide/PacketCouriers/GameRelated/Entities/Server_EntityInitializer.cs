@@ -13,8 +13,7 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
     public enum InstantiateType : int
     {
         NotBuffered,
-        Buffered,
-        Buffered_Plus_Position_And_Rotation
+        Buffered
     }
 
     static class InstantiadableGameObjectsPrefabHub
@@ -46,7 +45,7 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
             return new List<int>(allUsedIds);
         }
 
-        public static int AddGameObject(NetworkedEntity networkedEntity)//InstantiateType instantiateType, params byte[][] data
+        public static int AddGameObject(NetworkedEntity networkedEntity)
         {
             int ID;
             if (avaliableIds.Count > 0)
@@ -82,7 +81,6 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
                 return false;
             networkedEntities.Remove(id);
             avaliableIds.Add(id);
-
             bufferedInstantiationEntities.Remove(id);
             return true;
         }
@@ -111,6 +109,15 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
             avaliableIds.Add(key);
             return true;
         }
+
+        public static void ResetInstantiadableGameObjectsPrefabHub()
+        {
+            instantiadableGOPrefabs.Clear();
+            networkedEntities.Clear();
+            bufferedInstantiationEntities.Clear();
+            avaliableIds.Clear();
+            nextID = 0;
+        }
     }
 
     class Server_EntityInitializer : MonoBehaviour
@@ -133,7 +140,17 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
             Server_DynamicPacketCourierHandler handler = Server.GetServer().dynamicPacketCourierHandler;
             HeaderValue = handler.AddPacketCourier(EI_LOCALIZATION_STRING, ReadPacket);
             DynamicPacketIO = handler.DynamicPacketIO;
-            StartCoroutine("SendMarcoPeriodically");
+
+            Server.GetServer().NewConnectionID += Server_NewConnectionID;
+        }
+
+        public void OnDestroy()
+        {
+            if (server_EntityInitializer == this)
+            {
+                Server.GetServer().NewConnectionID -= Server_NewConnectionID;
+                InstantiadableGameObjectsPrefabHub.ResetInstantiadableGameObjectsPrefabHub();
+            }
         }
 
         public void AddGameObjectPrefab(string gameObjectName, GameObject gameObject)
@@ -146,26 +163,25 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
         {
             if (!InstantiadableGameObjectsPrefabHub.instantiadableGOPrefabs.TryGetValue(prefabName, out GameObject prefab))
                 throw new OperationCanceledException(string.Format("There is no GameObject in {0}", prefabName));
-            //Send:
-            //gameObjectName string
-            //object id short
-            //position Vector3
-            //rotation Quaternion
-            //data byte[][]
-
-            //TODO criar esse envio de dados
 
             GameObject gameObject = (GameObject)Instantiate(prefab, position, rotation);
             NetworkedEntity networkedEntity = gameObject.GetAttachedNetworkedEntity();
             networkedEntity.SetInstantiateVariables(prefabName, instantiateType, data);
-
             int ID = InstantiadableGameObjectsPrefabHub.AddGameObject(networkedEntity);
+            gameObject.SetActive(true);
 
+            SendAddEntities(new string[] { }, ID);
+            
             return gameObject;
         }
 
-        //TODO enviar dados buffered guardados em InstantiadableGameObjectsPrefabHub.bufferedInstantiationEntities
-        // para clientes que acabaram de se conectar, seguindo a "regra" de Server_DynamicPacketCourierHandler com uma courotine
+        public void DestroyEntity(NetworkedEntity networkedEntity)
+        {
+            InstantiadableGameObjectsPrefabHub.RemoveGameObject(networkedEntity, true);
+            Destroy(networkedEntity.gameObject);
+            SendRemoveEntities(new string[] { }, networkedEntity.id);
+        }
+        
         private void Server_NewConnectionID(string clientID)
         {
             StartCoroutine("SendToNewConnection", clientID);
@@ -174,38 +190,47 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
         IEnumerator SendToNewConnection(string clientID)
         {
             yield return new WaitForSeconds(Time.deltaTime * 2f);
-            SendBufferedEntities(clientID);
+            SendAddEntities(new string[] { clientID }, InstantiadableGameObjectsPrefabHub.bufferedInstantiationEntities.ToArray());
         }
 
-        private void SendBufferedEntities(string clientID)
+        private void SendAddEntities(string[] clientIDs, params int[] entitiesIDs)
         {
             PacketWriter buffer = new PacketWriter();
-            var bufferedEntitiesIDs = InstantiadableGameObjectsPrefabHub.GetAllUsedIds();
-            for(int i = 0; i< bufferedEntitiesIDs.Count; i++)
+            buffer.Write((byte)EntityInitializerHeaders.Instantiate);
+            buffer.Write(entitiesIDs.Length);
+            for (int i = 0; i< entitiesIDs.Length; i++)
             {
-                NetworkedEntity entity = InstantiadableGameObjectsPrefabHub.networkedEntities[bufferedEntitiesIDs[i]];
-                // Send:
-                //gameObjectName string
-                //object id int
-                //data byte[][]
-
-                //E se InstantiateType == Buffered_Plus_Position_And_Rotation
-                //position Vector3
-                //rotation Quaternion
+                NetworkedEntity networkedEntity = InstantiadableGameObjectsPrefabHub.networkedEntities[entitiesIDs[i]];
+                WriteEntityInstantiateData(networkedEntity, ref buffer);
             }
-            DynamicPacketIO.SendPackedData((byte)HeaderValue, buffer.GetBytes());
+            DynamicPacketIO.SendPackedData((byte)HeaderValue, buffer.GetBytes(), clientIDs);
         }
 
-        public void SendMarco(int i)
+        private void SendRemoveEntities(string[] clientIDs, params int[] entitiesIDs)
         {
-            PacketWriter marco = new PacketWriter();
-            marco.Write("Marco " + i);
-            DynamicPacketIO.SendPackedData((byte)HeaderValue, marco.GetBytes());
+            PacketWriter buffer = new PacketWriter();
+            buffer.Write((byte)EntityInitializerHeaders.Remove);
+            buffer.Write(entitiesIDs);
+            DynamicPacketIO.SendPackedData((byte)HeaderValue, buffer.GetBytes(), clientIDs);
         }
+
+        private void WriteEntityInstantiateData(NetworkedEntity entity, ref PacketWriter writer)
+        {
+            writer.Write(entity.prefabName);
+            writer.Write(entity.id);
+            writer.Write(entity.intantiateData);
+            writer.Write(entity.transform.position);
+            writer.Write(entity.transform.rotation);
+        }
+
         public void ReadPacket(byte[] data, string ClientID)
         {
-            PacketReader reader = new PacketReader(data);
-            Debug.Log($"Recebemos de {ClientID}: {reader.ReadString()}");
+        }
+
+        enum EntityInitializerHeaders : byte
+        {
+            Instantiate,
+            Remove
         }
     }
 }

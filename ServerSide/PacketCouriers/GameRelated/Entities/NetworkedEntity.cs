@@ -7,8 +7,6 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
     {
         public string prefabName;
         public byte[][] intantiateData;
-        public Vector3 InitialPosition;
-        public Quaternion InitialRotation;
         public InstantiateType instantiateType;
 
         public int id;
@@ -18,9 +16,6 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
             this.prefabName = prefabName;
             this.instantiateType = instantiateType;
             this.intantiateData = intantiateData;
-
-            InitialPosition = transform.position;
-            InitialRotation = transform.rotation;
         }
         public byte[] GetDataFromInstantiate(int index)
         {
@@ -32,7 +27,7 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
 		
 		private void OnDestroy()
 		{
-            InstantiadableGameObjectsPrefabHub.RemoveGameObject(id);		
-		}
+            Server_EntityInitializer.server_EntityInitializer.DestroyEntity(this);
+        }
     }
 }

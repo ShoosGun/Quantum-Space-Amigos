@@ -1,18 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using UnityEngine;
-using ServerSide.Sockets.Servers;
+﻿using UnityEngine;
 using CAMOWA;
 using DIMOWAModLoader;
-using System.Collections;
 
-//using ServerSide.PacketCouriers;
-//using ServerSide.PacketCouriers.Shades;
-//using ServerSide.PacketCouriers.Entities;
+using ServerSide.Sockets.Servers;
+
 using ServerSide.PacketCouriers.Experiments;
 using ServerSide.PacketCouriers.Essentials;
-//using ServerSide.PacketCouriers.PersistentOWRigdSync;
+using ServerSide.PacketCouriers.GameRelated.Entities;
 
 namespace ServerSide
 {
@@ -41,6 +35,7 @@ namespace ServerSide
             _serverSide = new Server(_debugger, gameObject.AddComponent<Server_DynamicPacketCourierHandler>());
             
             gameObject.AddComponent<Server_MarcoPoloExperiment>();
+            gameObject.AddComponent<Server_EntityInitializer>();
             //gameObject.AddComponent<Server_NetworkedEntityPacketCourier>();
             //gameObject.AddComponent<Server_ShadePacketCourier>();
         }        

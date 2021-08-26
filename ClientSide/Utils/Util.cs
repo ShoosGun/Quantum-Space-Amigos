@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
+﻿using UnityEngine;
+using ClientSide.PacketCouriers.GameRelated.Entities;
 namespace ClientSide.Utils
 {
     public static class Util
@@ -19,6 +17,15 @@ namespace ClientSide.Utils
                 p_pow = p_pow * p % m;
             }
             return hash_value;
+        }
+
+        public static NetworkedEntity GetAttachedNetworkedEntity(this GameObject gameObject)
+        {
+            return gameObject.GetComponent<NetworkedEntity>();
+        }
+        public static NetworkedEntity GetAttachedNetworkedEntity(this Component component)
+        {
+            return component.GetComponent<NetworkedEntity>();
         }
     }
 }

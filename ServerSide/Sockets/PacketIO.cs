@@ -20,7 +20,24 @@ namespace ServerSide.Sockets
             byte[] data = _memStream.ToArray();
             return data;
         }
-
+        public void WriteAsArray(byte[] array)
+        {
+            Write(array.Length);
+            Write(array);
+        }
+        public void Write(byte[][] byteMatrix)
+        {
+            int lenght = byteMatrix.Length;
+            Write(lenght);
+            for (int i = 0; i < lenght; i++)
+                WriteAsArray(byteMatrix[i]);
+        }
+        public void Write(int[] array)
+        {
+            Write(array.Length);
+            for(int i =0; i< array.Length;i++)
+                Write(array[i]);
+        }
         public void Write(Vector2 vector)
         {
             Write(vector.x);
@@ -63,6 +80,29 @@ namespace ServerSide.Sockets
         {
         }
 
+        public  byte[] ReadByteArray()
+        {
+            int arrayLenght = ReadInt32();
+            return ReadBytes(arrayLenght);
+        }
+        public byte[][] ReadByteMatrix()
+        {
+            int lenght = ReadInt32();
+            byte[][] byteMatrix = new byte[lenght][];
+            for (int i = 0; i < lenght; i++)
+                byteMatrix[i] = ReadByteArray();
+
+            return byteMatrix;
+        }
+        public int[] ReadInt32Array()
+        {
+            int lenght = ReadInt32();
+            int[] intArray = new int[lenght];
+            for (int i = 0; i < lenght; i++)
+                intArray[i] = ReadInt32();
+
+            return intArray;
+        }
         public Vector2 ReadVector2()
         {
             return new Vector2(ReadSingle(), ReadSingle());
