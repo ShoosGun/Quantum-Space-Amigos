@@ -57,6 +57,7 @@
     <Compile Include="PacketCouriers\GameRelated\Entities\NetworkedEntity.cs" />
     <Compile Include="PacketCouriers\GameRelated\Entities\Client_NetworkedEntityPacketCourier.cs" />
     <Compile Include="PacketCouriers\GameRelated\Entities\Client_EntityInitializer.cs" />
+    <Compile Include="PacketCouriers\GameRelated\InputReader\Client_InputReader.cs" />
     <Compile Include="PacketCouriers\GameRelated\NetworkedMessenger\Client_NetworkedMessengerPacketCourier.cs" />
     <Compile Include="PacketCouriers\GameRelated\PersistentOWRigd\Client_PersistentOWRigdPacketCourier.cs" />
     <Compile Include="PacketCouriers\GameRelated\Entities\OWRigidbodyNetworker.cs" />

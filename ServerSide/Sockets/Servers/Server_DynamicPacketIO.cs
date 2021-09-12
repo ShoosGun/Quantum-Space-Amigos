@@ -31,6 +31,11 @@ namespace ServerSide.Sockets.Servers
             else
                 return MAX_AMOUNT_OF_HEADER_VALUES;
         }
+
+        public static void ResetReadPacketHolderHeaderValues()
+        {
+            lastHeaderValue = 0;
+        }
     }
     //Teremos a classe ReadPacketHolder que guardara todos os dados para que possamos ter um IO dos pacotes
     //E teremos a classe DynamicPacketIO que cuidara dos valores que HeaderValue terão
@@ -42,6 +47,7 @@ namespace ServerSide.Sockets.Servers
 
         public Server_DynamicPacketIO()
         {
+            ReadPacketHolder.ResetReadPacketHolderHeaderValues();
             clientSpecificPacketWriters = new Dictionary<string, PacketWriter>();
             readPacketHolders = new ReadPacketHolder[ReadPacketHolder.MAX_AMOUNT_OF_HEADER_VALUES];
         }
@@ -74,7 +80,6 @@ namespace ServerSide.Sockets.Servers
         {
             clientSpecificPacketWriters.Clear();
         }
-
 
         private void WritePackedData(byte HeaderValue, byte[] data, ref PacketWriter writer)
         {

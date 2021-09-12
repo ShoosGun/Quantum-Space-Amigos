@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections;
 using System.Text;
 using UnityEngine;
-using ClientSide.PacketCouriers.Essentials;
+
 using ClientSide.Sockets;
-using System.Collections;
+
+using ClientSide.PacketCouriers.Essentials;
+using ClientSide.PacketCouriers.GameRelated.Entities;
 
 namespace ClientSide.PacketCouriers.Experiments
 {
@@ -20,6 +23,8 @@ namespace ClientSide.PacketCouriers.Experiments
             Client_DynamicPacketCourierHandler handler = Client.GetClient().dynamicPacketCourierHandler;
             handler.SetPacketCourier(MP_LOCALIZATION_STRING,OnReceiveHeaderValue);
             DynamicPacketIO = handler.DynamicPacketIO;
+            
+            Client_EntityInitializer.client_EntityInitializer.AddGameObjectPrefab("CuB0", CreateNetworkedCube());
         }
 
         private ReadPacketHolder.ReadPacket OnReceiveHeaderValue(int HeaderValue)
@@ -52,6 +57,14 @@ namespace ClientSide.PacketCouriers.Experiments
         {
             PacketReader reader = new PacketReader(data);
             Debug.Log($"Recebemos do servidor: {reader.ReadString()}");
+        }
+
+        public GameObject CreateNetworkedCube()
+        {
+            GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.GetComponent<Collider>().enabled = false;
+            go.AddComponent<NetworkedEntity>();
+            return go;
         }
     }
 }

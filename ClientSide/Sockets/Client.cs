@@ -15,14 +15,17 @@ namespace ClientSide.Sockets
     {
         private const int serverPort = 2121;
         private Socket serverSocket; //Port do servidor: 2121
-        private string IP; //se a conecção der certo, gravar para tentar reconectar no futuro caso haja uma desconecção
+        private const ProtocolType serverProtocolType = ProtocolType.Tcp;
+
+        private readonly string IP; //se a conecção der certo, gravar para tentar reconectar no futuro caso haja uma desconecção
         private ClientDebuggerSide debugger;
         public bool Connected { private set; get; }
 
 
         private readonly object packetBuffers_lock = new object();
         private List<byte[]> packetBuffers = new List<byte[]>();
-        private int receivingLimit;
+
+        //private int receivingLimit;
         private bool wasConnected = false;
 
         //private IPacketCourier[] PacketCouriers;
@@ -43,8 +46,11 @@ namespace ClientSide.Sockets
         /// <param name="receivingLimit"> In packets/s </param>
         public Client(ClientDebuggerSide debugger, int receivingLimit = 100)
         {
+            if (CurrentClient != null)
+                return;
+
             Connected = false;
-            this.receivingLimit = receivingLimit;
+            //this.receivingLimit = receivingLimit;
             this.debugger = debugger;
 
             dynamicPacketIO = new Client_DynamicPacketIO();
@@ -60,7 +66,7 @@ namespace ClientSide.Sockets
         /// <param name="timeOut"> In milliseconds. It will wait indefinitely if set to a negative number</param>
         public void TryConnect(string IP, int timeOut = -1)
         {
-            serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, serverProtocolType);
             //Tentar conectar, e se conectar gravar o IP na string
             debugger.SendLog("Tentando conectar...");
             //Se for negativo ira esperar para sempre por uma conecção
@@ -109,14 +115,15 @@ namespace ClientSide.Sockets
                 lock (packetBuffers_lock)
                     packetBuffers.Add(buffer);
 
-                //Proteção anti-spam de pacotes
-                if ((DateTime.UtcNow - startedReceivingTime).Milliseconds >= 1000)
-                    amountOfReceivedPackets = 0;
+                //TODO refazer isso
+                ////Proteção anti-spam de pacotes
+                //if ((DateTime.UtcNow - startedReceivingTime).Milliseconds >= 1000)
+                //    amountOfReceivedPackets = 0;
 
-                else if (amountOfReceivedPackets > receivingLimit)
-                {
-                    Thread.Sleep(1000 - (DateTime.UtcNow - startedReceivingTime).Milliseconds); // Esperar até dar um segundo
-                }
+                //else if (amountOfReceivedPackets > receivingLimit)
+                //{
+                //    Thread.Sleep(1000 - (DateTime.UtcNow - startedReceivingTime).Milliseconds); // Esperar até dar um segundo
+                //}
                 serverSocket.BeginReceive(new byte[] { 0 }, 0, 0, 0, ReceiveCallback, null);
             }
             catch (Exception ex)

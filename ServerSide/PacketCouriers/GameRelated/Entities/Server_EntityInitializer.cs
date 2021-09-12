@@ -128,7 +128,7 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
         const string EI_LOCALIZATION_STRING = "EntityInitializer";
         public int HeaderValue { get; private set; }
 
-        public void Start()
+        public void Awake()
         {
             if (server_EntityInitializer != null)
             {
@@ -148,7 +148,6 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
         {
             if (server_EntityInitializer == this)
             {
-                Server.GetServer().NewConnectionID -= Server_NewConnectionID;
                 InstantiadableGameObjectsPrefabHub.ResetInstantiadableGameObjectsPrefabHub();
             }
         }

@@ -60,6 +60,9 @@
     <Compile Include="PacketCouriers\Essentials\Server_DynamicPacketCourierHandler.cs" />
     <Compile Include="PacketCouriers\Experiments\Server_MarcoPoloExperiment.cs" />
     <Compile Include="PacketCouriers\GameRelated\Entities\Server_EntityInitializer.cs" />
+    <Compile Include="PacketCouriers\GameRelated\InputReader\ClientInputChannels.cs" />
+    <Compile Include="PacketCouriers\GameRelated\InputReader\NetworkedInputChannel.cs" />
+    <Compile Include="PacketCouriers\GameRelated\InputReader\Server_InputReader.cs" />
     <Compile Include="PacketCouriers\GameRelated\NetworkedMessenger\Server_NetworkedMessengerPacketCourier.cs" />
     <Compile Include="PacketCouriers\GameRelated\PersistentOWRigd\Server_PersistentOWRigdPacketCourier.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

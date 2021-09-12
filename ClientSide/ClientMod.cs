@@ -7,6 +7,7 @@ using ClientSide.SettingsMenu;
 
 using ClientSide.PacketCouriers.Experiments;
 using ClientSide.PacketCouriers.GameRelated.Entities;
+using ClientSide.PacketCouriers.GameRelated.InputReader;
 
 namespace ClientSide
 {
@@ -48,6 +49,7 @@ namespace ClientSide
             //gameObject.AddComponent<Client_ShadePacketCourier>();
             gameObject.AddComponent<Client_MarcoPoloExperiment>();
             gameObject.AddComponent<Client_EntityInitializer>();
+            gameObject.AddComponent<Client_InputReader>();
 
             gameObject.AddComponent<ClientModSettingsMenu>();           
         } 

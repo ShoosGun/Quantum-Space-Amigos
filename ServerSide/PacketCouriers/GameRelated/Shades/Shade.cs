@@ -1,64 +1,64 @@
-﻿using UnityEngine;
-using ServerSide.PacketCouriers.Entities;
+﻿//using UnityEngine;
+//using ServerSide.PacketCouriers.Entities;
 
-namespace ServerSide.PacketCouriers.Shades
-{
-    public class Shade : NetworkedEntity
-    {
-        //Tem que vir a partir de um Cilindro padrão
-        public ShadeMovementModel MovementModel
-        {
-            get;
-            private set;
-        }
+//namespace ServerSide.PacketCouriers.Shades
+//{
+//    public class Shade : NetworkedEntity
+//    {
+//        //Tem que vir a partir de um Cilindro padrão
+//        public ShadeMovementModel MovementModel
+//        {
+//            get;
+//            private set;
+//        }
 
-        public string Name = "";
+//        public string Name = "";
 
-        override protected void  Start()
-        {
-            base.Start();
+//        override protected void  Start()
+//        {
+//            base.Start();
             
-            Transform playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
-            transform.parent = playerTransform.root;
-            gameObject.layer= LayerMask.NameToLayer("Primitive");
+//            Transform playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
+//            transform.parent = playerTransform.root;
+//            gameObject.layer= LayerMask.NameToLayer("Primitive");
 
-            GetComponent<CapsuleCollider>().radius = 0.5f;
-            GetComponent<CapsuleCollider>().height = 2f;
+//            GetComponent<CapsuleCollider>().radius = 0.5f;
+//            GetComponent<CapsuleCollider>().height = 2f;
             
-            GetComponent<Rigidbody>().mass = 0.001f;
-            GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezeRotation;
+//            GetComponent<Rigidbody>().mass = 0.001f;
+//            GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezeRotation;
 
-            gameObject.AddComponent<OWRigidbody>();
+//            gameObject.AddComponent<OWRigidbody>();
 
-            Collider taggedComponent = playerTransform.collider/*OWUtilities.GetTaggedComponent<Collider>(gameObject,"Player")*/;
+//            Collider taggedComponent = playerTransform.collider/*OWUtilities.GetTaggedComponent<Collider>(gameObject,"Player")*/;
 
-            if (taggedComponent.enabled)
-            {
-                Physics.IgnoreCollision(collider, taggedComponent);
-            }
+//            if (taggedComponent.enabled)
+//            {
+//                Physics.IgnoreCollision(collider, taggedComponent);
+//            }
 
-            GameObject shadeGODetector = new GameObject
-            {
-                layer = LayerMask.NameToLayer("BasicEffectVolume")
-            };
+//            GameObject shadeGODetector = new GameObject
+//            {
+//                layer = LayerMask.NameToLayer("BasicEffectVolume")
+//            };
 
-            shadeGODetector.GetComponent<Transform>().parent = transform;
-            shadeGODetector.GetComponent<Transform>().name = "Detector";
-            shadeGODetector.AddComponent<SphereCollider>().isTrigger = true;
+//            shadeGODetector.GetComponent<Transform>().parent = transform;
+//            shadeGODetector.GetComponent<Transform>().name = "Detector";
+//            shadeGODetector.AddComponent<SphereCollider>().isTrigger = true;
 
-            shadeGODetector.AddComponent<AlignmentFieldDetector>();
-            gameObject.AddComponent<AlignWithField>();
+//            shadeGODetector.AddComponent<AlignmentFieldDetector>();
+//            gameObject.AddComponent<AlignWithField>();
 
-            MovementModel = gameObject.AddComponent<ShadeMovementModel>();
-            gameObject.AddComponent<ShadeDetachHandler>();
+//            MovementModel = gameObject.AddComponent<ShadeMovementModel>();
+//            gameObject.AddComponent<ShadeDetachHandler>();
             
-			transform.position = playerTransform.position;
-            transform.rotation = playerTransform.rotation;
-        }
+//			transform.position = playerTransform.position;
+//            transform.rotation = playerTransform.rotation;
+//        }
 
-        public void DestroyShade()
-        {
-            Destroy(gameObject);
-        }
-    }
-}
+//        public void DestroyShade()
+//        {
+//            Destroy(gameObject);
+//        }
+//    }
+//}

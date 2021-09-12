@@ -1,11 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections;
 using System.Text;
 using UnityEngine;
+
 using ServerSide.Sockets.Servers;
-using ServerSide.PacketCouriers.Essentials;
 using ServerSide.Sockets;
-using System.Collections;
+using ServerSide.Utils;
+
+using ServerSide.PacketCouriers.Essentials;
+using ServerSide.PacketCouriers.GameRelated.Entities;
 
 namespace ServerSide.PacketCouriers.Experiments
 {
@@ -21,12 +25,25 @@ namespace ServerSide.PacketCouriers.Experiments
             Server_DynamicPacketCourierHandler handler = Server.GetServer().dynamicPacketCourierHandler;
             HeaderValue = handler.AddPacketCourier(MP_LOCALIZATION_STRING, ReadPacket);
             DynamicPacketIO = handler.DynamicPacketIO;
+            
+            Server_EntityInitializer.server_EntityInitializer.AddGameObjectPrefab("CuB0", CreateNetworkedCube());
 
             StartCoroutine("SendMarcoPeriodically");
+            StartCoroutine("CreateAndDestroyCubePeriodically");
         }
         public void Update()
         {
             
+        }
+        IEnumerator CreateAndDestroyCubePeriodically()
+        {
+            while (true)
+            {
+                NetworkedEntity networkedEntity = Server_EntityInitializer.server_EntityInitializer.Instantiate("CuB0", Vector3.forward, Quaternion.identity, InstantiateType.Buffered).GetAttachedNetworkedEntity();
+                yield return new WaitForSeconds(5f);
+                Server_EntityInitializer.server_EntityInitializer.DestroyEntity(networkedEntity);
+                yield return new WaitForSeconds(2.5f);
+            }
         }
         IEnumerator SendMarcoPeriodically()
         {
@@ -48,6 +65,14 @@ namespace ServerSide.PacketCouriers.Experiments
         {
             PacketReader reader = new PacketReader(data);
             Debug.Log($"Recebemos de {ClientID}: {reader.ReadString()}");
+        }
+
+        public GameObject CreateNetworkedCube()
+        {
+            GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.GetComponent<Collider>().enabled = false;
+            go.AddComponent<NetworkedEntity>();
+            return go;
         }
     }
 }

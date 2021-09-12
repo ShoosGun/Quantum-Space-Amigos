@@ -12,6 +12,8 @@ namespace DumbClient
     class Program
     {
         private static Socket clientSck;
+        private const ProtocolType clientProtocolType = ProtocolType.Tcp;
+
         private static readonly object packets_lock = new object();
         private static List<byte[]> packets = new List<byte[]>();
         private static bool desconectados = false;
@@ -31,7 +33,7 @@ namespace DumbClient
             Console.WriteLine("Pressione ENTER para tentar conectar no servidor, e de um nome para ele caso queira");
             string shadeName = Console.ReadLine();
 
-            clientSck = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            clientSck = new Socket(AddressFamily.InterNetwork, SocketType.Stream, clientProtocolType);
             try
             {
                 clientSck.Connect(new IPEndPoint(IPAddress.Parse(serverIP), 2121));

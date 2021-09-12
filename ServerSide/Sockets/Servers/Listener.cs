@@ -22,15 +22,19 @@ namespace ServerSide.Sockets.Servers
         {
             get;
             private set;
-        }
+        }        
+
         private AllowedConnections AllowedConnections;
         private Socket s;
+
+        //TODO refazer a implementação das sockets usando UDP!
+        private const ProtocolType listenerProtocolType = ProtocolType.Tcp;
 
         public Listener(int port, AllowedConnections allowedConnections, ClientDebuggerSide debugger)
         {
             Port = port;
             AllowedConnections = allowedConnections;
-            s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, listenerProtocolType);
             this.debugger = debugger;
         }
         public void Start()
@@ -38,13 +42,14 @@ namespace ServerSide.Sockets.Servers
             if (Listening)
                 return;
 
-            //s.Bind(new IPEndPoint(AllowedConnections, Port)); // Depois trocar por 0
-
+            //TODO descobrir maneira de resolver o problema de usar o mesmo port num tempo menor que 120s
+            //1 - fazer ele esperar para resolver
+            //2 - mudar o protocolo das sockets para ProtocolType.Udp
             //https://stackoverflow.com/questions/3229860/what-is-the-meaning-of-so-reuseaddr-setsockopt-option-linux/3233022#3233022, achar forma de resolver isso ai
 
             if (AllowedConnections == AllowedConnections.ANY)
             {
-                s.Bind(new IPEndPoint(0, Port)); // Depois trocar por 0
+                s.Bind(new IPEndPoint(0, Port));
 
                 string localIPv4 = GetLocalIPAddress();
                 if (localIPv4 != null)
@@ -53,7 +58,7 @@ namespace ServerSide.Sockets.Servers
                     debugger.SendLog("Não conseguimos o IPv4");
             }
             else if (AllowedConnections == AllowedConnections.ONLY_HOST)
-                s.Bind(new IPEndPoint(IPAddress.Parse("127.1.0.0"), Port)); // Depois trocar por 0
+                s.Bind(new IPEndPoint(IPAddress.Parse("127.1.0.0"), Port));
 
             s.Listen(0);
             s.BeginAccept(callback, null);
@@ -68,7 +73,7 @@ namespace ServerSide.Sockets.Servers
             s.Close();
             
             TimeFromLastClose = DateTime.UtcNow;
-            s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, listenerProtocolType);
 
         }
 

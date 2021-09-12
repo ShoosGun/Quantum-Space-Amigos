@@ -7,6 +7,7 @@ using ServerSide.Sockets.Servers;
 using ServerSide.PacketCouriers.Experiments;
 using ServerSide.PacketCouriers.Essentials;
 using ServerSide.PacketCouriers.GameRelated.Entities;
+using ServerSide.PacketCouriers.GameRelated.InputReader;
 
 namespace ServerSide
 {
@@ -36,6 +37,7 @@ namespace ServerSide
             
             gameObject.AddComponent<Server_MarcoPoloExperiment>();
             gameObject.AddComponent<Server_EntityInitializer>();
+            gameObject.AddComponent<Server_InputReader>();
             //gameObject.AddComponent<Server_NetworkedEntityPacketCourier>();
             //gameObject.AddComponent<Server_ShadePacketCourier>();
         }        

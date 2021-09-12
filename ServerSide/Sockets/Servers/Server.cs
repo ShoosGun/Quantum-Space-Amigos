@@ -326,7 +326,11 @@ namespace ServerSide.Sockets.Servers
         public void Stop()
         {
             debugger.SendLog("Fechando o servidor . . .", DebugType.LOG);
+            for (int i = 0; i < clients.Count; i++)
+                clients[i].Close();
+
             l.Stop();
+            CurrentServer = null;
         }
 
         public event NewConnectionHandler NewConnection;

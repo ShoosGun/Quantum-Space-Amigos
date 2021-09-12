@@ -83,7 +83,7 @@ namespace ClientSide.PacketCouriers.GameRelated.Entities
         const string EI_LOCALIZATION_STRING = "EntityInitializer";
         public int HeaderValue { get; private set; }
 
-        public void Start()
+        public void Awake()
         {
             if (client_EntityInitializer != null)
             {

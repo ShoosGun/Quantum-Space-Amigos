@@ -29,7 +29,10 @@ namespace ServerSide.PacketCouriers.Essentials
             Server = server;
             Server.NewConnectionID += Server_NewConnectionID;
         }
-        
+        public void OnDestroy()
+        {
+            Server.NewConnectionID -= Server_NewConnectionID;
+        }
         private void Server_NewConnectionID(string clientID)
         {
             StartCoroutine("SendToNewConnection", clientID);

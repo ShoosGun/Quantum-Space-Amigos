@@ -22,10 +22,11 @@ namespace ServerSide.Sockets.Clients
             get;
             private set;
         }
+
         private Socket sck;
 
-        private DateTime startedReceivingTime;
-        private int receivingLimit;
+        //private DateTime startedReceivingTime;
+        //private readonly int receivingLimit;
 
         /// <summary>
         /// 
@@ -33,16 +34,17 @@ namespace ServerSide.Sockets.Clients
         /// <param name="accepted"></param>
         /// <param name="debugger"></param>
         /// <param name="receivingLimit"> In packets/s </param>
-        public Client(Socket accepted, ClientDebuggerSide debugger, int receivingLimit =  100)
+        public Client(Socket accepted, ClientDebuggerSide debugger/*, int receivingLimit =  100*/)
         {
             this.debugger = debugger;
-            this.receivingLimit = receivingLimit;
 
             ID = Guid.NewGuid().ToString();
             sck = accepted;
             EndPoint = (IPEndPoint)sck.RemoteEndPoint;
 
-            startedReceivingTime = DateTime.UtcNow;
+            //startedReceivingTime = DateTime.UtcNow;
+            //this.receivingLimit = receivingLimit;
+
             sck.BeginReceive(new byte[] { 0 }, 0, 0, 0, callback, null);
         }
 
@@ -68,14 +70,15 @@ namespace ServerSide.Sockets.Clients
                 {
                     Received(this, buffer);
                 }
+                //TODO reimplementar a maneira de evitar "spam" de pacotes
+                //if( (DateTime.UtcNow - startedReceivingTime).Milliseconds >= 1000)
+                //    amountOfReceivedPackets = 0;
 
-                if( (DateTime.UtcNow - startedReceivingTime).Milliseconds >= 1000)
-                    amountOfReceivedPackets = 0;
+                //else if(amountOfReceivedPackets > receivingLimit)
+                //{
+                //    Thread.Sleep(1000 - (DateTime.UtcNow - startedReceivingTime).Milliseconds); // Esperar até dar um segundo
+                //}
 
-                else if(amountOfReceivedPackets > receivingLimit)
-                {
-                    Thread.Sleep(1000 - (DateTime.UtcNow - startedReceivingTime).Milliseconds); // Esperar até dar um segundo
-                }
                 sck.BeginReceive(new byte[] { 0 }, 0, 0, 0,callback, null);
             }
             catch (Exception ex)
@@ -89,10 +92,10 @@ namespace ServerSide.Sockets.Clients
         }
         public void Send(byte[] buffer) 
         {
-            lock (this) //Será que isso ajuda? Sla, mas não quero que crashe de novo, se quiser tire esse lock e teste ai
+            lock (this)
             {
                 try
-                {   //Bruh momiento (pf não inverter na próxima vez, más lembranças)
+                {
                     byte[] sizeBuffer = BitConverter.GetBytes(buffer.Length);
                     sck.Send(sizeBuffer, 0, sizeBuffer.Length, 0);
                     sck.Send(buffer, 0, buffer.Length, 0);
