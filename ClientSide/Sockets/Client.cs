@@ -44,7 +44,7 @@ namespace ClientSide.Sockets
         /// </summary>
         /// <param name="debugger"></param>
         /// <param name="receivingLimit"> In packets/s </param>
-        public Client(ClientDebuggerSide debugger, int receivingLimit = 100)
+        public Client(ClientDebuggerSide debugger, int receivingLimit = 30)//TODO reinplement the receiveLimit param
         {
             if (CurrentClient != null)
                 return;

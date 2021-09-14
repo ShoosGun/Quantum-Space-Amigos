@@ -85,7 +85,7 @@ namespace ClientSide.PacketCouriers.NetworkedMessenger
                 ((Callback)@delegate)?.Invoke();
         }
 
-        public void Receive(byte[] data)
+        public void Receive(int latency, DateTime sentPacketTime, byte[] data)
         {
             FireEvent(BitConverter.ToInt64(data, 0));
         }

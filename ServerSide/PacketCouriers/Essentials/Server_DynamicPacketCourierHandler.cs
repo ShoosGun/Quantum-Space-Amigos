@@ -96,7 +96,7 @@ namespace ServerSide.PacketCouriers.Essentials
             HashesToUpdate.Add(HashHeaderPair);
             return courierHeaderValue;
         }
-        public void ReadPacket(byte[] data, string ClientID)
+        public void ReadPacket(int latency,DateTime sentPacketTime, byte[] data, string ClientID)
         {
             PacketReader reader = new PacketReader(data);
             DPCHHeaders DPCHHeader = (DPCHHeaders)reader.ReadByte();

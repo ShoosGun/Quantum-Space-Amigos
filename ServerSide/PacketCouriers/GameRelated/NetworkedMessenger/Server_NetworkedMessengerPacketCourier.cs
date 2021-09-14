@@ -55,7 +55,7 @@ namespace ServerSide.PacketCouriers.NetworkedMessenger
             dynamicPacketCourierHandler.DynamicPacketIO.SendPackedData((byte)HeaderValue, packet.GetBytes(), eventTable[hash].ToArray());
         }
 
-        public void Receive(byte[] data, string ClientID)
+        public void Receive(int latency,DateTime packetSentTime, byte[] data, string ClientID)
         {
             PacketReader packet = new PacketReader(data);
             switch(packet.ReadByte())

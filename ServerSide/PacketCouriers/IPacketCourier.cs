@@ -1,9 +1,9 @@
-﻿using ServerSide.Sockets;
+﻿using System;
 
 namespace ServerSide.PacketCouriers
 {
     public interface IPacketCourier
     {
-       void Receive(byte[] data, string ClientID);
+       void Receive(int latency,DateTime packetSentTime, byte[] data, string ClientID);
     }
 }

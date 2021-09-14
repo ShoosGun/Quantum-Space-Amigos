@@ -8,7 +8,7 @@ namespace ClientSide.Sockets
     public class ReadPacketHolder
     {
         public const byte MAX_AMOUNT_OF_HEADER_VALUES = byte.MaxValue;
-        public delegate void ReadPacket(byte[] data);
+        public delegate void ReadPacket(int latency,DateTime sentPacketTime, byte[] data);
         
         public ReadPacket PacketRead { get; private set; }
 
@@ -37,8 +37,11 @@ namespace ClientSide.Sockets
 
         public void SendPackedData(byte HeaderValue, byte[] data)
         {
-            if(packetWriter == null)
+            if (packetWriter == null)
+            {
                 packetWriter = new PacketWriter();
+                packetWriter.Write(DateTime.UtcNow);//Send packet time
+            }
 
             packetWriter.Write(HeaderValue);
 
@@ -49,7 +52,10 @@ namespace ClientSide.Sockets
         public void ReadReceivedPacket(ref PacketReader packetReader)
         {
             bool continueLoop = true;
-            UnityEngine.Debug.Log("Lendo info recebida");
+            DateTime sentTime = packetReader.ReadDateTime();
+            int latency = (DateTime.UtcNow - sentTime).Milliseconds;
+            UnityEngine.Debug.Log(string.Format("Lendo info recebida com delay de {0}", latency));
+
             List<int> ReceivedDataFromNonExistingHeaders = new List<int>();
             while (continueLoop)
             {
@@ -67,7 +73,7 @@ namespace ClientSide.Sockets
                         try
                         {
                             UnityEngine.Debug.Log("Passando para " + HeaderValue);
-                            readPacketHolders[HeaderValue].PacketRead(PackedData);
+                            readPacketHolders[HeaderValue].PacketRead(latency, sentTime, PackedData);
                         }
                         catch(Exception ex) { UnityEngine.Debug.Log(string.Format("{0} - {1} {2}", ex.Message, ex.Source, ex.StackTrace)); }
                     }

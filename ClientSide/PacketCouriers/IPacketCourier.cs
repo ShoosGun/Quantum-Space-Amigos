@@ -8,7 +8,7 @@ namespace ClientSide.PacketCouriers
 {
     public interface IPacketCourier
     {
-       void Receive(byte[] data);
+       void Receive(int latency, DateTime sentPacketTime, byte[] data);
 
     }
 }

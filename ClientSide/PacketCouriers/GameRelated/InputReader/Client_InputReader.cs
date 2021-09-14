@@ -1,4 +1,4 @@
-﻿using System.Collections;
+﻿using System;
 using UnityEngine;
 
 using ClientSide.Sockets;
@@ -24,16 +24,9 @@ namespace ClientSide.PacketCouriers.GameRelated.InputReader
             this.HeaderValue = HeaderValue;
             return ReadPacket;
         }
-        private bool sendInputUpdate = true;
-        private const float InputUpdateDelay = 0.3f;
-        public void Update()
+        public void FixedUpdate()
         {
-            if(sendInputUpdate)
-            {
-                SendInputUpdate();
-                StartCoroutine("DelayToSendUpdate");
-                sendInputUpdate = false;
-            }
+            SendInputUpdate();
         }
         public void SendInputUpdate()
         {
@@ -43,11 +36,6 @@ namespace ClientSide.PacketCouriers.GameRelated.InputReader
 
             DynamicPacketIO.SendPackedData((byte)HeaderValue, writer.GetBytes());
         }
-        private IEnumerator DelayToSendUpdate()
-        {
-            yield return new WaitForSeconds(InputUpdateDelay);
-            sendInputUpdate = true;
-        }
         public void WriteInputChannelData(ref PacketWriter writer, InputChannel inputChannel)
         {
             writer.Write(inputChannel.GetAxis());
@@ -56,7 +44,7 @@ namespace ClientSide.PacketCouriers.GameRelated.InputReader
             writer.Write(inputChannel.GetButtonDown());
             writer.Write(inputChannel.GetButtonUp());
         }        
-        public void ReadPacket(byte[] data)
+        public void ReadPacket(int latency, DateTime sentPacketTime, byte[] data)
         {
         }
 

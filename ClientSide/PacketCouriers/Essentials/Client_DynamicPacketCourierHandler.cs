@@ -47,7 +47,7 @@ namespace ClientSide.PacketCouriers.Essentials
                 return foundHeader;
             throw new OperationCanceledException(string.Format("O hash de {0} ainda nao foi recebido", localizationString));
         }
-        public void ReadPacket(byte[] data)
+        public void ReadPacket(int latency, DateTime sentPacketTime, byte[] data)
         {
             PacketReader reader = new PacketReader(data);
             DPCHHeaders DPCHHeader = (DPCHHeaders)reader.ReadByte();

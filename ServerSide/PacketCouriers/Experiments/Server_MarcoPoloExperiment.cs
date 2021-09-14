@@ -61,10 +61,10 @@ namespace ServerSide.PacketCouriers.Experiments
             marco.Write("Marco " + i);
             DynamicPacketIO.SendPackedData((byte)HeaderValue, marco.GetBytes());
         }
-        public void ReadPacket(byte[] data, string ClientID)
+        public void ReadPacket(int latency, DateTime packetSentTime, byte[] data, string ClientID)
         {
             PacketReader reader = new PacketReader(data);
-            Debug.Log($"Recebemos de {ClientID}: {reader.ReadString()}");
+            Debug.Log($"Recebemos de {ClientID}: {reader.ReadString()} | {latency} ms - {packetSentTime.Ticks} ticks");
         }
 
         public GameObject CreateNetworkedCube()

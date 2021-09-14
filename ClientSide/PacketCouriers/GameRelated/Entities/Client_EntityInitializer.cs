@@ -157,7 +157,7 @@ namespace ClientSide.PacketCouriers.GameRelated.Entities
             InstantiateEntity(prefabName, id, position, rotation, intantiateData);
         }
 
-        public void ReadPacket(byte[] data)
+        public void ReadPacket(int latency, DateTime sentPacketTime, byte[] data)
         {
             PacketReader reader = new PacketReader(data);
             switch ((EntityInitializerHeaders)reader.ReadByte())

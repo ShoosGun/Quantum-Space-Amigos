@@ -222,7 +222,7 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
             writer.Write(entity.transform.rotation);
         }
 
-        public void ReadPacket(byte[] data, string ClientID)
+        public void ReadPacket(int latency,DateTime packetSentTime, byte[] data, string ClientID)
         {
         }
 

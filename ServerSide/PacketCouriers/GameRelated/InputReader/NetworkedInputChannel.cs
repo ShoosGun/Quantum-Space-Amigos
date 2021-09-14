@@ -18,6 +18,10 @@ namespace ServerSide.PacketCouriers.GameRelated.InputReader
             this.ButtonDown = ButtonDown;
             this.ButtonUp = ButtonUp;
         }
+        public void ResetInputs()
+        {
+            UpdateInputs(0f, 0f, false, false, false);
+        }
         public void ReadInputChannelData(ref PacketReader reader)
         {
             UpdateInputs(reader.ReadSingle(), reader.ReadSingle(), reader.ReadBoolean(), reader.ReadBoolean(), reader.ReadBoolean());

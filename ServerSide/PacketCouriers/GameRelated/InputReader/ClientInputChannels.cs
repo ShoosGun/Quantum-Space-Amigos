@@ -5,6 +5,7 @@ using System.Text;
 
 namespace ServerSide.PacketCouriers.GameRelated.InputReader
 {
+    //We could make a more optimized code, or we could follow the alpha code style ;)
     public class ClientInputChannels
     {
         public NetworkedInputChannel moveX;
@@ -34,7 +35,10 @@ namespace ServerSide.PacketCouriers.GameRelated.InputReader
 
         public NetworkedInputChannel map;
         public NetworkedInputChannel pause;
-        //We could make a more optimized code, or we could follow the alpha code style ;
+
+        public int InputLatency { get; private set; }
+        public DateTime TimeOfLastInput { get; private set; }
+        
         public ClientInputChannels()
         {
             moveX = new NetworkedInputChannel();
@@ -65,8 +69,11 @@ namespace ServerSide.PacketCouriers.GameRelated.InputReader
             map = new NetworkedInputChannel();
             pause = new NetworkedInputChannel();
         }
-        public void ReadClienetInputChannelsData(ref PacketReader reader)
+        public void ReadClienetInputChannelsData(int latency, DateTime timeOfLastInput, ref PacketReader reader)
         {
+            InputLatency = latency;
+            TimeOfLastInput = timeOfLastInput;
+
             moveX.ReadInputChannelData(ref reader);
             moveZ.ReadInputChannelData(ref reader);
             moveUp.ReadInputChannelData(ref reader);
@@ -94,6 +101,41 @@ namespace ServerSide.PacketCouriers.GameRelated.InputReader
 
             map.ReadInputChannelData(ref reader);
             pause.ReadInputChannelData(ref reader);
+        }
+        public void ResetInputChannels()
+        {
+            moveX.ResetInputs();
+            moveZ.ResetInputs();
+            moveUp.ResetInputs();
+            moveDown.ResetInputs();
+
+            pitch.ResetInputs();
+            yaw.ResetInputs();
+            zoomIn.ResetInputs();
+
+            zoomOut.ResetInputs();
+
+            interact.ResetInputs();
+            cancel.ResetInputs();
+
+            jump.ResetInputs();
+
+            lockOn.ResetInputs();
+            probe.ResetInputs();
+            altProbe.ResetInputs();
+
+            matchVelocity.ResetInputs();
+            autopilot.ResetInputs();
+            landingCam.ResetInputs();
+            swapRollAndYaw.ResetInputs();
+
+            map.ResetInputs();
+            pause.ResetInputs();
+        }
+        public void ResetInputsIfTimeExceedsLatency()
+        {
+            if ((DateTime.UtcNow - TimeOfLastInput).Milliseconds > InputLatency)
+                ResetInputChannels();
         }
     }
 }

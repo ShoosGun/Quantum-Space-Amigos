@@ -8,7 +8,7 @@ namespace ServerSide.Sockets.Servers
     public class ReadPacketHolder
     {
         public const byte MAX_AMOUNT_OF_HEADER_VALUES = byte.MaxValue;
-        public delegate void ReadPacket(byte[] data, string ClientID);
+        public delegate void ReadPacket(int latency, DateTime packetSentTime, byte[] data, string ClientID);
 
         public byte HeaderValue { get; private set; }
         public ReadPacket PacketRead { get; private set; }
@@ -84,7 +84,10 @@ namespace ServerSide.Sockets.Servers
         private void WritePackedData(byte HeaderValue, byte[] data, ref PacketWriter writer)
         {
             if (writer == null)
+            {
                 writer = new PacketWriter();
+                writer.Write(DateTime.UtcNow);
+            }
 
             if (readPacketHolders[HeaderValue] != null)
                 writer.Write(HeaderValue);
@@ -102,10 +105,13 @@ namespace ServerSide.Sockets.Servers
             for (int i = 0; i < ClientIDs.Length; i++)
             {
                 if (!clientSpecificPacketWriters.ContainsKey(ClientIDs[i]))
-                    clientSpecificPacketWriters.Add(ClientIDs[i], new PacketWriter());
-
+                    clientSpecificPacketWriters.Add(ClientIDs[i], null);
+                
                 if (clientSpecificPacketWriters[ClientIDs[i]] == null)
+                {
                     clientSpecificPacketWriters[ClientIDs[i]] = new PacketWriter();
+                    clientSpecificPacketWriters[ClientIDs[i]].Write(DateTime.UtcNow);
+                }
 
                 if (readPacketHolders[HeaderValue] != null)
                     clientSpecificPacketWriters[ClientIDs[i]].Write(HeaderValue);
@@ -119,6 +125,8 @@ namespace ServerSide.Sockets.Servers
         {
             bool continueLoop = true;
             List<int> ReceivedDataFromNonExistingHeaders = new List<int>();
+            DateTime sentTime = packetReader.ReadDateTime();
+            int latency = (DateTime.UtcNow - sentTime).Milliseconds;
             while (continueLoop)
             {
                 try
@@ -134,7 +142,7 @@ namespace ServerSide.Sockets.Servers
                     {
                         try
                         {
-                            readPacketHolders[HeaderValue].PacketRead(PackedData, ClientID);
+                            readPacketHolders[HeaderValue].PacketRead(latency, sentTime, PackedData, ClientID);
                         }
                         catch (Exception ex) { UnityEngine.Debug.Log(string.Format("{0} - {1} {2}", ex.Message, ex.Source, ex.StackTrace)); }
                     }
