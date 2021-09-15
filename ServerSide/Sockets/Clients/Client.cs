@@ -66,10 +66,7 @@ namespace ServerSide.Sockets.Clients
                 {
                     received += sck.Receive(buffer, received, dataSize - received, 0);
                 }
-                if (Received != null)
-                {
-                    Received(this, buffer);
-                }
+                Received?.Invoke(this, buffer);
                 //TODO reimplementar a maneira de evitar "spam" de pacotes
                 //if( (DateTime.UtcNow - startedReceivingTime).Milliseconds >= 1000)
                 //    amountOfReceivedPackets = 0;
@@ -84,10 +81,7 @@ namespace ServerSide.Sockets.Clients
             catch (Exception ex)
             {
                 debugger.SendLogMultiThread(ex.Message, DebugType.ERROR);
-                if (Disconnected != null)
-                {
-                    Disconnected(this);
-                }
+                Disconnected?.Invoke(this);
             }
         }
         public void Send(byte[] buffer) 

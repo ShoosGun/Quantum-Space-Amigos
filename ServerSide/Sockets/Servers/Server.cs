@@ -25,7 +25,7 @@ namespace ServerSide.Sockets.Servers
         private readonly object NCC_lock = new object();
 
         private const int MAX_DATA_PER_CLIENT_LOOP = 3;
-        private Dictionary<string, byte[][]> ReceivedDataCache = new Dictionary<string, byte[][]>();
+        private Dictionary<string, Queue<byte[]>> ReceivedDataCache = new Dictionary<string, Queue<byte[]>>();
         private readonly object RDC_lock = new object();
 
         private List<string> DisconnecedClientsCache = new List<string>();
@@ -78,12 +78,7 @@ namespace ServerSide.Sockets.Servers
             clients.Add(client);
             lock (RDC_lock)
             {
-                var maxDataPerLoop = new byte[MAX_DATA_PER_CLIENT_LOOP][];
-                for (int i = 0; i < MAX_DATA_PER_CLIENT_LOOP; i++)
-                {
-                    maxDataPerLoop[i] = new byte[] { };
-                }
-                ReceivedDataCache.Add(client.ID, maxDataPerLoop);
+                ReceivedDataCache.Add(client.ID, new Queue<byte[]>(MAX_DATA_PER_CLIENT_LOOP));
             }
 
             NewConnection?.Invoke();
@@ -160,7 +155,7 @@ namespace ServerSide.Sockets.Servers
         /// </summary>
         /// <param name="receivedData">Holds the packets in an array separated by the clients ids</param>
         /// <param name="resetDataArrays"></param>
-        private void ReceivedData(Dictionary<string, byte[][]> receivedData, bool resetDataArrays = true)
+        private void ReceivedData(Dictionary<string, Queue<byte[]>> receivedData, bool resetDataArrays = true)
         {
             //Ideias: 
             // 1 - Fazer a leitura de dados no async (X)
@@ -169,16 +164,15 @@ namespace ServerSide.Sockets.Servers
             for (int i = 0; i < clients.Count; i++)
             {
                 string clientID = clients[i].ID;
-                for (int j = 0; j < receivedData[clientID].Length; j++)
+                foreach(byte[] data in receivedData[clientID])
                 {
-                    byte[] data = receivedData[clientID][j];
                     if (data.Length > 0)
                     {
                         ReceivedData(clientID, data);
-                        if (resetDataArrays)
-                            receivedData[clientID][j] = new byte[] { };
                     }
                 }
+                if(resetDataArrays)
+                    receivedData.Clear();
             }
         }
 
@@ -221,7 +215,7 @@ namespace ServerSide.Sockets.Servers
             {
                 if (RDC_NotLoked)
                 {
-                    ReceivedData(ReceivedDataCache); // Dá clear dentro do método
+                    ReceivedData(ReceivedDataCache);
                 }
             }
             finally
@@ -275,13 +269,8 @@ namespace ServerSide.Sockets.Servers
                         return;
 
                     var senderCache = ReceivedDataCache[sender.ID];
-
-                    for (int i = 0; i < senderCache.Length; i++)
-                        if (senderCache[i].Length <= 0)
-                        {
-                            senderCache[i] = data;
-                            break;
-                        }
+                    if (senderCache.Count > MAX_DATA_PER_CLIENT_LOOP)
+                        senderCache.Enqueue(data);
                 }
             }
             finally

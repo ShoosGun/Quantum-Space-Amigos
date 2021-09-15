@@ -17,13 +17,12 @@ namespace ClientSide.Sockets
         private Socket serverSocket; //Port do servidor: 2121
         private const ProtocolType serverProtocolType = ProtocolType.Tcp;
 
-        private readonly string IP; //se a conecção der certo, gravar para tentar reconectar no futuro caso haja uma desconecção
+        private string ConnectedServerIP = ""; //se a conecção der certo, gravar para tentar reconectar no futuro caso haja uma desconecção
         private ClientDebuggerSide debugger;
         public bool Connected { private set; get; }
-
-
+        
         private readonly object packetBuffers_lock = new object();
-        private List<byte[]> packetBuffers = new List<byte[]>();
+        private Queue<byte[]> packetBuffers = new Queue<byte[]>();
 
         //private int receivingLimit;
         private bool wasConnected = false;
@@ -67,6 +66,7 @@ namespace ClientSide.Sockets
         public void TryConnect(string IP, int timeOut = -1)
         {
             serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, serverProtocolType);
+            ConnectedServerIP = IP;
             //Tentar conectar, e se conectar gravar o IP na string
             debugger.SendLog("Tentando conectar...");
             //Se for negativo ira esperar para sempre por uma conecção
@@ -78,6 +78,7 @@ namespace ClientSide.Sockets
                     if (!serverSocket.Connected)
                     {
                         serverSocket.Close();
+                        ConnectedServerIP = "";
                         debugger.SendLogMultiThread($"A tentativa de coneccao superou o limite de {timeOut} ms, tentativa abortada", DebugType.WARNING);
                     }
                 }).Start();
@@ -113,7 +114,7 @@ namespace ClientSide.Sockets
                 }
 
                 lock (packetBuffers_lock)
-                    packetBuffers.Add(buffer);
+                    packetBuffers.Enqueue(buffer);
 
                 //TODO refazer isso
                 ////Proteção anti-spam de pacotes
@@ -152,7 +153,7 @@ namespace ClientSide.Sockets
                 {
                     if (packetBuffers_NotLocked && packetBuffers.Count > 0)
                     {
-                        ReceiveData(packetBuffers);
+                        ReceiveData(packetBuffers); //We could use Dequeue inside ReceiveData
                         packetBuffers.Clear();
                     }
                 }
@@ -168,11 +169,10 @@ namespace ClientSide.Sockets
                 Disconnection?.Invoke();
             }
         }
-        private void ReceiveData(List<byte[]> packets)
+        private void ReceiveData(Queue<byte[]> packets)
         {
-            for(int i = 0; i < packets.Count; i++)
+            foreach(byte[] data in packets)
             {
-                byte[] data = packets[i];
                 if (data.Length > 0)
                 {
                     PacketReader packet = new PacketReader(data);
