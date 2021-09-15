@@ -44,9 +44,7 @@ namespace ClientSide
 
             _debugger = GameObject.Find("DIMOWALevelLoaderHandler").GetComponent<ClientDebuggerSide>();
             _clientSide = new Client(_debugger);
-
-            //gameObject.AddComponent<Client_NetworkedEntityPacketCourier>();
-            //gameObject.AddComponent<Client_ShadePacketCourier>();
+            
             gameObject.AddComponent<Client_MarcoPoloExperiment>();
             gameObject.AddComponent<Client_EntityInitializer>();
             gameObject.AddComponent<Client_InputReader>();
