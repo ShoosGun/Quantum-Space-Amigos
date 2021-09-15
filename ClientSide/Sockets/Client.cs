@@ -4,10 +4,9 @@ using System.Text;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using DIMOWAModLoader;
-using System.IO;
 
-using ClientSide.PacketCouriers.Essentials;
+using DIMOWAModLoader;
+
 
 namespace ClientSide.Sockets
 {
@@ -26,11 +25,8 @@ namespace ClientSide.Sockets
 
         //private int receivingLimit;
         private bool wasConnected = false;
-
-        //private IPacketCourier[] PacketCouriers;
-        private Client_DynamicPacketIO dynamicPacketIO;
-        public Client_DynamicPacketCourierHandler dynamicPacketCourierHandler { get; private set; }
-        private const int OBLIGATORY_HEADER_VALUE_OF_DPCH = 0;
+        
+        public Client_DynamicPacketIO DynamicPacketIO { get; private set; }
 
         private static Client CurrentClient = null;
         public static Client GetClient()
@@ -52,8 +48,7 @@ namespace ClientSide.Sockets
             //this.receivingLimit = receivingLimit;
             this.debugger = debugger;
 
-            dynamicPacketIO = new Client_DynamicPacketIO();
-            dynamicPacketCourierHandler = new Client_DynamicPacketCourierHandler(ref dynamicPacketIO, OBLIGATORY_HEADER_VALUE_OF_DPCH);
+            DynamicPacketIO = new Client_DynamicPacketIO();
 
             CurrentClient = this;
         }
@@ -144,7 +139,7 @@ namespace ClientSide.Sockets
                     wasConnected = true;
                     Connection?.Invoke();
                 }
-                byte[] buffer = dynamicPacketIO.GetAllData();
+                byte[] buffer = DynamicPacketIO.GetAllData();
                 if (buffer.Length > 0)
                     Send(buffer);
                 //Ler dados
@@ -179,7 +174,7 @@ namespace ClientSide.Sockets
                     try
                     {
                         debugger.SendLog("Lendo info do servidor " + data.Length);
-                        dynamicPacketIO.ReadReceivedPacket(ref packet);
+                        DynamicPacketIO.ReadReceivedPacket(ref packet);
                     }
                     catch (Exception ex)
                     {

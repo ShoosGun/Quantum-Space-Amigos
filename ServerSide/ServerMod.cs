@@ -5,7 +5,6 @@ using DIMOWAModLoader;
 using ServerSide.Sockets.Servers;
 
 using ServerSide.PacketCouriers.Experiments;
-using ServerSide.PacketCouriers.Essentials;
 using ServerSide.PacketCouriers.GameRelated.Entities;
 using ServerSide.PacketCouriers.GameRelated.InputReader;
 
@@ -33,7 +32,7 @@ namespace ServerSide
         {
             _debugger = GameObject.Find("DIMOWALevelLoaderHandler").GetComponent<ClientDebuggerSide>();
 
-            _serverSide = new Server(_debugger, gameObject.AddComponent<Server_DynamicPacketCourierHandler>());
+            _serverSide = new Server(_debugger);
             
             gameObject.AddComponent<Server_MarcoPoloExperiment>();
             gameObject.AddComponent<Server_EntityInitializer>();

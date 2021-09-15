@@ -2,31 +2,27 @@
 using UnityEngine;
 
 using ClientSide.Sockets;
-using ClientSide.PacketCouriers.Essentials;
 
 
 namespace ClientSide.PacketCouriers.GameRelated.InputReader
 {
     public class Client_InputReader : MonoBehaviour
     {
-        public Client_DynamicPacketIO DynamicPacketIO { get; private set; }
+        private Client client;
+        private Client_DynamicPacketIO DynamicPacketIO;
         const string IR_LOCALIZATION_STRING = "InputReader";
         public int HeaderValue { get; private set; }
 
         public void Awake()
         {
-            Client_DynamicPacketCourierHandler handler = Client.GetClient().dynamicPacketCourierHandler;
-            handler.SetPacketCourier(IR_LOCALIZATION_STRING, OnReceiveHeaderValue);
-            DynamicPacketIO = handler.DynamicPacketIO;
-        }
-        private ReadPacketHolder.ReadPacket OnReceiveHeaderValue(int HeaderValue)
-        {
-            this.HeaderValue = HeaderValue;
-            return ReadPacket;
+            client = Client.GetClient();
+            DynamicPacketIO = client.DynamicPacketIO;
+            HeaderValue = DynamicPacketIO.AddPacketReader(IR_LOCALIZATION_STRING, ReadPacket);
         }
         public void FixedUpdate()
         {
-            SendInputUpdate();
+            if(client.Connected)
+                SendInputUpdate();
         }
         public void SendInputUpdate()
         {

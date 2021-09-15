@@ -1,27 +1,15 @@
-﻿using System;
+﻿using ClientSide.Utils;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
 namespace ClientSide.Sockets
-{
-    public class ReadPacketHolder
-    {
-        public const byte MAX_AMOUNT_OF_HEADER_VALUES = byte.MaxValue;
-        public delegate void ReadPacket(int latency,DateTime sentPacketTime, byte[] data);
-        
-        public ReadPacket PacketRead { get; private set; }
-
-        public ReadPacketHolder(ReadPacket readPacket)
-        {
-            PacketRead = readPacket;
-        }
-    }
-    //Teremos a classe ReadPacketHolder que guardara todos os dados para que possamos ter um IO dos pacotes
-    //E teremos a classe DynamicPacketIO que cuidara dos valores que HeaderValue terão
+{    
     public class Client_DynamicPacketIO
     {
-        private ReadPacketHolder[] readPacketHolders = new ReadPacketHolder[ReadPacketHolder.MAX_AMOUNT_OF_HEADER_VALUES];
+        public delegate void ReadPacket(int latency, DateTime packetSentTime, byte[] data);
+        private Dictionary<int, ReadPacket> ReadPacketHolders = new Dictionary<int, ReadPacket>();
         private PacketWriter packetWriter;
         
         public byte[] GetAllData()
@@ -52,11 +40,9 @@ namespace ClientSide.Sockets
         public void ReadReceivedPacket(ref PacketReader packetReader)
         {
             bool continueLoop = true;
+            List<int> ReceivedDataFromNonExistingHeaders = new List<int>();
             DateTime sentTime = packetReader.ReadDateTime();
             int latency = (DateTime.UtcNow - sentTime).Milliseconds;
-            UnityEngine.Debug.Log(string.Format("Lendo info recebida com delay de {0}", latency));
-
-            List<int> ReceivedDataFromNonExistingHeaders = new List<int>();
             while (continueLoop)
             {
                 try
@@ -64,18 +50,18 @@ namespace ClientSide.Sockets
                     byte HeaderValue = packetReader.ReadByte();
                     int PackedDataSize = packetReader.ReadInt32();
                     byte[] PackedData = packetReader.ReadBytes(PackedDataSize);
-                    if (readPacketHolders[HeaderValue] == null)
-                    {
-                        ReceivedDataFromNonExistingHeaders.Add(HeaderValue);
-                    }
-                    else
+
+                    if (ReadPacketHolders.TryGetValue(HeaderValue, out ReadPacket readPacket))
                     {
                         try
                         {
-                            UnityEngine.Debug.Log("Passando para " + HeaderValue);
-                            readPacketHolders[HeaderValue].PacketRead(latency, sentTime, PackedData);
+                            readPacket(latency, sentTime, PackedData);
                         }
-                        catch(Exception ex) { UnityEngine.Debug.Log(string.Format("{0} - {1} {2}", ex.Message, ex.Source, ex.StackTrace)); }
+                        catch (Exception ex) { UnityEngine.Debug.Log(string.Format("{0} - {1} {2}", ex.Message, ex.Source, ex.StackTrace)); }
+                    }
+                    else
+                    {
+                        ReceivedDataFromNonExistingHeaders.Add(HeaderValue);
                     }
                 }
                 catch (Exception ex)
@@ -97,15 +83,15 @@ namespace ClientSide.Sockets
             }
         }
 
-        public void SetPacketCourier(int headerValue, ReadPacketHolder.ReadPacket readPacket)
+        public int AddPacketReader(string LocalizationString, ReadPacket readPacket)
         {
-            if (headerValue == ReadPacketHolder.MAX_AMOUNT_OF_HEADER_VALUES - 1)
-                throw new IndexOutOfRangeException(string.Format("The HeaderValue cannot be equal or bigger then ", ReadPacketHolder.MAX_AMOUNT_OF_HEADER_VALUES - 1));
+            int hash = Util.GerarHashInt(LocalizationString);
 
-            if (readPacketHolders[headerValue] != null)
-                throw new OperationCanceledException(string.Format("This HeaderValue is already being used {0}", headerValue));
+            if (ReadPacketHolders.ContainsKey(hash))
+                throw new OperationCanceledException(string.Format("This string has a hash thay is already being used {0}", hash));
 
-            readPacketHolders[headerValue] = new ReadPacketHolder(readPacket);
+            ReadPacketHolders.Add(hash, readPacket);
+            return hash;
         }
     }
 }

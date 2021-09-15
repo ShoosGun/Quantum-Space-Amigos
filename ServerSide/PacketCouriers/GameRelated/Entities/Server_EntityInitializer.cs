@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using ServerSide.PacketCouriers.Essentials;
+
 using ServerSide.Sockets;
 using ServerSide.Sockets.Servers;
 using ServerSide.Utils;
@@ -137,9 +137,8 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
             }
             server_EntityInitializer = this;
 
-            Server_DynamicPacketCourierHandler handler = Server.GetServer().dynamicPacketCourierHandler;
-            HeaderValue = handler.AddPacketCourier(EI_LOCALIZATION_STRING, ReadPacket);
-            DynamicPacketIO = handler.DynamicPacketIO;
+            DynamicPacketIO = Server.GetServer().DynamicPacketIO;
+            HeaderValue = DynamicPacketIO.AddPacketReader(EI_LOCALIZATION_STRING, ReadPacket);
 
             Server.GetServer().NewConnectionID += Server_NewConnectionID;
         }
@@ -158,7 +157,7 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
             gameObject.SetActive(false);
         }
 
-        public GameObject Instantiate(string prefabName, Vector3 position, Quaternion rotation, InstantiateType instantiateType, params byte[][] data)
+        public GameObject Instantiate(string prefabName, Vector3 position, Quaternion rotation, InstantiateType instantiateType, params object[] data)
         {
             if (!InstantiadableGameObjectsPrefabHub.instantiadableGOPrefabs.TryGetValue(prefabName, out GameObject prefab))
                 throw new OperationCanceledException(string.Format("There is no GameObject in {0}", prefabName));

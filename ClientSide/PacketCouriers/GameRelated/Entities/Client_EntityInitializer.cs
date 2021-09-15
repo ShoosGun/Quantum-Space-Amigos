@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using ClientSide.PacketCouriers.Essentials;
+
 using ClientSide.Sockets;
 using ClientSide.Utils;
 using UnityEngine;
@@ -92,14 +91,8 @@ namespace ClientSide.PacketCouriers.GameRelated.Entities
             }
             client_EntityInitializer = this;
 
-            Client_DynamicPacketCourierHandler handler = Client.GetClient().dynamicPacketCourierHandler;
-            handler.SetPacketCourier(EI_LOCALIZATION_STRING, OnReceiveHeaderValue);
-            DynamicPacketIO = handler.DynamicPacketIO;
-        }
-        private ReadPacketHolder.ReadPacket OnReceiveHeaderValue(int HeaderValue)
-        {
-            this.HeaderValue = HeaderValue;
-            return ReadPacket;
+            DynamicPacketIO = Client.GetClient().DynamicPacketIO;
+            HeaderValue = DynamicPacketIO.AddPacketReader(EI_LOCALIZATION_STRING, ReadPacket);
         }
 
         public void OnDestroy()

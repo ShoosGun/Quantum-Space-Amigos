@@ -6,16 +6,10 @@ using ServerSide.Sockets.Clients;
 using System.Threading;
 using System.IO;
 
-
-using ServerSide.PacketCouriers.Essentials;
-
 namespace ServerSide.Sockets.Servers
 {
     public class Server
     {
-        //Vocês não iriam acreditar que todo esse código (e mais) foi deletado por eu ter feito merge enquanto tentava colocar ele em um repo
-        // É, nem eu acreditaria
-        // que aventura desgranhenta, nunca mais não terei um backup de algum tipo (ao menos que eu esqueça :P)
         private ClientDebuggerSide debugger;
         private Listener l;
         private List<Client> clients;
@@ -31,12 +25,8 @@ namespace ServerSide.Sockets.Servers
         private List<string> DisconnecedClientsCache = new List<string>();
         private readonly object DCC_lock = new object();
 
-
-        //Parte legal
-        //private IPacketCourier[] PacketCouriers;
-        private Server_DynamicPacketIO dynamicPacketIO;
-        public Server_DynamicPacketCourierHandler dynamicPacketCourierHandler { get; private set; }
-        private const int OBLIGATORY_HEADER_VALUE_OF_DPCH = 0;
+        
+        public Server_DynamicPacketIO DynamicPacketIO { get; private set; }
 
         private static Server CurrentServer = null;
         public static Server GetServer()
@@ -44,21 +34,13 @@ namespace ServerSide.Sockets.Servers
             return CurrentServer;
         }
 
-        public Server(ClientDebuggerSide debugger, Server_DynamicPacketCourierHandler dynamicPacketCourierHandler)
+        public Server(ClientDebuggerSide debugger)
         {
             if (CurrentServer != null)
                 return;
 
             this.debugger = debugger;
-
-            dynamicPacketIO = new Server_DynamicPacketIO();
-            this.dynamicPacketCourierHandler = dynamicPacketCourierHandler;
-            this.dynamicPacketCourierHandler.SetVariables(ref dynamicPacketIO, this);
-
-            if(dynamicPacketCourierHandler.HeaderValue != OBLIGATORY_HEADER_VALUE_OF_DPCH)
-                throw new OperationCanceledException(string.Format("dynamicPacketCourierHandler tem que ter como HeaderValue o valor de {0}, mas no lugar tem {1}"
-                    , OBLIGATORY_HEADER_VALUE_OF_DPCH, dynamicPacketCourierHandler.HeaderValue));
-
+                        
             clients = new List<Client>();
             clientsLookUpTable = new Dictionary<string, Client>();
             l = new Listener(2121, AllowedConnections.ANY, this.debugger);
@@ -141,7 +123,7 @@ namespace ServerSide.Sockets.Servers
                 PacketReader packet = new PacketReader(data);
                 try
                 {
-                    dynamicPacketIO.ReadReceivedPacket(ref packet, clientID);
+                    DynamicPacketIO.ReadReceivedPacket(ref packet, clientID);
                 }
                 catch (Exception ex)
                 {
@@ -178,22 +160,19 @@ namespace ServerSide.Sockets.Servers
 
         public void FixedUpdate()
         {
-            //Send data
-            dynamicPacketCourierHandler.SendUpdateHeaders();
-
             //Global Data
-            byte[] globalDataBuffer = dynamicPacketIO.GetGlobalPacketWriterData();
+            byte[] globalDataBuffer = DynamicPacketIO.GetGlobalPacketWriterData();
             if (globalDataBuffer.Length > 0)
                 SendAll(globalDataBuffer);
 
             //Client Specific Data
             for (int i =0; i< clients.Count; i++)
             {
-                byte[] clientSpecificBuffer = dynamicPacketIO.GetClientSpecificPacketWriterData(clients[i].ID);
+                byte[] clientSpecificBuffer = DynamicPacketIO.GetClientSpecificPacketWriterData(clients[i].ID);
                 if (clientSpecificBuffer.Length > 0)
                     Send(clientSpecificBuffer, clients[i].ID);
             }
-            dynamicPacketIO.ResetClientSpecificDataHolder();
+            DynamicPacketIO.ResetClientSpecificDataHolder();
             //
 
             bool NCC_NotLoked = Monitor.TryEnter(NCC_lock, 10);

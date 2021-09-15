@@ -1,55 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
+using ServerSide.Utils;
 namespace ServerSide.Sockets.Servers
 {
-    public class ReadPacketHolder
-    {
-        public const byte MAX_AMOUNT_OF_HEADER_VALUES = byte.MaxValue;
-        public delegate void ReadPacket(int latency, DateTime packetSentTime, byte[] data, string ClientID);
-
-        public byte HeaderValue { get; private set; }
-        public ReadPacket PacketRead { get; private set; }
-
-        public ReadPacketHolder(ReadPacket readPacket)
-        {
-            HeaderValue = GetUniqueHeaderValue();
-            PacketRead = readPacket;
-        }
-
-        private static byte lastHeaderValue = 0;
-        private byte GetUniqueHeaderValue()
-        {
-            if (lastHeaderValue < MAX_AMOUNT_OF_HEADER_VALUES)
-            {
-                byte thisHeaderValue = lastHeaderValue;
-                lastHeaderValue++;
-                return thisHeaderValue;
-            }
-            else
-                return MAX_AMOUNT_OF_HEADER_VALUES;
-        }
-
-        public static void ResetReadPacketHolderHeaderValues()
-        {
-            lastHeaderValue = 0;
-        }
-    }
-    //Teremos a classe ReadPacketHolder que guardara todos os dados para que possamos ter um IO dos pacotes
-    //E teremos a classe DynamicPacketIO que cuidara dos valores que HeaderValue terão
+    
     public class Server_DynamicPacketIO
     {
-        private ReadPacketHolder[] readPacketHolders;
+        public delegate void ReadPacket(int latency, DateTime packetSentTime, byte[] data, string ClientID);
+        private Dictionary<int, ReadPacket> ReadPacketHolders;
+       
+
         private PacketWriter globalPacketWriter;
         private Dictionary<string, PacketWriter> clientSpecificPacketWriters;
 
         public Server_DynamicPacketIO()
         {
-            ReadPacketHolder.ResetReadPacketHolderHeaderValues();
             clientSpecificPacketWriters = new Dictionary<string, PacketWriter>();
-            readPacketHolders = new ReadPacketHolder[ReadPacketHolder.MAX_AMOUNT_OF_HEADER_VALUES];
+            ReadPacketHolders = new Dictionary<int, ReadPacket>();
         }
 
         private byte[] GetAllData(ref PacketWriter packetWriter)
@@ -81,7 +50,7 @@ namespace ServerSide.Sockets.Servers
             clientSpecificPacketWriters.Clear();
         }
 
-        private void WritePackedData(byte HeaderValue, byte[] data, ref PacketWriter writer)
+        private void WritePackedData(int HeaderValue, byte[] data, ref PacketWriter writer)
         {
             if (writer == null)
             {
@@ -89,13 +58,11 @@ namespace ServerSide.Sockets.Servers
                 writer.Write(DateTime.UtcNow);
             }
 
-            if (readPacketHolders[HeaderValue] != null)
-                writer.Write(HeaderValue);
-
+            writer.Write(HeaderValue);
             writer.Write(data.Length);
             writer.Write(data);
         }
-        public void SendPackedData(byte HeaderValue, byte[] data, params string[] ClientIDs)
+        public void SendPackedData(int HeaderValue, byte[] data, params string[] ClientIDs)
         {
             if (ClientIDs.Length == 0)
             {
@@ -113,9 +80,7 @@ namespace ServerSide.Sockets.Servers
                     clientSpecificPacketWriters[ClientIDs[i]].Write(DateTime.UtcNow);
                 }
 
-                if (readPacketHolders[HeaderValue] != null)
-                    clientSpecificPacketWriters[ClientIDs[i]].Write(HeaderValue);
-
+                clientSpecificPacketWriters[ClientIDs[i]].Write(HeaderValue);
                 clientSpecificPacketWriters[ClientIDs[i]].Write(data.Length);
                 clientSpecificPacketWriters[ClientIDs[i]].Write(data);
             }
@@ -134,17 +99,18 @@ namespace ServerSide.Sockets.Servers
                     byte HeaderValue = packetReader.ReadByte();
                     int PackedDataSize = packetReader.ReadInt32();
                     byte[] PackedData = packetReader.ReadBytes(PackedDataSize);
-                    if (readPacketHolders[HeaderValue] == null)
-                    {
-                        ReceivedDataFromNonExistingHeaders.Add(HeaderValue);
-                    }
-                    else
+
+                    if (ReadPacketHolders.TryGetValue(HeaderValue, out ReadPacket readPacket))
                     {
                         try
                         {
-                            readPacketHolders[HeaderValue].PacketRead(latency, sentTime, PackedData, ClientID);
+                            readPacket(latency, sentTime, PackedData, ClientID);
                         }
                         catch (Exception ex) { UnityEngine.Debug.Log(string.Format("{0} - {1} {2}", ex.Message, ex.Source, ex.StackTrace)); }
+                    }
+                    else
+                    {
+                        ReceivedDataFromNonExistingHeaders.Add(HeaderValue);
                     }
                 }
                 catch (Exception ex)
@@ -166,18 +132,15 @@ namespace ServerSide.Sockets.Servers
             }
         }
 
-        public int AddPacketCourier(ReadPacketHolder.ReadPacket readPacket)
+        public int AddPacketReader(string LocalizationString, ReadPacket readPacket)
         {
-            ReadPacketHolder newReadPacketHolder = new ReadPacketHolder(readPacket);
+            int hash = Util.GerarHashInt(LocalizationString);
 
-            if (newReadPacketHolder.HeaderValue == ReadPacketHolder.MAX_AMOUNT_OF_HEADER_VALUES)
-                return ReadPacketHolder.MAX_AMOUNT_OF_HEADER_VALUES;
+            if (ReadPacketHolders.ContainsKey(hash))
+                throw new OperationCanceledException(string.Format("This string has a hash thay is already being used {0}", hash));
 
-            if (readPacketHolders[newReadPacketHolder.HeaderValue] != null)
-                throw new OperationCanceledException(string.Format("This HeaderValue is already being used {0}", newReadPacketHolder.HeaderValue));
-
-            readPacketHolders[newReadPacketHolder.HeaderValue] = newReadPacketHolder;
-            return newReadPacketHolder.HeaderValue;
+            ReadPacketHolders.Add(hash, readPacket);
+            return hash;
         }
     }
 }

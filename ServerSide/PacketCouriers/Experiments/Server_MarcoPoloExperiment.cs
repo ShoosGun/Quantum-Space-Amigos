@@ -8,7 +8,6 @@ using ServerSide.Sockets.Servers;
 using ServerSide.Sockets;
 using ServerSide.Utils;
 
-using ServerSide.PacketCouriers.Essentials;
 using ServerSide.PacketCouriers.GameRelated.Entities;
 
 namespace ServerSide.PacketCouriers.Experiments
@@ -22,9 +21,8 @@ namespace ServerSide.PacketCouriers.Experiments
 
         public void Start()
         {
-            Server_DynamicPacketCourierHandler handler = Server.GetServer().dynamicPacketCourierHandler;
-            HeaderValue = handler.AddPacketCourier(MP_LOCALIZATION_STRING, ReadPacket);
-            DynamicPacketIO = handler.DynamicPacketIO;
+            DynamicPacketIO = Server.GetServer().DynamicPacketIO;
+            HeaderValue = DynamicPacketIO.AddPacketReader(MP_LOCALIZATION_STRING, ReadPacket);
             
             Server_EntityInitializer.server_EntityInitializer.AddGameObjectPrefab("CuB0", CreateNetworkedCube());
 

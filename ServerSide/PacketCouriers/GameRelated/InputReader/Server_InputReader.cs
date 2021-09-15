@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
 
 using ServerSide.Sockets.Servers;
 using ServerSide.Sockets;
-
-using ServerSide.PacketCouriers.Essentials;
 
 namespace ServerSide.PacketCouriers.GameRelated.InputReader
 {
@@ -21,9 +18,8 @@ namespace ServerSide.PacketCouriers.GameRelated.InputReader
 
         public void Start()
         {
-            Server_DynamicPacketCourierHandler handler = Server.GetServer().dynamicPacketCourierHandler;
-            HeaderValue = handler.AddPacketCourier(IR_LOCALIZATION_STRING, ReadPacket);
-            DynamicPacketIO = handler.DynamicPacketIO;
+            DynamicPacketIO = Server.GetServer().DynamicPacketIO;
+            HeaderValue = DynamicPacketIO.AddPacketReader(IR_LOCALIZATION_STRING, ReadPacket);
 
             ClientsInputChannels = new Dictionary<string, ClientInputChannels>();
 

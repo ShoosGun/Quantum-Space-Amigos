@@ -25,7 +25,7 @@ namespace ServerSide.PacketCouriers.GameRelated.TransfromSync
         {
             networkedEntity = GetComponent<NetworkedEntity>();
 
-            byte[] instantiateData = networkedEntity.intantiateData[0];
+            object[] instantiateData = networkedEntity.intantiateData;
             if (instantiateData.Length > 0)
                 syncTransformType = (SyncTransform)instantiateData[0];
         }
