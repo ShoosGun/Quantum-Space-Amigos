@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using UnityEngine;
+﻿using UnityEngine;
 
 using ServerSide.PacketCouriers.GameRelated.Entities;
-using ServerSide.Sockets;
 
-namespace ServerSide.PacketCouriers.GameRelated.TransfromSync
+namespace ServerSide.EntityScripts.TransfromSync
 {
     public enum SyncTransform : byte
     {
@@ -16,14 +12,13 @@ namespace ServerSide.PacketCouriers.GameRelated.TransfromSync
         PositionAndRotationOnly,
         All
     }
-    public class TransformEntitySync : MonoBehaviour //Usar o primeiro byte do primeiro byte[] para suas informações de inicialização
+    public class TransformEntitySync : EntityScriptBehaviour //Usar o primeiro byte do primeiro byte[] para suas informações de inicialização
     {
         //TODO Sincronizar qual Sector o corpo usa como referencia junto com a informação do Transform. Provavelmente gerar um hash com o nome do setor ou algo assim
-        private NetworkedEntity networkedEntity;
-        private SyncTransform syncTransformType;
-        private void Start()
+       private SyncTransform syncTransformType;
+        protected override void Start()
         {
-            networkedEntity = GetComponent<NetworkedEntity>();
+            base.Start();
 
             object[] instantiateData = networkedEntity.intantiateData;
             if (instantiateData.Length > 0)
