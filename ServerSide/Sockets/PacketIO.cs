@@ -72,6 +72,82 @@ namespace ServerSide.Sockets
             Write(dateTime.ToBinary());
         }
 
+        public void Write(object[] array)
+        {
+            Write(array.Length);
+            for (int i = 0; i < array.Length; i++)
+                Write(array[i]);
+        }
+        public void Write(object Object) //TODO for my sanity, make this function better
+        {
+            Type objectType = Object.GetType();
+             
+            if(objectType == typeof(byte))
+            {
+                Write((byte)SentObjectType.BYTE);
+                Write((byte)Object);
+            }
+            else if (objectType == typeof(short))
+            {
+                Write((byte)SentObjectType.SHORT);
+                Write((short)Object);
+            }
+            else if (objectType == typeof(int))
+            {
+                Write((byte)SentObjectType.INT);
+                Write((int)Object);
+            }
+            else if (objectType == typeof(long))
+            {
+                Write((byte)SentObjectType.LONG);
+                Write((long)Object);
+            }
+
+            else if (objectType == typeof(float))
+            {
+                Write((byte)SentObjectType.FLOAT);
+                Write((float)Object);
+            }
+            else if (objectType == typeof(double))
+            {
+                Write((byte)SentObjectType.DOUBLE);
+                Write((double)Object);
+            }
+
+            else if (objectType == typeof(Vector2))
+            {
+                Write((byte)SentObjectType.VECTOR2);
+                Write((Vector2)Object);
+            }
+            else if (objectType == typeof(Vector3))
+            {
+                Write((byte)SentObjectType.VECTOR3);
+                Write((Vector3)Object);
+            }
+            else if (objectType == typeof(Vector4))
+            {
+                Write((byte)SentObjectType.VECTOR4);
+                Write((Vector4)Object);
+            }
+            else if (objectType == typeof(Quaternion))
+            {
+                Write((byte)SentObjectType.QUATERNION);
+                Write((Quaternion)Object);
+            }
+
+            else if (objectType == typeof(byte[]))
+            {
+                Write((byte)(SentObjectType.BYTE | SentObjectType.ARRAY));
+                WriteAsArray((byte[])Object);
+            }
+            else if (objectType == typeof(int[]))
+            {
+                Write((byte)(SentObjectType.INT | SentObjectType.ARRAY));
+                Write((int[])Object);
+            }
+            else
+                throw new ArgumentException(string.Format("The type {0} isn't currently supported by this function", objectType));
+        }
     }
 
     public class PacketReader : BinaryReader
@@ -127,5 +203,85 @@ namespace ServerSide.Sockets
         {
             return DateTime.FromBinary(ReadInt64());
         }
+
+        public object[] ReadObjectArray()
+        {
+            int lenght = ReadInt32();
+            object[] objArray = new object[lenght];
+            for (int i = 0; i < lenght; i++)
+                objArray[i] = ReadObject();
+
+            return objArray;
+        }
+        public object ReadObject()
+        {
+            byte objectType = ReadByte();
+            object sentObject;
+            switch (objectType)
+            {
+                case (byte)SentObjectType.BYTE:
+                    sentObject = ReadByte();
+                    break;
+                case (byte)SentObjectType.SHORT:
+                    sentObject = ReadInt16();
+                    break;
+                case (byte)SentObjectType.INT:
+                    sentObject = ReadInt32();
+                    break;
+                case (byte)SentObjectType.LONG:
+                    sentObject = ReadInt64();
+                    break;
+
+                case (byte)SentObjectType.FLOAT:
+                    sentObject = ReadSingle();
+                    break;
+                case (byte)SentObjectType.DOUBLE:
+                    sentObject = ReadDouble();
+                    break;
+
+                case (byte)SentObjectType.VECTOR2:
+                    sentObject = ReadVector2();
+                    break;
+                case (byte)SentObjectType.VECTOR3:
+                    sentObject = ReadVector3();
+                    break;
+                case (byte)SentObjectType.VECTOR4:
+                    sentObject = ReadVector4();
+                    break;
+                case (byte)SentObjectType.QUATERNION:
+                    sentObject = ReadQuaternion();
+                    break;
+
+                case (byte)(SentObjectType.BYTE | SentObjectType.ARRAY):
+                    sentObject = ReadByteArray();
+                    break;
+                case (byte)(SentObjectType.INT | SentObjectType.ARRAY):
+                    sentObject = ReadInt32Array();
+                    break;
+
+                default:
+                    sentObject = new object();
+                    break;
+            }
+
+            return sentObject;
+        }
+    }
+    public enum SentObjectType : byte
+    {
+        BYTE,
+        SHORT,
+        INT,
+        LONG,
+
+        FLOAT,
+        DOUBLE,
+
+        VECTOR2,
+        VECTOR3,
+        VECTOR4,
+        QUATERNION,
+
+        ARRAY = 128 //Ultimo byte
     }
 }

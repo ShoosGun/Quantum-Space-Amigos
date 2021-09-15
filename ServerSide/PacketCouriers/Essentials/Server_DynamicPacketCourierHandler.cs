@@ -7,6 +7,9 @@ using ServerSide.Utils;
 using ServerSide.Sockets;
 using UnityEngine;
 
+//TODO remover isso para usar um sistema apenas com GerarHash de utils (a versão em int)
+//Apenas guardar um valor caso o hash seja igual, para ai evitar o conflito
+//aka, usar o hash como header
 namespace ServerSide.PacketCouriers.Essentials
 {
     //Hibrido de PacketCourier com DynamicPacketIO, ele TEM que ter o HeaderValue IGUAL a 0(ZERO). Assim teremos um canal confiavel para comunicarmos entre os computadores
