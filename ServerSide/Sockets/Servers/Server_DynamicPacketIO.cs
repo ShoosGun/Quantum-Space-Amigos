@@ -8,7 +8,7 @@ namespace ServerSide.Sockets.Servers
     
     public class Server_DynamicPacketIO
     {
-        public delegate void ReadPacket(int latency, DateTime packetSentTime, byte[] data, string ClientID);
+        public delegate void ReadPacket(byte[] data, ReceivedPacketData receivedPacketData);
         private Dictionary<int, ReadPacket> ReadPacketHolders;
        
 
@@ -92,6 +92,8 @@ namespace ServerSide.Sockets.Servers
             List<int> ReceivedDataFromNonExistingHeaders = new List<int>();
             DateTime sentTime = packetReader.ReadDateTime();
             int latency = (DateTime.UtcNow - sentTime).Milliseconds;
+
+            ReceivedPacketData receivedPacketData = new ReceivedPacketData(ClientID, sentTime, latency);
             while (continueLoop)
             {
                 try
@@ -104,7 +106,7 @@ namespace ServerSide.Sockets.Servers
                     {
                         try
                         {
-                            readPacket(latency, sentTime, PackedData, ClientID);
+                            readPacket(PackedData, receivedPacketData);
                         }
                         catch (Exception ex) { UnityEngine.Debug.Log(string.Format("{0} - {1} {2}", ex.Message, ex.Source, ex.StackTrace)); }
                     }
@@ -141,6 +143,19 @@ namespace ServerSide.Sockets.Servers
 
             ReadPacketHolders.Add(hash, readPacket);
             return hash;
+        }
+    }
+    public struct ReceivedPacketData
+    {
+        public readonly string ClientID;
+        public readonly DateTime SentTime;
+        public readonly int Latency;
+
+        public ReceivedPacketData(string ClientID, DateTime SentTime, int Latency)
+        {
+            this.ClientID = ClientID;
+            this.SentTime = SentTime;
+            this.Latency = Latency;
         }
     }
 }

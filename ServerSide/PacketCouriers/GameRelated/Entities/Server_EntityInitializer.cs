@@ -221,8 +221,37 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
             writer.Write(entity.transform.rotation);
         }
 
-        public void ReadPacket(int latency,DateTime packetSentTime, byte[] data, string ClientID)
+        public void WriteEntityScriptsOnSerialization(ref PacketWriter writer)
         {
+            writer.Write(InstantiadableGameObjectsPrefabHub.networkedEntities.Count);
+            foreach(var entity in InstantiadableGameObjectsPrefabHub.networkedEntities)
+            {
+                PacketWriter entityWriter = new PacketWriter();
+                entity.Value.OnSerializeEntity(ref entityWriter);
+                byte[] data = entityWriter.GetBytes();
+                if (data.Length > 0)
+                {
+                    writer.Write(entity.Key);
+                    writer.WriteAsArray(data);
+                }
+            }
+        }
+        public void ReadEntityScriptsOnDeserialization(ref PacketReader reader, ReceivedPacketData receivedPacketData)
+        {
+            int count = reader.ReadInt32();
+            for(int i =0; i < count; i++)
+            {
+                int entityId = reader.ReadInt32();
+                byte[] data = reader.ReadByteArray();
+
+                if (InstantiadableGameObjectsPrefabHub.networkedEntities.TryGetValue(entityId, out NetworkedEntity entity))
+                    entity.OnDeserializeEntity(data, receivedPacketData);
+            }
+        }
+        public void ReadPacket(byte[] data, ReceivedPacketData receivedPacketData)
+        {
+            PacketReader reader = new PacketReader(data);
+            ReadEntityScriptsOnDeserialization(ref reader, receivedPacketData);
         }
 
         enum EntityInitializerHeaders : byte

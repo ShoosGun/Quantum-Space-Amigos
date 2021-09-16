@@ -52,11 +52,11 @@ namespace ServerSide.PacketCouriers.GameRelated.InputReader
             writer.Write(inputChannel.GetButtonDown());
             writer.Write(inputChannel.GetButtonUp());
         }        
-        public void ReadPacket(int latency,DateTime packetSentTime, byte[] data, string ClientID)
+        public void ReadPacket(byte[] data, ReceivedPacketData receivedPacketData)
         {
             PacketReader reader = new PacketReader(data);
-            if (ClientsInputChannels.TryGetValue(ClientID, out ClientInputChannels inputChannels))
-                inputChannels.ReadClienetInputChannelsData(latency, packetSentTime, ref reader);
+            if (ClientsInputChannels.TryGetValue(receivedPacketData.ClientID, out ClientInputChannels inputChannels))
+                inputChannels.ReadClienetInputChannelsData(receivedPacketData.Latency, receivedPacketData.SentTime, ref reader);
         }
     }
 }

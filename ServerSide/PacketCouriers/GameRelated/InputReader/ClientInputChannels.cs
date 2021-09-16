@@ -132,7 +132,7 @@ namespace ServerSide.PacketCouriers.GameRelated.InputReader
             map.ResetInputs();
             pause.ResetInputs();
         }
-        public void ResetInputsIfTimeExceedsLatency()
+        public void ResetInputsIfTimeExceedsLatency() //TODO fazer com que isso tenha um Queue dos botoes
         {
             if ((DateTime.UtcNow - TimeOfLastInput).Milliseconds > InputLatency)
                 ResetInputChannels();
