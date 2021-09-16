@@ -41,8 +41,10 @@ namespace ServerSide.PacketCouriers.GameRelated.InputReader
             ClientsInputChannels.Remove(clientID);
         }
 
-        public void Update()
+        public void FixedUpdate()
         {
+            foreach (var inputChannel in ClientsInputChannels)
+                inputChannel.Value.GoToNextInputsInInputChannels();
         }
         public void WriteInputChannelData(ref PacketWriter writer, InputChannel inputChannel)
         {

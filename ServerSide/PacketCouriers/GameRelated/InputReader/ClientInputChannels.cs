@@ -102,40 +102,36 @@ namespace ServerSide.PacketCouriers.GameRelated.InputReader
             map.ReadInputChannelData(ref reader);
             pause.ReadInputChannelData(ref reader);
         }
-        public void ResetInputChannels()
+
+        public void GoToNextInputsInInputChannels()
         {
-            moveX.ResetInputs();
-            moveZ.ResetInputs();
-            moveUp.ResetInputs();
-            moveDown.ResetInputs();
+            moveX.GoToNextInput();
+            moveZ.GoToNextInput();
+            moveUp.GoToNextInput();
+            moveDown.GoToNextInput();
 
-            pitch.ResetInputs();
-            yaw.ResetInputs();
-            zoomIn.ResetInputs();
+            pitch.GoToNextInput();
+            yaw.GoToNextInput();
+            zoomIn.GoToNextInput();
 
-            zoomOut.ResetInputs();
+            zoomOut.GoToNextInput();
 
-            interact.ResetInputs();
-            cancel.ResetInputs();
+            interact.GoToNextInput();
+            cancel.GoToNextInput();
 
-            jump.ResetInputs();
+            jump.GoToNextInput();
 
-            lockOn.ResetInputs();
-            probe.ResetInputs();
-            altProbe.ResetInputs();
+            lockOn.GoToNextInput();
+            probe.GoToNextInput();
+            altProbe.GoToNextInput();
 
-            matchVelocity.ResetInputs();
-            autopilot.ResetInputs();
-            landingCam.ResetInputs();
-            swapRollAndYaw.ResetInputs();
+            matchVelocity.GoToNextInput();
+            autopilot.GoToNextInput();
+            landingCam.GoToNextInput();
+            swapRollAndYaw.GoToNextInput();
 
-            map.ResetInputs();
-            pause.ResetInputs();
-        }
-        public void ResetInputsIfTimeExceedsLatency() //TODO fazer com que isso tenha um Queue dos botoes
-        {
-            if ((DateTime.UtcNow - TimeOfLastInput).Milliseconds > InputLatency)
-                ResetInputChannels();
+            map.GoToNextInput();
+            pause.GoToNextInput();
         }
     }
 }

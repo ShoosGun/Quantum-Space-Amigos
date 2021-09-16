@@ -107,7 +107,7 @@ namespace ClientSide.PacketCouriers.GameRelated.Entities
             gameObject.SetActive(false);
         }
 
-        private void InstantiateEntity(string prefabName, int ID, Vector3 position, Quaternion rotation, params byte[][] data)
+        private void InstantiateEntity(string prefabName, int ID, Vector3 position, Quaternion rotation, params object[] data)
         {
             if (!InstantiadableGameObjectsPrefabHub.instantiadableGOPrefabs.TryGetValue(prefabName, out GameObject prefab))
                 throw new OperationCanceledException(string.Format("There is no GameObject in {0}", prefabName));
@@ -149,8 +149,37 @@ namespace ClientSide.PacketCouriers.GameRelated.Entities
 
             InstantiateEntity(prefabName, id, position, rotation, intantiateData);
         }
+        public void WriteEntityScriptsOnSerialization(ref PacketWriter writer)
+        {
+            writer.Write((byte)EntityInitializerHeaders.EntitySerialization);
 
-        public void ReadPacket(int latency, DateTime sentPacketTime, byte[] data)
+            writer.Write(InstantiadableGameObjectsPrefabHub.networkedEntities.Count);
+            foreach (var entity in InstantiadableGameObjectsPrefabHub.networkedEntities)
+            {
+                PacketWriter entityWriter = new PacketWriter();
+                entity.Value.OnSerializeEntity(ref entityWriter);
+                byte[] data = entityWriter.GetBytes();
+                if (data.Length > 0)
+                {
+                    writer.Write(entity.Key);
+                    writer.WriteAsArray(data);
+                }
+            }
+        }
+        public void ReadEntityScriptsOnDeserialization(ref PacketReader reader, ReceivedPacketData receivedPacketData)
+        {
+            int count = reader.ReadInt32();
+            for (int i = 0; i < count; i++)
+            {
+                int entityId = reader.ReadInt32();
+                byte[] data = reader.ReadByteArray();
+
+                if (InstantiadableGameObjectsPrefabHub.networkedEntities.TryGetValue(entityId, out NetworkedEntity entity))
+                    entity.OnDeserializeEntity(data, receivedPacketData);
+            }
+        }
+
+        public void ReadPacket(byte[] data, ReceivedPacketData receivedPacketData)
         {
             PacketReader reader = new PacketReader(data);
             switch ((EntityInitializerHeaders)reader.ReadByte())
@@ -161,13 +190,24 @@ namespace ClientSide.PacketCouriers.GameRelated.Entities
                 case EntityInitializerHeaders.Remove:
                     ReceiveRemoveEntities(ref reader);
                     break;
+                case EntityInitializerHeaders.EntitySerialization:
+                    ReadEntityScriptsOnDeserialization(ref reader, receivedPacketData);
+                    break;
             }
+        }
+
+        private void FixedUpdate()
+        {
+            PacketWriter buffer = new PacketWriter(); //Doesn't need to send the Header because the server can only receive entity updates/serialization (for now)
+            WriteEntityScriptsOnSerialization(ref buffer);
+            DynamicPacketIO.SendPackedData(HeaderValue, buffer.GetBytes());
         }
 
         enum EntityInitializerHeaders : byte
         {
             Instantiate,
-            Remove
+            Remove,
+            EntitySerialization
         }
     }
 }

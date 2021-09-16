@@ -8,7 +8,7 @@ namespace ClientSide.Sockets
 {    
     public class Client_DynamicPacketIO
     {
-        public delegate void ReadPacket(int latency, DateTime packetSentTime, byte[] data);
+        public delegate void ReadPacket(byte[] data, ReceivedPacketData receivedPacketData);
         private Dictionary<int, ReadPacket> ReadPacketHolders = new Dictionary<int, ReadPacket>();
         private PacketWriter packetWriter;
         
@@ -23,7 +23,7 @@ namespace ClientSide.Sockets
             return new byte[] { };
         }
 
-        public void SendPackedData(byte HeaderValue, byte[] data)
+        public void SendPackedData(int HeaderValue, byte[] data)
         {
             if (packetWriter == null)
             {
@@ -43,11 +43,13 @@ namespace ClientSide.Sockets
             List<int> ReceivedDataFromNonExistingHeaders = new List<int>();
             DateTime sentTime = packetReader.ReadDateTime();
             int latency = (DateTime.UtcNow - sentTime).Milliseconds;
+
+            ReceivedPacketData receivedPacketData = new ReceivedPacketData(sentTime, latency);
             while (continueLoop)
             {
                 try
                 {
-                    byte HeaderValue = packetReader.ReadByte();
+                    int HeaderValue = packetReader.ReadInt32();
                     int PackedDataSize = packetReader.ReadInt32();
                     byte[] PackedData = packetReader.ReadBytes(PackedDataSize);
 
@@ -55,7 +57,7 @@ namespace ClientSide.Sockets
                     {
                         try
                         {
-                            readPacket(latency, sentTime, PackedData);
+                            readPacket(PackedData, receivedPacketData);
                         }
                         catch (Exception ex) { UnityEngine.Debug.Log(string.Format("{0} - {1} {2}", ex.Message, ex.Source, ex.StackTrace)); }
                     }
@@ -92,6 +94,17 @@ namespace ClientSide.Sockets
 
             ReadPacketHolders.Add(hash, readPacket);
             return hash;
+        }
+    }
+    public struct ReceivedPacketData
+    {
+        public readonly DateTime SentTime;
+        public readonly int Latency;
+
+        public ReceivedPacketData(DateTime SentTime, int Latency)
+        {
+            this.SentTime = SentTime;
+            this.Latency = Latency;
         }
     }
 }

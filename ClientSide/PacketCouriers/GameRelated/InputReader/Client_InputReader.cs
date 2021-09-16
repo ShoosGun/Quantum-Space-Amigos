@@ -40,7 +40,7 @@ namespace ClientSide.PacketCouriers.GameRelated.InputReader
             writer.Write(inputChannel.GetButtonDown());
             writer.Write(inputChannel.GetButtonUp());
         }        
-        public void ReadPacket(int latency, DateTime sentPacketTime, byte[] data)
+        public void ReadPacket(byte[] data, ReceivedPacketData receivedPacketData)
         {
         }
 

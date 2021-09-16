@@ -45,10 +45,10 @@ namespace ClientSide.PacketCouriers.Experiments
             polo.Write("Polo");
             DynamicPacketIO.SendPackedData((byte)HeaderValue, polo.GetBytes());
         }
-        public void ReadPacket(int latency, DateTime sentPacketTime, byte[] data)
+        public void ReadPacket(byte[] data, ReceivedPacketData receivedPacketData)
         {
             PacketReader reader = new PacketReader(data);
-            Debug.Log($"Recebemos do servidor: {reader.ReadString()} | {latency} ms");
+            Debug.Log($"Recebemos do servidor: {reader.ReadString()} | {receivedPacketData.Latency} ms");
         }
 
         public GameObject CreateNetworkedCube()

@@ -22,7 +22,7 @@ namespace ServerSide.EntityScripts.TransfromSync
 
             object[] instantiateData = networkedEntity.intantiateData;
             if (instantiateData.Length > 0)
-                syncTransformType = (SyncTransform)instantiateData[0];
+                syncTransformType = (SyncTransform)(byte)instantiateData[0];
         }
     }
 }

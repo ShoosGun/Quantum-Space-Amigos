@@ -254,10 +254,19 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
             ReadEntityScriptsOnDeserialization(ref reader, receivedPacketData);
         }
 
+        private void FixedUpdate()
+        {
+            PacketWriter buffer = new PacketWriter();
+            buffer.Write((byte)EntityInitializerHeaders.EntitySerialization);
+            WriteEntityScriptsOnSerialization(ref buffer);
+            DynamicPacketIO.SendPackedData(HeaderValue, buffer.GetBytes());
+        }
+
         enum EntityInitializerHeaders : byte
         {
             Instantiate,
-            Remove
+            Remove,
+            EntitySerialization
         }
     }
 }

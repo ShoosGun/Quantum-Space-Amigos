@@ -98,7 +98,7 @@ namespace ServerSide.Sockets.Servers
             {
                 try
                 {
-                    byte HeaderValue = packetReader.ReadByte();
+                    int HeaderValue = packetReader.ReadInt32();
                     int PackedDataSize = packetReader.ReadInt32();
                     byte[] PackedData = packetReader.ReadBytes(PackedDataSize);
 
