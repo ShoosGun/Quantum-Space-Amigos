@@ -58,6 +58,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EntityScripts\EntityScriptBehaviour.cs" />
+    <Compile Include="EntityScripts\TransfromSync\RigidbodyEntitySync.cs" />
     <Compile Include="PacketCouriers\Experiments\Server_MarcoPoloExperiment.cs" />
     <Compile Include="PacketCouriers\GameRelated\Entities\Server_EntityInitializer.cs" />
     <Compile Include="PacketCouriers\GameRelated\InputReader\ClientInputChannels.cs" />

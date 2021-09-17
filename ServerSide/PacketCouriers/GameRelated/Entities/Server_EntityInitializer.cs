@@ -216,7 +216,7 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
         {
             writer.Write(entity.prefabName);
             writer.Write(entity.id);
-            writer.Write(entity.intantiateData);
+            writer.WriteAsObject(entity.intantiateData);
             writer.Write(entity.transform.position);
             writer.Write(entity.transform.rotation);
         }

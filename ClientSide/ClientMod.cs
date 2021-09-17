@@ -4,6 +4,7 @@ using DIMOWAModLoader;
 
 using ClientSide.Sockets;
 using ClientSide.SettingsMenu;
+using ClientSide.Utils;
 
 using ClientSide.PacketCouriers.Experiments;
 using ClientSide.PacketCouriers.GameRelated.Entities;
@@ -41,6 +42,7 @@ namespace ClientSide
 
         private void Start()
         {
+            gameObject.AddComponent<MajorSectorLocator>();
 
             _debugger = GameObject.Find("DIMOWALevelLoaderHandler").GetComponent<ClientDebuggerSide>();
             _clientSide = new Client(_debugger);

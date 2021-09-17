@@ -5,6 +5,7 @@ using UnityEngine;
 using ClientSide.Sockets;
 
 using ClientSide.PacketCouriers.GameRelated.Entities;
+using ClientSide.EntityScripts.TransfromSync;
 
 namespace ClientSide.PacketCouriers.Experiments
 {
@@ -55,7 +56,8 @@ namespace ClientSide.PacketCouriers.Experiments
         {
             GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.GetComponent<Collider>().enabled = false;
-            go.AddComponent<NetworkedEntity>();
+            NetworkedEntity networkedEntity = go.AddComponent<NetworkedEntity>();
+            networkedEntity.AddEntityScript<TransformEntitySync>();
             return go;
         }
     }

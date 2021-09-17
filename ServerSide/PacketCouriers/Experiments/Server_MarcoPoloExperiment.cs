@@ -9,6 +9,7 @@ using ServerSide.Sockets;
 using ServerSide.Utils;
 
 using ServerSide.PacketCouriers.GameRelated.Entities;
+using ServerSide.EntityScripts.TransfromSync;
 
 namespace ServerSide.PacketCouriers.Experiments
 {
@@ -37,7 +38,7 @@ namespace ServerSide.PacketCouriers.Experiments
         {
             while (true)
             {
-                NetworkedEntity networkedEntity = Server_EntityInitializer.server_EntityInitializer.Instantiate("CuB0", Vector3.forward, Quaternion.identity, InstantiateType.Buffered).GetAttachedNetworkedEntity();
+                NetworkedEntity networkedEntity = Server_EntityInitializer.server_EntityInitializer.Instantiate("CuB0", Vector3.forward, Quaternion.identity, InstantiateType.Buffered,(byte)SyncTransform.PositionAndRotationOnly).GetAttachedNetworkedEntity();
                 yield return new WaitForSeconds(5f);
                 Server_EntityInitializer.server_EntityInitializer.DestroyEntity(networkedEntity);
                 yield return new WaitForSeconds(2.5f);
@@ -69,7 +70,8 @@ namespace ServerSide.PacketCouriers.Experiments
         {
             GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.GetComponent<Collider>().enabled = false;
-            go.AddComponent<NetworkedEntity>();
+            NetworkedEntity networkedEntity = go.AddComponent<NetworkedEntity>();
+            networkedEntity.AddEntityScript<TransformEntitySync>();
             return go;
         }
     }

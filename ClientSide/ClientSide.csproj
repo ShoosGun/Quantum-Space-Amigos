@@ -53,6 +53,8 @@
   <ItemGroup>
     <Compile Include="ClientMod.cs" />
     <Compile Include="EntityScripts\EntityScriptBehaviour.cs" />
+    <Compile Include="EntityScripts\TransfromSync\RigidbodyEntitySync.cs" />
+    <Compile Include="EntityScripts\TransfromSync\TransformEntitySync.cs" />
     <Compile Include="PacketCouriers\Experiments\Client_MarcoPoloExperiment.cs" />
     <Compile Include="PacketCouriers\GameRelated\Entities\NetworkedEntity.cs" />
     <Compile Include="PacketCouriers\GameRelated\Entities\Client_EntityInitializer.cs" />
@@ -70,6 +72,7 @@
     <Compile Include="Sockets\Headers.cs" />
     <Compile Include="Sockets\PacketIO.cs" />
     <Compile Include="PacketCouriers\IPacketCourier.cs" />
+    <Compile Include="Utils\MajorSectorLocator.cs" />
     <Compile Include="Utils\Util.cs" />
   </ItemGroup>
   <ItemGroup />

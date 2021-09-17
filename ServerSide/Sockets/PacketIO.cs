@@ -72,13 +72,13 @@ namespace ServerSide.Sockets
             Write(dateTime.ToBinary());
         }
 
-        public void Write(object[] array)
+        public void WriteAsObjectArray(object[] array)
         {
             Write(array.Length);
             for (int i = 0; i < array.Length; i++)
-                Write(array[i]);
+                WriteAsObject(array[i]);
         }
-        public void Write(object Object) //TODO for my sanity, make this function better
+        public void WriteAsObject(object Object) //TODO for my sanity, make this function better
         {
             Type objectType = Object.GetType();
              

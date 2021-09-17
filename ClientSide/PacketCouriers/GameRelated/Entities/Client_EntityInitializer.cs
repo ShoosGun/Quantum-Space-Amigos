@@ -143,7 +143,7 @@ namespace ClientSide.PacketCouriers.GameRelated.Entities
         {
             string prefabName = reader.ReadString();
             int id = reader.ReadInt32();
-            byte[][] intantiateData = reader.ReadByteMatrix();
+            object[] intantiateData = reader.ReadObjectArray();
             Vector3 position = reader.ReadVector3();
             Quaternion rotation = reader.ReadQuaternion();
 
