@@ -25,15 +25,16 @@ namespace ClientSide.EntityScripts.TransfromSync
             
             object[] instantiateData = networkedEntity.intantiateData;
             if (instantiateData.Length > 0)
+            {
                 syncTransformType = (SyncTransform)(byte)instantiateData[0];
+                Debug.Log("Transform type: " + instantiateData[0]);
+            }
         }
 
         public override void OnDeserialize(ref PacketReader reader, ReceivedPacketData receivedPacketData)
         {
             Sector.SectorName referenceFrameName = (Sector.SectorName)reader.ReadByte();
             Transform referenceFrame = Utils.MajorSectorLocator.GetMajorSector(referenceFrameName).GetAttachedOWRigidbody().transform;
-            
-            
 
             if (syncTransformType == SyncTransform.PositionOnly || syncTransformType == SyncTransform.PositionAndRotationOnly || syncTransformType == SyncTransform.All)
                 transform.position = reader.ReadVector3() + referenceFrame.position;

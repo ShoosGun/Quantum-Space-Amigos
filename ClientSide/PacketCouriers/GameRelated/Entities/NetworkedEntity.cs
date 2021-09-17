@@ -15,6 +15,12 @@ namespace ClientSide.PacketCouriers.GameRelated.Entities
 
         public int id;
 
+        private void Awake()
+        {
+            foreach (var script in GetComponents<EntityScriptBehaviour>())
+                SetEntityScript(script);
+        }
+
         public void SetInstantiateVariables(string prefabName,  params object[] intantiateData)
         {
             this.prefabName = prefabName;

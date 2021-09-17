@@ -14,6 +14,8 @@ namespace ServerSide.EntityScripts.TransfromSync
     public class TransformEntitySync : EntityScriptBehaviour //Usar o primeiro byte do primeiro byte[] para suas informações de inicialização
     {
         private MajorSector sectorReferenceFrame;
+
+        private bool hasSectorDetector = false;
         private SectorDetector sectorDetector;
         private bool isOnSpace = false;
         private SyncTransform syncTransformType;
@@ -25,23 +27,33 @@ namespace ServerSide.EntityScripts.TransfromSync
         protected override void Start()
         {
             base.Start();
-
-            sectorDetector = GetComponent<SectorDetector>();
-            sectorDetector.OnSwitchMajorSector += SectorDetector_OnSwitchMajorSector;
-            sectorDetector.OnEnterTheVoid += SectorDetector_OnEnterTheVoid;
-            sectorDetector.OnExitTheVoid += SectorDetector_OnExitTheVoid;
-            
             object[] instantiateData = networkedEntity.intantiateData;
             if (instantiateData.Length > 0)
+            {
                 syncTransformType = (SyncTransform)(byte)instantiateData[0];
+                Debug.Log("SyncTransform type: " + instantiateData[0]);
+            }
+
+            sectorDetector = GetComponent<SectorDetector>();
+            hasSectorDetector = sectorDetector != null;
+
+            if (hasSectorDetector)
+            {
+                sectorDetector.OnSwitchMajorSector += SectorDetector_OnSwitchMajorSector;
+                sectorDetector.OnEnterTheVoid += SectorDetector_OnEnterTheVoid;
+                sectorDetector.OnExitTheVoid += SectorDetector_OnExitTheVoid;
+            }
         }
         protected override void OnDestroy()
         {
             base.OnDestroy();
 
-            sectorDetector.OnSwitchMajorSector -= SectorDetector_OnSwitchMajorSector;
-            sectorDetector.OnEnterTheVoid -= SectorDetector_OnEnterTheVoid;
-            sectorDetector.OnExitTheVoid -= SectorDetector_OnExitTheVoid;
+            if (hasSectorDetector)
+            {
+                sectorDetector.OnSwitchMajorSector -= SectorDetector_OnSwitchMajorSector;
+                sectorDetector.OnEnterTheVoid -= SectorDetector_OnEnterTheVoid;
+                sectorDetector.OnExitTheVoid -= SectorDetector_OnExitTheVoid;
+            }
         }
 
         private void SectorDetector_OnExitTheVoid()
@@ -59,6 +71,9 @@ namespace ServerSide.EntityScripts.TransfromSync
 
         public override void OnSerialize(ref PacketWriter writer)
         {
+            if (!hasSectorDetector)
+                return;
+
             Transform referenceFrame;
             if (!isOnSpace)
             {

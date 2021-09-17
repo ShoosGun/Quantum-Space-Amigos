@@ -17,6 +17,12 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
 
         public int id;
 
+        private void Awake()
+        {
+            foreach (var script in GetComponents<EntityScriptBehaviour>())
+                SetEntityScript(script);
+        }
+
         public void SetInstantiateVariables(string prefabName, InstantiateType instantiateType, params object[] intantiateData)
         {
             this.prefabName = prefabName;
@@ -44,7 +50,7 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
         public void RemoveEntityScript<T>(T script) where T : EntityScriptBehaviour
         {
             if (!ComponentsToIO.Remove(script.GetScriptID()))
-                Debug.LogWarning(string.Format("The script {0}({1}) isn't being synced in {1}", script.GetType(), script.GetScriptID(), transform.name), this);
+                Debug.LogWarning(string.Format("The script {0}({1}) isn't being synced in {2}", script.GetType(), script.GetScriptID(), transform.name), this);
         }
 
         public void  OnSerializeEntity(ref PacketWriter writer)

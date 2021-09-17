@@ -39,6 +39,7 @@ namespace ServerSide.Sockets.Servers
             if (CurrentServer != null)
                 return;
 
+            DynamicPacketIO = new Server_DynamicPacketIO();
             this.debugger = debugger;
                         
             clients = new List<Client>();

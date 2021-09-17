@@ -7,9 +7,13 @@ namespace ClientSide.EntityScripts
     public class EntityScriptBehaviour : MonoBehaviour
     {
         protected NetworkedEntity networkedEntity;
+
+        [SerializeField]
         protected string UniqueScriptIdentifingString;
 
+        [SerializeField]
         private bool HasGeneratedScriptId = false;
+        [SerializeField]
         private int ScriptID = 0;
         public int GetScriptID()
         {
@@ -33,7 +37,8 @@ namespace ClientSide.EntityScripts
         }
         protected virtual void OnDestroy()
         {
-            networkedEntity.RemoveEntityScript(this);
+            if (networkedEntity != null)
+                networkedEntity.RemoveEntityScript(this);
         }
     }
 }

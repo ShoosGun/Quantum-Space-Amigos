@@ -28,6 +28,9 @@ namespace ServerSide.PacketCouriers.GameRelated.InputReader
         }
         public void OnDestroy()
         {
+            if (Server.GetServer() == null)
+                return;
+
             Server.GetServer().NewConnectionID -= Server_InputReader_NewConnectionID;
             Server.GetServer().DisconnectionID -= Server_InputReader_DisconnectionID;
         }

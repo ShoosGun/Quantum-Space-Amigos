@@ -6,11 +6,15 @@ using UnityEngine;
 namespace ServerSide.EntityScripts
 {
     public class EntityScriptBehaviour : MonoBehaviour
-    {
+    {        
         protected NetworkedEntity networkedEntity;
+
+        [SerializeField]
         protected string UniqueScriptIdentifingString;
 
+        [SerializeField]
         private bool HasGeneratedScriptId = false;
+        [SerializeField]
         private int ScriptID = 0;
         public int GetScriptID()
         {
@@ -34,7 +38,8 @@ namespace ServerSide.EntityScripts
         }
         protected virtual void OnDestroy()
         {
-            networkedEntity.RemoveEntityScript(this);
+            if(networkedEntity != null)
+                networkedEntity.RemoveEntityScript(this);
         }
     }
 }
