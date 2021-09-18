@@ -9,6 +9,14 @@ namespace ClientSide.EntityScripts
         protected NetworkedEntity networkedEntity;
 
         [SerializeField]
+        protected bool Serialize = false;
+
+        public bool IsToSerialize()
+        {
+            return Serialize;
+        }
+
+        [SerializeField]
         protected string UniqueScriptIdentifingString;
 
         [SerializeField]

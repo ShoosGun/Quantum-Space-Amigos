@@ -135,6 +135,12 @@ namespace ClientSide.Sockets
                 Write((Quaternion)Object);
             }
 
+            else if (objectType == typeof(string))
+            {
+                Write((byte)SentObjectType.STRING);
+                Write((string)Object);
+            }
+
             else if (objectType == typeof(byte[]))
             {
                 Write((byte)(SentObjectType.BYTE | SentObjectType.ARRAY));
@@ -252,6 +258,10 @@ namespace ClientSide.Sockets
                     sentObject = ReadQuaternion();
                     break;
 
+                case (byte)SentObjectType.STRING:
+                    sentObject = ReadString();
+                    break;
+
                 case (byte)(SentObjectType.BYTE | SentObjectType.ARRAY):
                     sentObject = ReadByteArray();
                     break;
@@ -281,6 +291,8 @@ namespace ClientSide.Sockets
         VECTOR3,
         VECTOR4,
         QUATERNION,
+
+        STRING,
 
         ARRAY = 128 //Ultimo byte
     }

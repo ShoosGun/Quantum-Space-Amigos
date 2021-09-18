@@ -58,12 +58,19 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
             if (ComponentsToIO.Count <= 0)
                 return;
 
-            writer.Write(ComponentsToIO.Count);
+            int serializedScripts = 0;
+            PacketWriter scriptSerializeBuffer = new PacketWriter();
             foreach (var networkedScript in ComponentsToIO)
             {
-                writer.Write(networkedScript.Key);
-                networkedScript.Value.OnSerialize(ref writer);
+                if (networkedScript.Value.IsToSerialize())
+                {
+                    scriptSerializeBuffer.Write(networkedScript.Key);
+                    networkedScript.Value.OnSerialize(ref scriptSerializeBuffer);
+                }
             }
+
+            writer.Write(serializedScripts);
+            writer.Write(scriptSerializeBuffer.GetBytes());
         }
         public void OnDeserializeEntity(byte[] data, ReceivedPacketData receivedPacketData)
         {
@@ -74,7 +81,14 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
                 int scriptId = reader.ReadInt32();
                 if(ComponentsToIO.TryGetValue(scriptId,out var script))
                 {
-                    script.OnDeserialize(ref reader, receivedPacketData);
+                    try
+                    {
+                        script.OnDeserialize(ref reader, receivedPacketData);
+                    }
+                    catch(Exception ex)
+                    {
+                        Debug.Log(string.Format("OnDeserialize failed in {0} : {1}", script.name, ex.Message));
+                    }
                 }
                 else
                 {

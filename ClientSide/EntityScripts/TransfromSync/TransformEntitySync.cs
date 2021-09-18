@@ -18,6 +18,7 @@ namespace ClientSide.EntityScripts.TransfromSync
         private void Awake()
         {
             UniqueScriptIdentifingString = "TransformEntitySync";
+            Serialize = false;
         }
         protected override void Start()
         {
