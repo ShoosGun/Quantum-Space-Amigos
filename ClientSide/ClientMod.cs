@@ -18,7 +18,7 @@ namespace ClientSide
         public Client _clientSide;
         private ClientDebuggerSide _debugger;
 
-        [IMOWAModInnit("Client Test", 2, 2)]
+        [IMOWAModInnit("Client Test", -1, 2)]
         public static void ModInnit(string porOndeTaInicializando)
         {
             if (!Application.runInBackground)
