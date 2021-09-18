@@ -89,6 +89,8 @@ namespace ClientSide.Sockets
         {
             int hash = Util.GerarHashInt(LocalizationString);
 
+            UnityEngine.Debug.Log(string.Format("Add PacketReader Header: {0}", hash));
+
             if (ReadPacketHolders.ContainsKey(hash))
                 throw new OperationCanceledException(string.Format("This string has a hash thay is already being used {0}", hash));
 

@@ -62,6 +62,7 @@ namespace ServerSide.Sockets.Servers
             lock (RDC_lock)
             {
                 ReceivedDataCache.Add(client.ID, new Queue<byte[]>(MAX_DATA_PER_CLIENT_LOOP));
+                debugger.SendLogMultiThread(client.ID);
             }
 
             NewConnection?.Invoke();
@@ -120,7 +121,6 @@ namespace ServerSide.Sockets.Servers
         {
             if (data.Length > 0)
             {
-                Client c = clientsLookUpTable[clientID];
                 PacketReader packet = new PacketReader(data);
                 try
                 {
@@ -128,7 +128,7 @@ namespace ServerSide.Sockets.Servers
                 }
                 catch (Exception ex)
                 {
-                    debugger.SendLog($"Erro ao ler dados de {c.ID}: {ex.Source} | {ex.Message}", DebugType.ERROR);
+                    debugger.SendLog($"Erro ao ler dados de {clientID}: {ex.Source} | {ex.Message}", DebugType.ERROR);
                 }
             }
         }
@@ -155,7 +155,7 @@ namespace ServerSide.Sockets.Servers
                     }
                 }
                 if(resetDataArrays)
-                    receivedData.Clear();
+                    receivedData[clientID].Clear();
             }
         }
 

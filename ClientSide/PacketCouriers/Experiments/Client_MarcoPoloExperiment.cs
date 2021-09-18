@@ -30,7 +30,7 @@ namespace ClientSide.PacketCouriers.Experiments
         public void Update()
         {
             if(client.Connected)
-                StartCoroutine("SendMarcoPeriodically");
+                StartCoroutine("SendPoloPeriodically");
         }
         IEnumerator SendPoloPeriodically()
         {
@@ -44,7 +44,7 @@ namespace ClientSide.PacketCouriers.Experiments
         {
             PacketWriter polo = new PacketWriter();
             polo.Write("Polo");
-            DynamicPacketIO.SendPackedData((byte)HeaderValue, polo.GetBytes());
+            DynamicPacketIO.SendPackedData(HeaderValue, polo.GetBytes());
         }
         public void ReadPacket(byte[] data, ReceivedPacketData receivedPacketData)
         {

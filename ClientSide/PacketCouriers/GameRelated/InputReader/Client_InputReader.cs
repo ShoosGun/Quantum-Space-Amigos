@@ -30,7 +30,7 @@ namespace ClientSide.PacketCouriers.GameRelated.InputReader
             for (int i = 0; i < Channels.Length; i++)
                 WriteInputChannelData(ref writer, Channels[i]);
 
-            DynamicPacketIO.SendPackedData((byte)HeaderValue, writer.GetBytes());
+            DynamicPacketIO.SendPackedData(HeaderValue, writer.GetBytes());
         }
         public void WriteInputChannelData(ref PacketWriter writer, InputChannel inputChannel)
         {

@@ -58,7 +58,7 @@ namespace ServerSide.PacketCouriers.Experiments
         {
             PacketWriter marco = new PacketWriter();
             marco.Write("Marco " + i);
-            DynamicPacketIO.SendPackedData((byte)HeaderValue, marco.GetBytes());
+            DynamicPacketIO.SendPackedData(HeaderValue, marco.GetBytes());
         }
         public void ReadPacket( byte[] data, ReceivedPacketData receivedPacketData)
         {

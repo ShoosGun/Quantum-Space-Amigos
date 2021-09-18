@@ -9,7 +9,8 @@ namespace ServerSide.PacketCouriers.GameRelated.InputReader
         private Queue<NetworkedInputs> networkedInputs = new Queue<NetworkedInputs>();
         public void GoToNextInput()
         {
-            networkedInputs.Dequeue();
+            if(networkedInputs.Count > 0)
+                networkedInputs.Dequeue();
 
             if (networkedInputs.Count < 1)
                 networkedInputs.Enqueue(new NetworkedInputs(0f, 0f, false, false, false));

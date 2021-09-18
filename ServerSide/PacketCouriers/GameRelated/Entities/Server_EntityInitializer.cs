@@ -201,7 +201,7 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
                 NetworkedEntity networkedEntity = InstantiadableGameObjectsPrefabHub.networkedEntities[entitiesIDs[i]];
                 WriteEntityInstantiateData(networkedEntity, ref buffer);
             }
-            DynamicPacketIO.SendPackedData((byte)HeaderValue, buffer.GetBytes(), clientIDs);
+            DynamicPacketIO.SendPackedData(HeaderValue, buffer.GetBytes(), clientIDs);
         }
 
         private void SendRemoveEntities(string[] clientIDs, params int[] entitiesIDs)
@@ -209,7 +209,7 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
             PacketWriter buffer = new PacketWriter();
             buffer.Write((byte)EntityInitializerHeaders.Remove);
             buffer.Write(entitiesIDs);
-            DynamicPacketIO.SendPackedData((byte)HeaderValue, buffer.GetBytes(), clientIDs);
+            DynamicPacketIO.SendPackedData(HeaderValue, buffer.GetBytes(), clientIDs);
         }
 
         private void WriteEntityInstantiateData(NetworkedEntity entity, ref PacketWriter writer)
