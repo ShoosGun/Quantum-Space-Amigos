@@ -23,6 +23,9 @@ namespace ServerSide.PacketCouriers.GameRelated.InputReader
         public NetworkedInputChannel cancel;
 
         public NetworkedInputChannel jump;
+		
+		public NetworkedInputChannel flashlight;
+		public NetworkedInputChannel telescope;
 
         public NetworkedInputChannel lockOn;
         public NetworkedInputChannel probe;
@@ -56,7 +59,11 @@ namespace ServerSide.PacketCouriers.GameRelated.InputReader
             cancel = new NetworkedInputChannel();
 
             jump = new NetworkedInputChannel();
-
+			
+			flashlight = new NetworkedInputChannel();
+			telescope = new NetworkedInputChannel();
+			
+			
             lockOn = new NetworkedInputChannel();
             probe = new NetworkedInputChannel();
             altProbe = new NetworkedInputChannel();
@@ -89,6 +96,9 @@ namespace ServerSide.PacketCouriers.GameRelated.InputReader
             cancel.ReadInputChannelData(ref reader);
 
             jump.ReadInputChannelData(ref reader);
+			
+			flashlight.ReadInputChannelData(ref reader);
+			telescope.ReadInputChannelData(ref reader);
 
             lockOn.ReadInputChannelData(ref reader);
             probe.ReadInputChannelData(ref reader);
@@ -120,6 +130,9 @@ namespace ServerSide.PacketCouriers.GameRelated.InputReader
             cancel.GoToNextInput();
 
             jump.GoToNextInput();
+			
+			flashlight.GoToNextInput();
+			telescope.GoToNextInput();
 
             lockOn.GoToNextInput();
             probe.GoToNextInput();

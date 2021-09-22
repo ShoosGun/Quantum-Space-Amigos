@@ -10,6 +10,7 @@ using ServerSide.Utils;
 
 using ServerSide.PacketCouriers.GameRelated.Entities;
 using ServerSide.EntityScripts.TransfromSync;
+using ServerSide.PacketCouriers.GameRelated.InputReader;
 
 namespace ServerSide.PacketCouriers.Experiments
 {
@@ -19,20 +20,54 @@ namespace ServerSide.PacketCouriers.Experiments
         
         const string MP_LOCALIZATION_STRING = "MarcoPoloExperiment";
         public int HeaderValue { get; private set; }
+		
+		public string clientToSee = "";
 
         public void Start()
         {
             DynamicPacketIO = Server.GetServer().DynamicPacketIO;
             HeaderValue = DynamicPacketIO.AddPacketReader(MP_LOCALIZATION_STRING, ReadPacket);
+			
+			Server.GetServer().NewConnectionID += Server_MarcoPoloExperiment_NewConnectionID;
+			Server.GetServer().DisconnectionID += Server_MarcoPoloExperiment_DisconnectionID;
             
             Server_EntityInitializer.server_EntityInitializer.AddGameObjectPrefab("CuB0", CreateNetworkedCube());
 
             StartCoroutine("SendMarcoPeriodically");
             StartCoroutine("CreateAndDestroyCubePeriodically");
         }
-        public void Update()
+		public void OnDestroy()
+		{
+			Server.GetServer().NewConnectionID -= Server_MarcoPoloExperiment_NewConnectionID;
+			Server.GetServer().DisconnectionID -= Server_MarcoPoloExperiment_DisconnectionID;			
+		}
+		private void Server_MarcoPoloExperiment_NewConnectionID(string clientID)
         {
-            
+            clientToSee = clientID;
+        }
+        private void Server_MarcoPoloExperiment_DisconnectionID(string clientID)
+        {
+            if(clientToSee == clientID)
+				clientToSee = "";
+        }
+		NetworkedEntity entityCreatedByClient;
+        public void FixedUpdate()
+        {
+			ClientInputChannels channels = Server_InputReader.GetClientInputs(clientToSee);
+			if(channels != null)
+			{
+				if(channels.flashlight.GetButtonDown())
+				{
+					if(entityCreatedByClient == null)
+					{
+					entityCreatedByClient = Server_EntityInitializer.server_EntityInitializer.Instantiate("CuB0", Vector3.forward, Quaternion.identity, InstantiateType.Buffered,(byte)SyncTransform.PositionAndRotationOnly).GetAttachedNetworkedEntity();
+					entityCreatedByClient.transform.position = Vector3.forward * 2;
+					}
+					else
+						Server_EntityInitializer.server_EntityInitializer.DestroyEntity(entityCreatedByClient);
+				}
+					
+			}
         }
         IEnumerator CreateAndDestroyCubePeriodically()
         {

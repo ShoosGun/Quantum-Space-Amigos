@@ -57,7 +57,7 @@ namespace ClientSide
         {
             _clientSide.Update();
         }
-        private void OnDestroy()
+        private void OnDestroy() //TODO descobrir porque o _clientSide não está sendo destruido
         {
             _clientSide.Close();
         }

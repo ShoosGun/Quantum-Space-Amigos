@@ -27,7 +27,9 @@ namespace ClientSide.EntityScripts.TransfromSync
             object[] instantiateData = networkedEntity.intantiateData;
             if (instantiateData.Length > 0)
             {
-                syncTransformType = (SyncTransform)(byte)instantiateData[0];
+                object syncType = instantiateData[0];
+                Debug.Log(string.Format("Tipo: {0} - {1}", syncType.GetType(), syncType.ToString()));
+                syncTransformType = (SyncTransform)(byte)syncType;
                 Debug.Log("Transform type: " + instantiateData[0]);
             }
         }

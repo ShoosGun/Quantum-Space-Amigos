@@ -61,6 +61,9 @@ namespace ClientSide.PacketCouriers.GameRelated.InputReader
             InputChannels.cancel,
 
             InputChannels.jump,
+			
+			InputChannels.flashlight,
+			InputChannels.telescope,
 
             InputChannels.lockOn,
             InputChannels.probe,

@@ -15,9 +15,19 @@ namespace ServerSide.PacketCouriers.GameRelated.InputReader
         public int HeaderValue { get; private set; }
 
         private Dictionary<string, ClientInputChannels> ClientsInputChannels;
-
+		
+		private static Server_InputReader inputReader;
+		
         public void Start()
         {
+			if(inputReader != null)
+			{
+				Destroy(this);
+				return;
+			}
+			
+			inputReader = this;
+			
             DynamicPacketIO = Server.GetServer().DynamicPacketIO;
             HeaderValue = DynamicPacketIO.AddPacketReader(IR_LOCALIZATION_STRING, ReadPacket);
 
@@ -43,6 +53,15 @@ namespace ServerSide.PacketCouriers.GameRelated.InputReader
         {
             ClientsInputChannels.Remove(clientID);
         }
+		
+		public static ClientInputChannels GetClientInputs(string clientID)
+		{
+            if (inputReader == null)
+                return null;
+
+            inputReader.ClientsInputChannels.TryGetValue(clientID, out ClientInputChannels channels);
+			return channels;			
+		}
 
         public void FixedUpdate()
         {

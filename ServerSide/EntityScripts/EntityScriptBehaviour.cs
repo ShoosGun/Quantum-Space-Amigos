@@ -1,7 +1,14 @@
-﻿using ServerSide.PacketCouriers.GameRelated.Entities;
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Linq;
+
+using UnityEngine;
+
+using ServerSide.PacketCouriers.GameRelated.Entities;
 using ServerSide.Sockets;
 using ServerSide.Sockets.Servers;
-using UnityEngine;
+
 
 namespace ServerSide.EntityScripts
 {
@@ -33,7 +40,8 @@ namespace ServerSide.EntityScripts
             }
             return ScriptID;
         }
-
+        //TODO add an networked event system per EntitySciptBehavior, prob. inside NetworkedEntity
+       
         protected virtual void Start()
         {
             networkedEntity = GetComponent<NetworkedEntity>();
@@ -46,7 +54,7 @@ namespace ServerSide.EntityScripts
         }
         protected virtual void OnDestroy()
         {
-            if(networkedEntity != null)
+            if (networkedEntity != null)
                 networkedEntity.RemoveEntityScript(this);
         }
     }

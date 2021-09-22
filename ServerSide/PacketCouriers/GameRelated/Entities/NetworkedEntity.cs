@@ -14,7 +14,7 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
         public InstantiateType instantiateType;
 
         public Dictionary<int,EntityScriptBehaviour> ComponentsToIO = new Dictionary<int, EntityScriptBehaviour>();
-
+        
         public int id;
 
         private void Awake()
@@ -98,9 +98,28 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
             }
         }
 
+        //TODO finalizar essa versão do RPC
+        public void InvokeRemoteAccessMethod(string method, string[] playersToSendTo, params object[] parameters)
+        {
+            //1 - criar uma nova via apenas para 'rpcs' que não interfira no entity serizlize
+            //2 - fazer essa distinção entre quem recebe o rpc 
+        }
+
         private void OnDestroy()
 		{
             Server_EntityInitializer.server_EntityInitializer.DestroyEntity(this);
+        }
+    }
+
+    public struct RemoteAccesedMethodData
+    {
+        public string MethodName;
+        public object[] Parameters;
+
+        public RemoteAccesedMethodData(string methodName, params object[] parameters)
+        {
+            MethodName = methodName;
+            Parameters = parameters;
         }
     }
 }
