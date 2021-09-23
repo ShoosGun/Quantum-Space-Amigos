@@ -25,13 +25,16 @@ namespace ClientSide.PacketCouriers.Experiments
             DynamicPacketIO = client.DynamicPacketIO;
             HeaderValue = DynamicPacketIO.AddPacketReader(MP_LOCALIZATION_STRING, ReadPacket);
 
+            client.Connection += Client_Connection;
+
             Client_EntityInitializer.client_EntityInitializer.AddGameObjectPrefab("CuB0", CreateNetworkedCube());
         }
-        public void Update()
+
+        private void Client_Connection()
         {
-            if(client.Connected)
-                StartCoroutine("SendPoloPeriodically");
+            StartCoroutine("SendPoloPeriodically");
         }
+        
         IEnumerator SendPoloPeriodically()
         {
             while (true)
@@ -56,8 +59,11 @@ namespace ClientSide.PacketCouriers.Experiments
         {
             GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.GetComponent<Collider>().enabled = false;
+            go.AddComponent<Rigidbody>();
+            go.AddComponent<OWRigidbody>();
             NetworkedEntity networkedEntity = go.AddComponent<NetworkedEntity>();
             networkedEntity.AddEntityScript<TransformEntitySync>();
+            networkedEntity.AddEntityScript<RigidbodyEntitySync>();
             return go;
         }
     }

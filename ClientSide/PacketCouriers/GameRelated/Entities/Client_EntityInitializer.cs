@@ -114,7 +114,8 @@ namespace ClientSide.PacketCouriers.GameRelated.Entities
 
             GameObject gameObject = (GameObject)Instantiate(prefab, position, rotation);
             NetworkedEntity networkedEntity = gameObject.GetAttachedNetworkedEntity();
-            networkedEntity.SetInstantiateVariables(prefabName, ID, data);
+            networkedEntity.id = ID;
+            networkedEntity.SetInstantiateVariables(prefabName, data);
             gameObject.SetActive(true);
             InstantiadableGameObjectsPrefabHub.AddGameObject(networkedEntity);
         }

@@ -1,19 +1,28 @@
 ﻿using System.Collections.Generic;
 
 using ServerSide.Sockets;
+using UnityEngine;
 
 namespace ServerSide.PacketCouriers.GameRelated.InputReader
 {
     public class NetworkedInputChannel
     {
         private Queue<NetworkedInputs> networkedInputs = new Queue<NetworkedInputs>();
+        private NetworkedInputs currentInput;
+        private NetworkedInputs lastInput;
+        public NetworkedInputChannel()
+        {
+            lastInput = new NetworkedInputs(0f, 0f, false, false, false);
+            currentInput = new NetworkedInputs(0f, 0f, false, false, false);
+        }
         public void GoToNextInput()
         {
-            if(networkedInputs.Count > 0)
-                networkedInputs.Dequeue();
+            lastInput = currentInput;
 
-            if (networkedInputs.Count < 1)
-                networkedInputs.Enqueue(new NetworkedInputs(0f, 0f, false, false, false));
+            if (networkedInputs.Count > 0)
+                currentInput = networkedInputs.Dequeue();
+            else
+                currentInput = new NetworkedInputs(0f, 0f, false, false, false);
         }
         public void ReadInputChannelData(ref PacketReader reader)
         {
@@ -21,23 +30,45 @@ namespace ServerSide.PacketCouriers.GameRelated.InputReader
         }
         public float GetAxis()
         {
-            return networkedInputs.Peek().Axis;
+            return currentInput.Axis;
         }    
         public float GetAxisRaw()
         {
-            return networkedInputs.Peek().AxisRaw;
+            return currentInput.AxisRaw;
         }        
         public bool GetButton()
         {
-            return networkedInputs.Peek().Button;
+            return currentInput.Button;
         }        
         public bool GetButtonDown()
         {
-            return networkedInputs.Peek().ButtonDown;
-        }        
+            return currentInput.ButtonDown;
+        }
         public bool GetButtonUp()
         {
-            return networkedInputs.Peek().ButtonUp;
+            return currentInput.ButtonUp;
+        }
+        //Axis only
+        private const float AxisToBoolClamp = 0.2f;
+        public bool AxisIsNoLongerPositive()
+        {
+            return lastInput.Axis > AxisToBoolClamp && currentInput.Axis < AxisToBoolClamp;
+        }
+        public bool AxisIsNewlyNegative()
+        {
+            return lastInput.Axis > -AxisToBoolClamp && currentInput.Axis < -AxisToBoolClamp;
+        }
+        public bool AxisIsNoLongerNegative()
+        {
+            return lastInput.Axis < -AxisToBoolClamp && currentInput.Axis > -AxisToBoolClamp;
+        }
+        public bool AxisIsNewlyNull()
+        {
+            return (lastInput.Axis < -AxisToBoolClamp || lastInput.Axis > AxisToBoolClamp) && currentInput.Axis > -AxisToBoolClamp && currentInput.Axis < AxisToBoolClamp;
+        }
+        public bool AxisIsNoLongerNull()
+        {
+            return lastInput.Axis > -0.2f && lastInput.Axis < 0.2f && (currentInput.Axis < -0.2f || currentInput.Axis > 0.2f);
         }
     }
     public struct NetworkedInputs

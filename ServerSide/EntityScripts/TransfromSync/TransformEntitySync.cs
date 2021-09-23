@@ -17,25 +17,24 @@ namespace ServerSide.EntityScripts.TransfromSync
 
         private bool hasSectorDetector = false;
         private SectorDetector sectorDetector;
-        private bool isOnSpace = false;
+        private bool isOnSpace = true;
         private SyncTransform syncTransformType;
 
         private void Awake()
         {
             UniqueScriptIdentifingString = "TransformEntitySync";
-            Serialize = false;
+            Serialize = true;
         }
         protected override void Start()
         {
             base.Start();
             object[] instantiateData = networkedEntity.intantiateData;
-            if (instantiateData.Length > 0)
-            {
-                syncTransformType = (SyncTransform)(byte)instantiateData[0];
-                Debug.Log("SyncTransform type: " + instantiateData[0]);
-            }
 
-            sectorDetector = GetComponent<SectorDetector>();
+            if (instantiateData.Length > 0)
+                syncTransformType = (SyncTransform)(byte)instantiateData[0];
+
+
+            sectorDetector = GetComponentInChildren<SectorDetector>();
             hasSectorDetector = sectorDetector != null;
 
             if (hasSectorDetector)

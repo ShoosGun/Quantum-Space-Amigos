@@ -16,12 +16,13 @@ namespace ServerSide.EntityScripts.TransfromSync
         private void Awake()
         {
             UniqueScriptIdentifingString = "RigidbodyEntitySync";
+            Serialize = true;
         }
         protected override void Start()
         {
             base.Start();
-
             object[] instantiateData = networkedEntity.intantiateData;
+
             if (instantiateData.Length > 1)
                 syncRigidbodyType = (SyncRigidbody)(byte)instantiateData[1];
         }

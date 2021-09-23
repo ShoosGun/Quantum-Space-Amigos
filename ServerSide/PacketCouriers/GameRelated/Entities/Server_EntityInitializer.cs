@@ -251,7 +251,12 @@ namespace ServerSide.PacketCouriers.GameRelated.Entities
         public void ReadPacket(byte[] data, ReceivedPacketData receivedPacketData)
         {
             PacketReader reader = new PacketReader(data);
-            ReadEntityScriptsOnDeserialization(ref reader, receivedPacketData);
+            switch ((EntityInitializerHeaders)reader.ReadByte())
+            {
+                case EntityInitializerHeaders.EntitySerialization:
+                    ReadEntityScriptsOnDeserialization(ref reader, receivedPacketData);
+                    break;
+            }
         }
 
         private void FixedUpdate()

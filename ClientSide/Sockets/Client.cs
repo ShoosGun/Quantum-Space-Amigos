@@ -173,7 +173,6 @@ namespace ClientSide.Sockets
                     PacketReader packet = new PacketReader(data);
                     try
                     {
-                        debugger.SendLog("Lendo info do servidor " + data.Length);
                         DynamicPacketIO.ReadReceivedPacket(ref packet);
                     }
                     catch (Exception ex)
@@ -203,6 +202,8 @@ namespace ClientSide.Sockets
         {
             if(serverSocket != null)
                 serverSocket.Close();
+
+            CurrentClient = null;
         }
 
         public event ConnectionHandler Connection;

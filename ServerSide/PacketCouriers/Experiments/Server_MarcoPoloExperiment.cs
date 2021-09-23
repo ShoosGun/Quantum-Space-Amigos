@@ -34,10 +34,12 @@ namespace ServerSide.PacketCouriers.Experiments
             Server_EntityInitializer.server_EntityInitializer.AddGameObjectPrefab("CuB0", CreateNetworkedCube());
 
             StartCoroutine("SendMarcoPeriodically");
-            StartCoroutine("CreateAndDestroyCubePeriodically");
+            //StartCoroutine("CreateAndDestroyCubePeriodically");
         }
 		public void OnDestroy()
 		{
+            if (Server.GetServer() == null)
+                return;
 			Server.GetServer().NewConnectionID -= Server_MarcoPoloExperiment_NewConnectionID;
 			Server.GetServer().DisconnectionID -= Server_MarcoPoloExperiment_DisconnectionID;			
 		}
@@ -54,18 +56,17 @@ namespace ServerSide.PacketCouriers.Experiments
         public void FixedUpdate()
         {
 			ClientInputChannels channels = Server_InputReader.GetClientInputs(clientToSee);
-			if(channels != null)
+			if(channels != null && !string.IsNullOrEmpty(clientToSee))
 			{
-				if(channels.flashlight.GetButtonDown())
+				if(channels.flashlight.AxisIsNoLongerPositive())
 				{
-					if(entityCreatedByClient == null)
-					{
-					entityCreatedByClient = Server_EntityInitializer.server_EntityInitializer.Instantiate("CuB0", Vector3.forward, Quaternion.identity, InstantiateType.Buffered,(byte)SyncTransform.PositionAndRotationOnly).GetAttachedNetworkedEntity();
-					entityCreatedByClient.transform.position = Vector3.forward * 2;
-					}
-					else
-						Server_EntityInitializer.server_EntityInitializer.DestroyEntity(entityCreatedByClient);
-				}
+                    if (entityCreatedByClient == null)
+                    {                        
+                        entityCreatedByClient = Server_EntityInitializer.server_EntityInitializer.Instantiate("CuB0", Locator.GetPlayerTransform().transform.position + Vector3.forward*2, Quaternion.identity, InstantiateType.Buffered, (byte)SyncTransform.PositionOnly, (byte)SyncRigidbody.Both).GetAttachedNetworkedEntity();
+                    }
+                    else
+                        Server_EntityInitializer.server_EntityInitializer.DestroyEntity(entityCreatedByClient);
+                }
 					
 			}
         }
@@ -104,9 +105,23 @@ namespace ServerSide.PacketCouriers.Experiments
         public GameObject CreateNetworkedCube()
         {
             GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            go.GetComponent<Collider>().enabled = false;
+
+            //Detector
+            GameObject detector = new GameObject("cubo_detector");
+            detector.transform.parent = go.transform;
+            detector.transform.localPosition = Vector3.zero;
+
+            detector.AddComponent<SphereCollider>();
+            go.AddComponent<MultiFieldDetector>();
+            go.AddComponent<SectorDetector>();
+            //
+
+            go.AddComponent<Rigidbody>();
+            go.AddComponent<OWRigidbody>();
+
             NetworkedEntity networkedEntity = go.AddComponent<NetworkedEntity>();
             networkedEntity.AddEntityScript<TransformEntitySync>();
+            networkedEntity.AddEntityScript<RigidbodyEntitySync>();
             return go;
         }
     }

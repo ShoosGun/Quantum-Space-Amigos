@@ -18,20 +18,15 @@ namespace ClientSide.EntityScripts.TransfromSync
         private void Awake()
         {
             UniqueScriptIdentifingString = "TransformEntitySync";
-            Serialize = false;
+            Serialize = true;
         }
         protected override void Start()
         {
-            base.Start();
-            
+            base.Start();            
             object[] instantiateData = networkedEntity.intantiateData;
+
             if (instantiateData.Length > 0)
-            {
-                object syncType = instantiateData[0];
-                Debug.Log(string.Format("Tipo: {0} - {1}", syncType.GetType(), syncType.ToString()));
-                syncTransformType = (SyncTransform)(byte)syncType;
-                Debug.Log("Transform type: " + instantiateData[0]);
-            }
+                syncTransformType = (SyncTransform)(byte)instantiateData[0];
         }
 
         public override void OnDeserialize(ref PacketReader reader, ReceivedPacketData receivedPacketData)

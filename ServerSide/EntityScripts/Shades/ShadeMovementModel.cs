@@ -3,56 +3,44 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using DIMOWAModLoader;
+using ServerSide.PacketCouriers.GameRelated.InputReader;
 
-namespace ServerSide.PacketCouriers.Shades
+namespace ServerSide.EntityScripts.Shades
 {
     public class ShadeMovementModel : CharacterMovementModel
     {
-        private ClientDebuggerSide debugger;
-
-        public MovementPacket CurrentMovementPacket;
+        private string ClientControllerString = "";
         
         private void Start()
         {
-            debugger = GameObject.Find("DIMOWALevelLoaderHandler").GetComponent<ClientDebuggerSide>();
-            
             _jumpSpeed = 6f;
             _turnRate = 160f;
-            
         }
         protected override Vector3 GetMoveInput()
         {
-            return CurrentMovementPacket.MoveInput; // x = andar de lado z = andar para frente e para tras
+            ClientInputChannels channels = Server_InputReader.GetClientInputs(ClientControllerString);
+            if(channels != null)
+                return new Vector3(channels.moveX.GetAxis(), 0f, channels.moveZ.GetAxis());
+
+            return Vector3.zero;
         }
 
         protected override float GetTurnInput()
         {
-            return CurrentMovementPacket.TurnInput;
+            ClientInputChannels channels = Server_InputReader.GetClientInputs(ClientControllerString);
+            if (channels != null)
+                return channels.yaw.GetAxis();
+
+            return 0f;
         }
 
         protected override bool GetJumpInput()
         {
-           return CurrentMovementPacket.JumpInput;
-        }
+            ClientInputChannels channels = Server_InputReader.GetClientInputs(ClientControllerString);
+            if (channels != null)
+                return channels.jump.GetButtonDown();
 
-        public void SetNewPacket(MovementPacket packet)
-        {
-            CurrentMovementPacket = packet;
-        }
-    }
-    public struct MovementPacket
-    {
-        public Vector3 MoveInput;
-        public float TurnInput;
-        public bool JumpInput;
-        public DateTime SendTime;
-
-        public MovementPacket(Vector3 moveInput, float turnInput, bool jumpInput, DateTime sendTime)
-        {
-            MoveInput = moveInput;
-            TurnInput = turnInput;
-            JumpInput = jumpInput;
-            SendTime = sendTime;
-        }
+            return false;
+        }        
     }
 }

@@ -147,12 +147,11 @@ namespace ServerSide.Sockets.Servers
             for (int i = 0; i < clients.Count; i++)
             {
                 string clientID = clients[i].ID;
-                foreach(byte[] data in receivedData[clientID])
+                
+                foreach (byte[] data in receivedData[clientID])
                 {
                     if (data.Length > 0)
-                    {
                         ReceivedData(clientID, data);
-                    }
                 }
                 if(resetDataArrays)
                     receivedData[clientID].Clear();
@@ -248,9 +247,8 @@ namespace ServerSide.Sockets.Servers
                     if (!ReceivedDataCache.ContainsKey(sender.ID))
                         return;
 
-                    var senderCache = ReceivedDataCache[sender.ID];
-                    if (senderCache.Count > MAX_DATA_PER_CLIENT_LOOP)
-                        senderCache.Enqueue(data);
+                    if (ReceivedDataCache[sender.ID].Count < MAX_DATA_PER_CLIENT_LOOP)
+                        ReceivedDataCache[sender.ID].Enqueue(data);
                 }
             }
             finally

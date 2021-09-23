@@ -67,7 +67,6 @@
     <Compile Include="PacketCouriers\GameRelated\NetworkedMessenger\Server_NetworkedMessengerPacketCourier.cs" />
     <Compile Include="EntityScripts\TransfromSync\TransformEntitySync.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="EntityScripts\Shades\MovementConstraints\OWRigidbodyFollowsAnother.cs" />
     <Compile Include="EntityScripts\Shades\ShadeDetachHandler.cs" />
     <Compile Include="EntityScripts\Shades\ShadeMovementModel.cs" />
     <Compile Include="EntityScripts\Shades\Shade.cs" />

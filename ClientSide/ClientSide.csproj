@@ -60,7 +60,6 @@
     <Compile Include="PacketCouriers\GameRelated\Entities\Client_EntityInitializer.cs" />
     <Compile Include="PacketCouriers\GameRelated\InputReader\Client_InputReader.cs" />
     <Compile Include="PacketCouriers\GameRelated\NetworkedMessenger\Client_NetworkedMessengerPacketCourier.cs" />
-    <Compile Include="EntityScripts\Shades\MovementConstraints\OWRigidbodyFollowsAnother.cs" />
     <Compile Include="SettingsMenu\ClientModSettingsMenu.cs" />
     <Compile Include="EntityScripts\Shades\Shade.cs" />
     <Compile Include="EntityScripts\Shades\ShadeDetachHandler.cs" />
