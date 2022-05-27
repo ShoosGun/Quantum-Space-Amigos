@@ -1,3 +1,5 @@
+# There is now a continuation to this mod called [SNet](https://github.com/ShoosGun/SNet), the differences is that this one was made in tcp, and the other in udp
+
 # QSA (Quantum Space Acquaintances/Amigos/...)
 
 ### A project that aims to add multiplayer to the game Outer Wilds Alpha 1.2
